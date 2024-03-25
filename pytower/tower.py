@@ -32,7 +32,22 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
     os.chdir(curr_cwd)
 
 
-def load_tools(verbose=False) -> list[str, ModuleType]:
+class ToolMetadata:
+    def __init__(self, tool_name: str, version: str, author: str, url: str):
+        self.tool_name = tool_name
+        self.version = version
+        self.author = author
+        self.url = url
+
+    @staticmethod
+    def strattr_or_default(module, attr, default):
+        if hasattr(module, attr):
+            return str(getattr(module, attr))
+
+        return default
+
+
+def load_tools(verbose=False) -> list[ToolMetadata, ModuleType]:
     # Get tooling scripts
     tools_folder = 'pytower/tools'
     if not os.path.exists(tools_folder):
@@ -57,21 +72,32 @@ def load_tools(verbose=False) -> list[str, ModuleType]:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            tool_name = module_name
-            # Check if the module has a TOOL_NAME variable
-            if hasattr(module, 'TOOL_NAME'):
-                tool_name = getattr(module, 'TOOL_NAME')
+            # Check if module should be ignored before proceeding
+            if hasattr(module, 'IGNORE') and getattr(module, 'IGNORE'):
+                continue
 
-            # Check if the module has a main function and call it
+            # Get script directives/metadata variables
+            tool_name = ToolMetadata.strattr_or_default(module, 'TOOL_NAME', module_name)
+            version = ToolMetadata.strattr_or_default(module, 'VERSION', None)
+            author = ToolMetadata.strattr_or_default(module, 'AUTHOR', None)
+            url = ToolMetadata.strattr_or_default(module, 'URL', None)
+
+            # Check if the module has a main function before registering it
             if not hasattr(module, 'main'):
                 logging.warning(f"No 'main' function found in tool '{tool_name}'. Skipping.")
                 continue
 
-            tools.append((tool_name, module))
+            success_message = f'Successfully loaded {tool_name}'
+            if version is not None:
+                success_message += f' {version}'
+            if author is not None:
+                success_message += f' by {author}'
+            print(success_message)
+
+            tools.append((ToolMetadata(tool_name, version, author, url), module))
 
         except Exception as e:
             logging.error(f"Error executing script '{script}': {e}")
-            continue
 
     return tools
 
@@ -90,7 +116,7 @@ def parse_args(tool_names):
                         help='Whether or not to invert selection')
     parser.add_argument('-t', '--tool', dest='tool', type=str,
                         help=f'Tool script to use')
-    #TODO fix bang and -j and -v flags to be whether they are inlcluded, not true/false
+    # TODO fix bang and -j and -v flags to be whether they are inlcluded, not true/false
     parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool, help='Tool to use')
     parser.add_argument('-', '--', '--params', '--parameters', dest='parameters', nargs='*',
                         help='Parameters to pass onto tooling script (must come at end)')
@@ -112,7 +138,7 @@ def parse_selection(select_input: str) -> Selection:
 
 
 def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], list], None] = None,
-         tools: list[str, ModuleType] = [], args: dict = None):
+         tools: list[ToolMetadata, ModuleType] = [], args: dict = None):
     # Make sure script is running in main directory, not tools directory (and not main module directory)
     if tooling_injection is not None:
         os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -154,7 +180,7 @@ def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], lis
 
 def init():
     tools = load_tools(verbose=len(sys.argv) <= 1)
-    tool_names = ', '.join([name for name, _ in tools])
+    tool_names = ', '.join([meta.name for meta, _ in tools])
     print()
     args = parse_args(tool_names)
 
