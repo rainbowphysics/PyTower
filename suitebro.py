@@ -1,18 +1,11 @@
-import argparse
-import logging
-from subprocess import Popen, PIPE
-import sys
-import os
 import json
 import uuid
 import copy
 
-SUITEBRO_PATH = r'C:\Users\gklub\Documents\Tower Unite\suitebro'
-
 
 def replace_guids(datadict, replacement_table):
     encoding = json.dumps(datadict)
-    for target, replacement in replacement_table:
+    for target, replacement in replacement_table.items():
         encoding.replace(target, replacement)
     return json.loads(encoding)
 
@@ -128,50 +121,55 @@ class ItemConnectionObject:
 
 
 class TowerObject:
-    def __init__(self, item=None, properties=None):
+    def __init__(self, item: dict | None = None, properties: dict | None = None):
         self.item = copy.deepcopy(item)
         self.properties = copy.deepcopy(properties)
 
-        if 'ItemConnections' not in self.item.keys():
+        if self.item is not None and 'ItemConnections' not in self.item.keys():
             self.item['ItemConnections'] = json.loads('''{
-          "ArrayProperty": {
-            "StructProperty": {
-              "field_name": "ItemConnections",
-              "value_type": "StructProperty",
-              "struct_type": "ItemConnectionData",
-              "values": []
-            }
-          }
-        }''')
+              "ArrayProperty": {
+                "StructProperty": {
+                  "field_name": "ItemConnections",
+                  "value_type": "StructProperty",
+                  "struct_type": "ItemConnectionData",
+                  "values": []
+                }
+              }
+            }''')
 
-    def copy(self):
+    def copy(self) -> 'TowerObject':
         copied = TowerObject(item=self.item, properties=self.properties)
-        copied.item['guid'] = str(uuid.uuid4()).upper()
+        if copied.item is not None:
+            copied.item['guid'] = str(uuid.uuid4()).upper()
         return copied
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.item['name']
 
-    def get_custom_name(self):
+    def get_custom_name(self) -> str:
         return self.item['properties']['ItemCustomName']['NameProperty']
 
-    def matches_name(self, name):
+    def matches_name(self, name) -> bool:
         name = name.casefold()
         return self.get_name() == name or self.get_custom_name().casefold() == name
 
-    def get_group(self):
+    def get_group_id(self) -> int:
         return self.item['properties']['GroupID']['IntProperty']
 
     @staticmethod
-    def copy_group(group: list):
+    def copy_group(group: list) -> list['TowerObject']:
         # First pass: new guids and setup replacement table
         replacement_table = {}
         copies = [None] * len(group)
         for x, obj in enumerate(group):
-            old_guid = obj.item['guid']
+            if obj.item is not None:
+                old_guid = obj.item['guid']
+
             copied = obj.copy()
-            new_guid = copied.item['guid']
-            replacement_table[old_guid] = new_guid
+
+            if obj.item is not None:
+                new_guid = copied.item['guid']
+                replacement_table[old_guid] = new_guid
 
             copies[x] = copied
 
@@ -187,16 +185,16 @@ class TowerObject:
         connections += con.to_dict()
         self.properties['ItemConnections'] = self.item['ItemConnections']
 
-    def get_connections(self) -> [ItemConnectionObject]:
+    def get_connections(self) -> list[ItemConnectionObject]:
         cons = []
         for data in self.item['ItemConnections']['ArrayProperty']['StructProperty']['values']:
             cons.append(ItemConnectionObject(data))
 
         return cons
 
-    def set_connections(self, cons: [ItemConnectionObject]):
-        self.item['ItemConnections']['ArrayProperty']['StructProperty']['values'] = list(
-            map(lambda con: con.to_dict(), cons))
+    def set_connections(self, cons: list[ItemConnectionObject]):
+        self.item['ItemConnections']['ArrayProperty']['StructProperty']['values'] \
+            = list(map(lambda con: con.to_dict(), cons))
 
     def __lt__(self, other):
         if not isinstance(other, TowerObject):
@@ -225,15 +223,18 @@ class TowerObject:
     def __repl__(self):
         return f'TowerObject({self.item}, {self.properties})'
 
+    def __str__(self):
+        return self.__repl__()
+
 
 class Suitebro:
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, data: dict):
+        self.data: dict = data
 
         # Parse objects
         prop_section = self.data['properties']
         item_section = self.data['items']
-        self.objects = [None] * len(prop_section)
+        self.objects: list[TowerObject | None] = [None] * len(prop_section)
 
         item_idx = 0
         for x in range(len(prop_section)):
@@ -251,6 +252,17 @@ class Suitebro:
     def add_objects(self, objs):
         self.objects += objs
 
+    def find_item(self, name: str) -> TowerObject | None:
+        for obj in self.objects:
+            if obj.matches_name(name):
+                return obj
+        return None
+
+    # Returns all non-property TowerObjects
+    def items(self) -> list[TowerObject]:
+        return [obj for obj in self.objects if obj.item is not None]
+
+    # Convert item list back into a dict
     def to_dict(self):
         new_dict = {}
         for k, v in self.data.items():
@@ -302,72 +314,6 @@ class Suitebro:
     def __repl__(self):
         return f'Suitebro({self.data}, {self.objects})'
 
-
-def main():
-    filename = 'CondoData'
-    abs_filepath = os.path.realpath(filename)
-    condo_dir = os.path.dirname(abs_filepath)
-    json_output_path = os.path.join(condo_dir, os.path.basename(abs_filepath) + ".json")
-    json_final_path = os.path.join(condo_dir, 'output.json')
-    final_output_path = os.path.join(condo_dir, 'output')
-
-    os.chdir(SUITEBRO_PATH)
-
-    process = Popen(f'cargo run --release to-json -! -i \"{abs_filepath}\" -o \"{json_output_path}\"', stdout=PIPE)
-    (output, err) = process.communicate()
-    print(output, file=sys.stderr)
-    for line in output.splitlines(False):
-        print(line)
-
-    exit_code = process.wait()
-
-    if exit_code != 0:
-        logging.warning('WARNING: Suitebro to-json did not complete successfully!')
-
-    os.chdir(condo_dir)
-
-    print('Loading JSON file...')
-    with open(json_output_path, 'r') as fd:
-        save_json = json.load(fd)
-
-    save = Suitebro(save_json)
-
-    exclusions = ['CanvasWallFull', 'Counter', 'FloatingTextSign']
-    template_objects = list(
-        filter(lambda obj: (obj.item is not None) and (obj.item['name'] not in exclusions), save.objects))
-    print(template_objects)
-
-    for x in range(-5, 5):
-        for y in range(-5, 5):
-            for z in range(20):
-                if x == 0 and y == 0 and z == 0:
-                    continue
-                copies = TowerObject.copy_group(template_objects)
-
-                # Set position
-                for obj in copies:
-                    obj.item['position']['x'] += 70 * x
-                    obj.item['position']['y'] += 70 * y
-                    obj.item['position']['z'] += 70 * z
-
-                save.add_objects(copies)
-
-    with open(json_final_path, 'w') as fd:
-        json.dump(save.to_dict(), fd, indent=2)
-
-    # Finally run!
-    os.chdir(SUITEBRO_PATH)
-
-    process = Popen(f'cargo run --release to-save -! -i \"{json_final_path}\" -o \"{final_output_path}\"', stdout=PIPE)
-    (output, err) = process.communicate()
-    print(output, file=sys.stderr)
-    for line in output.splitlines(False):
-        print(line)
-
-    exit_code = process.wait()
-    if exit_code != 0:
-        logging.warning('WARNING: Suitebro to-save did not complete successfully!')
-
-
-if __name__ == '__main__':
-    main()
+    def __iter__(self):
+        for obj in self.objects:
+            yield obj
