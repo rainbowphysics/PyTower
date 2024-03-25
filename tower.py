@@ -121,27 +121,6 @@ def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], lis
         for name, module in tools:
             if name.casefold().startswith(args['tool'].casefold()):
                 module.main(save, save.objects, args['parameters'])
-    '''
-    exclusions = ['CanvasWallFull', 'Counter', 'FloatingTextSign']
-    template_objects = list(
-        filter(lambda obj: (obj.item is not None) and (obj.item['name'] not in exclusions), save.objects))
-    print(template_objects)
-
-    for x in range(-5, 5):
-        for y in range(-5, 5):
-            for z in range(20):
-                if x == 0 and y == 0 and z == 0:
-                    continue
-                copies = TowerObject.copy_group(template_objects)
-
-                # Set position
-                for obj in copies:
-                    obj.item['position']['x'] += 70 * x
-                    obj.item['position']['y'] += 70 * y
-                    obj.item['position']['z'] += 70 * z
-
-                save.add_objects(copies)
-    '''
 
     with open(json_final_path, 'w') as fd:
         json.dump(save.to_dict(), fd, indent=2)
