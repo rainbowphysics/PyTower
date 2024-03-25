@@ -1,15 +1,47 @@
+import os
+import subprocess
 from setuptools import setup
+from setuptools.command.install import install
+
+
+def install_dependencies():
+    try:
+        subprocess.run(['git', 'clone', 'https://github.com/brecert/tower-unite-suitebro.git'])
+    except Exception as e:
+        print(f"Error cloning repository: {e}")
+
+
+class CustomInstallCommand(install):
+    def run(self):
+        install_dependencies()
+
+        cwd = os.getcwd()
+        os.chdir('tower-unite-suitebro')
+        subprocess.run(['cargo', 'build', '--release'])  # Assuming cargo is installed and in the PATH
+        os.chdir(cwd)
+
+        install.run(self)
+
 
 setup(
-    name='towerpy',
+    name='pytower',
     version='0.1.0',
     description='Python API for Tower Unite map-editing',
-    url='https://github.com/kluberge/TowerPy',
+    url='https://github.com/kluberge/PyTower',
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
     packages=['pytower'],
     install_requires=['requests'],
+    entry_points={
+        'console_scripts': [
+            'pytower = pytower.tower:main'
+        ]
+    },
+
+    cmdclass={
+        'install': CustomInstallCommand
+    },
 
     # https://pypi.org/pypi?%3Aaction=list_classifiers
     classifiers=[

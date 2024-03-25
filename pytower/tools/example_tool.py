@@ -1,5 +1,5 @@
-from towerpy.suitebro import Suitebro
-from towerpy.selection import RegexSelection
+from pytower.suitebro import Suitebro
+from pytower.selection import RegexSelection
 
 TOOL_NAME = 'ExampleTool'
 

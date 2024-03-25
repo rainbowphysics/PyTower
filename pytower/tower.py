@@ -73,7 +73,8 @@ def load_tools() -> list[str, ModuleType]:
 
 
 def parse_args(tool_names):
-    parser = argparse.ArgumentParser(description='Entrypoint for TowerPy')
+    parser = argparse.ArgumentParser(prog='PyTower', description='High-level API for Tower Unite map editing',
+                                     epilog=f'Detected tools: {tool_names}')
     parser.add_argument('-i', '--input', dest='input', type=str, default='CondoData',
                         help='Input file')
     parser.add_argument('-o', '--output', dest='output', type=str, default='CondoData_output',
@@ -83,7 +84,7 @@ def parse_args(tool_names):
     parser.add_argument('-v', '--invert', dest='invert', type=bool, default=False,
                         help='Whether or not to invert selection')
     parser.add_argument('-t', '--tool', dest='tool', type=str,
-                        help=f'Tool script to use. Available tools: {tool_names}')
+                        help=f'Tool script to use')
     parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool, help='Tool to use')
     parser.add_argument('-', '--', '--params', '--parameters', dest='parameters', nargs='*',
                         help='Parameters to pass onto tooling script (must come at end)')

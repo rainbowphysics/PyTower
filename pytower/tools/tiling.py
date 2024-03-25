@@ -1,6 +1,6 @@
-from towerpy import tower
-from towerpy.selection import GroupSelection, ItemSelection
-from towerpy.suitebro import Suitebro, TowerObject
+from pytower import tower
+from pytower.selection import GroupSelection, ItemSelection
+from pytower.suitebro import Suitebro, TowerObject
 
 TOOL_NAME = 'Tiling'
 
