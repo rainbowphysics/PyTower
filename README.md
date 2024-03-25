@@ -1,11 +1,6 @@
 # PyTower 0.1.0
 High-level Python API for editing/generating Tower Unite maps.
 
-## Important Notice:
-#### This API is not officially affiliated with PixelTail Games nor Tower Unite, please do not ask for help regarding tooling/scripts in the official Discord server nor on the official forums, except for in the megathread or in any other relevant threads.
-#### Any tools/scripts posted or shared in this repository are not officially affiliated with PixelTail Games nor Tower Unite. They are unofficial tools created by the community for the purpose of making community content and maps.
-#### Be safe when downloading tool scripts from the internet. Always look them over before adding them to the tools folder. If you can't understand how a tool script works, or if it looks sketchy, do not use it and report it.
-
 ## Installation Instructions
 1. Download Rust (latest nightly build): https://www.rust-lang.org/tools/install
 2. (On Windows) Download Git Bash: https://git-scm.com/download/win
@@ -51,3 +46,8 @@ To register a new tool to use with PyTower, simply create a new script in the to
 This project is open source and open to public contributions. 
 
 To make a contribution, submit a pull request following PEP 8: https://peps.python.org/pep-0008/.
+
+## Important Notice:
+#### This API is not officially affiliated with PixelTail Games nor Tower Unite, please do not ask for help regarding tooling/scripts in the official Discord server nor on the official forums, except for in the megathread or in any other relevant threads.
+#### Any tools/scripts posted or shared in this repository are not officially affiliated with PixelTail Games nor Tower Unite. They are unofficial tools created by the community for the purpose of making community content and maps.
+#### Be safe when downloading tool scripts from the internet. Always look them over before adding them to the tools folder. If you can't understand how a tool script works, or if it looks sketchy, do not use it and report it.
