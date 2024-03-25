@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from .suitebro import TowerObject
 
-from suitebro import TowerObject
+from abc import ABC, abstractmethod
 import re
 
 

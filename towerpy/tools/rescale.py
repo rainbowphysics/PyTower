@@ -1,5 +1,5 @@
-import tower
-from suitebro import Suitebro, TowerObject
+from towerpy import tower
+from towerpy.suitebro import Suitebro, TowerObject
 
 TOOL_NAME = 'Rescale'
 

@@ -2,7 +2,6 @@ import json
 import uuid
 import copy
 
-
 def replace_guids(datadict, replacement_table):
     encoding = json.dumps(datadict)
     for target, replacement in replacement_table.items():

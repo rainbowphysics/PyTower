@@ -1,3 +1,5 @@
+from .suitebro import Suitebro, ItemConnectionObject, TowerObject
+
 import argparse
 import importlib
 import json
@@ -6,8 +8,6 @@ from subprocess import Popen, PIPE
 import sys
 import os
 from typing import Callable
-
-from suitebro import Suitebro, ItemConnectionObject, TowerObject
 from types import ModuleType
 
 SUITEBRO_PATH = r'C:\Users\gklub\Documents\Tower Unite\suitebro'
@@ -30,6 +30,7 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
         logging.warning('Suitebro to-json did not complete successfully!')
 
     os.chdir(curr_cwd)
+
 
 def load_tools() -> list[str, ModuleType]:
     # Get tooling scripts
@@ -89,11 +90,12 @@ def parse_args(tool_names):
     # Return args as a dict
     return vars(parser.parse_args())
 
+
 def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], list], None] = None,
          tools: list[str, ModuleType] = [], args: dict = None):
-    # Make sure script is running in main directory, not tools directory
+    # Make sure script is running in main directory, not tools directory (and not main module directory)
     if tooling_injection is not None:
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
     abs_filepath = os.path.realpath(filename)
     condo_dir = os.path.dirname(abs_filepath)

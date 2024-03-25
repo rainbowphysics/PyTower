@@ -1,6 +1,6 @@
-import tower
-from selection import GroupSelection, ItemSelection
-from suitebro import Suitebro, TowerObject
+from towerpy import tower
+from towerpy.selection import GroupSelection, ItemSelection
+from towerpy.suitebro import Suitebro, TowerObject
 
 TOOL_NAME = 'Tiling'
 

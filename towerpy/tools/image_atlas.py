@@ -4,8 +4,8 @@ import os
 import requests
 import asyncio
 
-from suitebro import Suitebro, TowerObject
-from util import dict_walk
+from towerpy.suitebro import Suitebro, TowerObject
+from towerpy.util import dict_walk
 
 TOOL_NAME = 'ImageAtlas'
 
