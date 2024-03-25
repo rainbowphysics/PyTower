@@ -1,3 +1,4 @@
+from .selection import *
 from .suitebro import Suitebro, ItemConnectionObject, TowerObject
 
 import argparse
@@ -10,12 +11,11 @@ import os
 from typing import Callable
 from types import ModuleType
 
-SUITEBRO_PATH = r'C:\Users\gklub\Documents\Tower Unite\suitebro'
-
 
 def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None, overwrite: bool = False):
     curr_cwd = os.getcwd()
-    os.chdir(SUITEBRO_PATH)
+    suitebro_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tower-unite-suitebro')
+    os.chdir(suitebro_path)
 
     process = Popen(f'cargo run --release {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
                     f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE)
@@ -32,9 +32,9 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
     os.chdir(curr_cwd)
 
 
-def load_tools() -> list[str, ModuleType]:
+def load_tools(verbose=False) -> list[str, ModuleType]:
     # Get tooling scripts
-    tools_folder = 'tools'
+    tools_folder = 'pytower/tools'
     if not os.path.exists(tools_folder):
         os.mkdir(tools_folder)
 
@@ -42,7 +42,7 @@ def load_tools() -> list[str, ModuleType]:
 
     python_files = [f for f in files if f.endswith('.py')]
     if not python_files:
-        print("No Python scripts found in 'tools' folder.")
+        logging.warning("No Python scripts found in 'tools' folder.")
         return []
 
     # Execute each Python script
@@ -50,7 +50,8 @@ def load_tools() -> list[str, ModuleType]:
     for script in python_files:
         script_path = os.path.join(tools_folder, script)
         module_name = os.path.splitext(script)[0]
-        print(f"Loading script: {module_name}")
+        if verbose:
+            print(f"Loading tool script: {module_name}")
         try:
             spec = importlib.util.spec_from_file_location(module_name, script_path)
             module = importlib.util.module_from_spec(spec)
@@ -63,17 +64,21 @@ def load_tools() -> list[str, ModuleType]:
 
             # Check if the module has a main function and call it
             if not hasattr(module, 'main'):
-                print(f"No 'main' function found in tool '{tool_name}'. Skipping.")
+                logging.warning(f"No 'main' function found in tool '{tool_name}'. Skipping.")
                 continue
 
-            tools.append(tool_name, module)
+            tools.append((tool_name, module))
 
         except Exception as e:
-            print(f"Error executing script '{script}': {e}")
+            logging.error(f"Error executing script '{script}': {e}")
+            continue
+
+    return tools
 
 
 def parse_args(tool_names):
-    parser = argparse.ArgumentParser(prog='PyTower', description='High-level API for Tower Unite map editing',
+    parser = argparse.ArgumentParser(prog='PyTower',
+                                     description='High-level toolset and Python API for Tower Unite map editing',
                                      epilog=f'Detected tools: {tool_names}')
     parser.add_argument('-i', '--input', dest='input', type=str, default='CondoData',
                         help='Input file')
@@ -85,11 +90,25 @@ def parse_args(tool_names):
                         help='Whether or not to invert selection')
     parser.add_argument('-t', '--tool', dest='tool', type=str,
                         help=f'Tool script to use')
+    #TODO fix bang and -j and -v flags to be whether they are inlcluded, not true/false
     parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool, help='Tool to use')
     parser.add_argument('-', '--', '--params', '--parameters', dest='parameters', nargs='*',
                         help='Parameters to pass onto tooling script (must come at end)')
+    parser.add_argument('-j', '--json', dest='json', type=bool, default=False,
+                        help='If --json True, then to-json and to-save steps are skipped')
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stdout)
+        sys.exit(0)
+
     # Return args as a dict
     return vars(parser.parse_args())
+
+
+def parse_selection(select_input: str) -> Selection:
+    select_input = select_input.strip().casefold()
+    if select_input == 'all' or select_input == 'everything':
+        return ItemSelection()
 
 
 def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], list], None] = None,
@@ -98,6 +117,7 @@ def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], lis
     if tooling_injection is not None:
         os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
+    # TODO fix this up using args['output']
     abs_filepath = os.path.realpath(filename)
     condo_dir = os.path.dirname(abs_filepath)
     json_output_path = os.path.join(condo_dir, os.path.basename(abs_filepath) + ".json")
@@ -132,10 +152,14 @@ def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], lis
     run_suitebro_parser(json_final_path, True, final_output_path, overwrite=True)
 
 
-if __name__ == '__main__':
-    tools = load_tools()
-
+def init():
+    tools = load_tools(verbose=len(sys.argv) <= 1)
     tool_names = ', '.join([name for name, _ in tools])
+    print()
     args = parse_args(tool_names)
 
     main(args['input'], tooling_injection=None, tools=tools, args=args)
+
+
+if __name__ == '__main__':
+    init()

@@ -7,7 +7,7 @@ import asyncio
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.util import dict_walk
 
-TOOL_NAME = 'ImageAtlas'
+TOOL_NAME = 'CreateImageAtlas'
 
 
 def hash_image(data: bytes):

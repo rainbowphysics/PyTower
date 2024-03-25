@@ -4,24 +4,36 @@ from setuptools import setup
 from setuptools.command.install import install
 
 
-def install_dependencies():
+def run_command(args, error_context='Error'):
     try:
-        subprocess.run(['git', 'clone', 'https://github.com/brecert/tower-unite-suitebro.git'])
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        for line in process.stdout:
+            print(line, end='')
+        process.communicate()
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, process.args)
     except Exception as e:
-        print(f"Error cloning repository: {e}")
+        print(f"{error_context}: {e}")
 
 
 class CustomInstallCommand(install):
     def run(self):
-        install_dependencies()
+        run_command(['git', 'clone', 'https://github.com/brecert/tower-unite-suitebro.git'],
+                    error_context='Error cloning Suitebro repository')
 
         cwd = os.getcwd()
         os.chdir('tower-unite-suitebro')
-        subprocess.run(['cargo', 'build', '--release'])  # Assuming cargo is installed and in the PATH
+        run_command(['git', 'pull'],
+                    error_context='Error pulling from Suitebro repository')
+        run_command(['cargo', 'build', '--release'],
+                    error_context='Error cloning repository')  # Assuming cargo is installed and in the PATH
         os.chdir(cwd)
 
         install.run(self)
 
+
+with open('requirements.txt', 'r') as fd:
+    requirements = fd.readlines()
 
 setup(
     name='pytower',
@@ -32,10 +44,11 @@ setup(
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
     packages=['pytower'],
-    install_requires=['requests'],
+    install_requires=requirements,
+    zip_safe=False,
     entry_points={
         'console_scripts': [
-            'pytower = pytower.tower:main'
+            'pytower = pytower.tower:init'
         ]
     },
 
