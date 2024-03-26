@@ -33,6 +33,11 @@ class TowerObject:
               }
             }''')
 
+    def is_canvas(self) -> bool:
+        item_props = self.item['properties']
+        return (self.item is not None
+                and (self.get_name().startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props))
+
     def get_name(self) -> str:
         return self.item['name']
 

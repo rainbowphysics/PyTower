@@ -1,6 +1,6 @@
 from pytower import tower
 from pytower.suitebro import Suitebro, TowerObject
-from pytower.tower import ToolParameterInfo
+from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint
 
 TOOL_NAME = 'Set'
@@ -11,13 +11,13 @@ INFO = '''Sets materials on canvas objects in the given selection.'''
 PARAMETERS = {'material': ToolParameterInfo(dtype=str, description='Material to apply')}
 
 
-def main(suitebro: Suitebro, selection: list[TowerObject], params):
-    mat = params['material']
+def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+    mat = params.material
     for obj in selection:
         item_props = obj.item['properties']
 
         # Skip over non-canvas items
-        if not obj.get_name().startswith('Canvas') and 'SurfaceMaterial' not in item_props and 'URL' not in item_props:
+        if not obj.is_canvas():
             continue
 
         # Remove URL entry from object header if exists

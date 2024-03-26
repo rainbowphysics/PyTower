@@ -1,6 +1,6 @@
 from pytower import tower
 from pytower.suitebro import Suitebro, TowerObject
-from pytower.tower import ToolParameterInfo
+from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint
 
 TOOL_NAME = 'Tile'
@@ -12,9 +12,9 @@ PARAMETERS = {'tile': ToolParameterInfo(dtype=xyzint, description='x,y,z tiling 
               'offset': ToolParameterInfo(dtype=xyz, description='x,y,z offsets')}
 
 
-def main(suitebro: Suitebro, selection: list[TowerObject], params):
-    nx, ny, nz = params['tile']
-    dx, dy, dz = params['offset']
+def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+    nx, ny, nz = params.tile
+    dx, dy, dz = params.offset
     for x in range(nx):
         for y in range(ny):
             for z in range(nz):
@@ -31,7 +31,7 @@ def main(suitebro: Suitebro, selection: list[TowerObject], params):
                     obj.position += offset
 
                 # Add copies to save
-                suitebro.add_objects(copies)
+                save.add_objects(copies)
 
 
 if __name__ == '__main__':

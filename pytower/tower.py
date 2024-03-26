@@ -220,6 +220,12 @@ def parse_selection(select_input: str) -> Selection:
     if select_input == 'all' or select_input == 'everything':
         return ItemSelection()
 
+class ParameterDict(dict):
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            raise AttributeError(f"'ParameterDict' object has no attribute '{key}'")
 
 def parse_parameters(param_input: list[str], meta: ToolMetadata) -> dict:
     # Ensure that all inputs were parsed correctly as strings
@@ -254,10 +260,12 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> dict:
                 sys.exit(1)
             params[param] = value
 
+    # Add support for accessing parameters using dot notation
+    params = ParameterDict(params)
     return params
 
 
-def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], dict], None] = None,
+def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], ParameterDict], None] = None,
          tools: list[ModuleType, ToolMetadata] = [], args: dict = None):
     # TODO remove this chdir fuckery and just let the code run wherever it happens to run, including in the tools
     #  directory
