@@ -229,13 +229,14 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> dict:
             logging.error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.')
             sys.exit(1)
 
-        param_split = param.strip().casefold().split('=')
+        param_split = param.split('=')
         if len(param_split) != 2:
             logging.error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces and only'
                           f'one equal sign.')
             sys.exit(1)
 
         param_name, value = param_split
+        param_name = param_name.strip().casefold()
         if param_name in meta.params:
             # Typecast value to expected type
             value = meta.params[param_name].dtype(value)
