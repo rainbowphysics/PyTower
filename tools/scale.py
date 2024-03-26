@@ -6,7 +6,7 @@ from pytower.util import xyz
 TOOL_NAME = 'Scale'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/pytower/tools/scale.py'
+URL = 'https://github.com/kluberge/PyTower/blob/main/tools/scale.py'
 INFO = '''Scales selection up, either around the centroid (default) or world origin (origin=True)'''
 PARAMETERS = {'scale': ToolParameterInfo(dtype=xyz, description='Scaling factor'),
               'origin': ToolParameterInfo(dtype=bool, description='Whether to scale around the origin', optional=True)}
