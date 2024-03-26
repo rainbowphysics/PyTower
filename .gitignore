@@ -159,8 +159,15 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Tower Unite files
+# Tower Unite condo files
 CondoData
 CondoData.json
 CondoData_output.json
 CondoData_output
+tools/CondoData
+tools/CondoData.json
+tools/CondoData_output.json
+tools/CondoData_output
+
+# Suitebro parser
+tower-unite-suitebro/

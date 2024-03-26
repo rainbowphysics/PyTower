@@ -1,8 +1,10 @@
+import importlib
 import os
 import subprocess
 from setuptools import setup
 from setuptools.command.install import install
-
+from distutils.util import convert_path
+import logging
 
 def run_command(args, error_context='Error'):
     try:
@@ -35,15 +37,21 @@ class CustomInstallCommand(install):
 with open('requirements.txt', 'r') as fd:
     requirements = fd.readlines()
 
+spec = importlib.util.spec_from_file_location('pytower', convert_path('pytower/__init__.py'))
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+version = getattr(module, '__version__')
+logging.info(f'Installing PyTower {version}')
+
 setup(
     name='pytower',
-    version='0.1.0',
+    version=version,
     description='Python API for Tower Unite map-editing',
     url='https://github.com/kluberge/PyTower',
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
-    packages=['pytower'],
+    packages=['pytower', 'tools'],
     install_requires=requirements,
     zip_safe=False,
     entry_points={

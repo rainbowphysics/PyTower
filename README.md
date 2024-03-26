@@ -32,6 +32,8 @@ Example usage:
 - GroupSelection: Select objects by group id
 - RegexSelection: Select objects by regular expression pattern (matches both names) 
 
+### Subcommands
+
 ## Writing tools scripts
 To register a new tool to use with PyTower, simply create a new script in the tools folder with a main method.
 
@@ -40,6 +42,8 @@ To register a new tool to use with PyTower, simply create a new script in the to
 - `VERSION`: Script version
 - `AUTHOR`: Script author
 - `URL`: External URL for more information (e.g., a link to a forum post)
+- `INFO`: Further info printed when calling `pytower info <toolname>`
+- `PARAMETERS`: Dictionary of required parameters and their types (`dict[str, ToolParameterInfo]`)
 - `IGNORE=True`: Tells PyTower to skip over this script. Useful for shared libraries or utility scripts
 
 ## Contributing

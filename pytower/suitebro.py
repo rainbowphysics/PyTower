@@ -1,122 +1,19 @@
+import difflib
 import json
+import logging
+import sys
 import uuid
 import copy
+import numpy as np
+
+from .connections import ItemConnectionObject
+
 
 def replace_guids(datadict, replacement_table):
     encoding = json.dumps(datadict)
     for target, replacement in replacement_table.items():
-        encoding.replace(target, replacement)
+        encoding = encoding.replace(target, replacement)
     return json.loads(encoding)
-
-
-def run_if_not_none(func, data):
-    if data is not None:
-        func(data)
-
-
-class ItemConnectionObject:
-    def __init__(self, datadict=None, guid=None, event_name=None, delay=None, listener_event=None, datatype=None,
-                 data=None):
-        if datadict is not None:
-            self.data = datadict
-            return
-
-        # Load in dictionary template with default values
-        self.data = json.loads('''{
-                  "struct_type": "ItemConnectionData",
-                  "value": {
-                    "Item": {
-                      "StructProperty": {
-                        "struct_type": "GUID",
-                        "value": null
-                      }
-                    },
-                    "EventName": {
-                      "NameProperty": null
-                    },
-                    "Delay": {
-                      "FloatProperty": 0.0
-                    },
-                    "ListenerEventName": {
-                      "NameProperty": null
-                    },
-                    "DataType": {
-                      "EnumProperty": {
-                        "enum_type": "FItemDataType",
-                        "value": "FItemDataType::NONE"
-                      }
-                    },
-                    "Data": {
-                      "StrProperty": ""
-                    }
-                  }
-                }''')
-
-        setter_pairs = [(self.set_item_guid, guid),
-                        (self.set_event_name, event_name),
-                        (self.set_delay, delay),
-                        (self.set_listener_event_name, listener_event),
-                        (self.set_datatype, datatype),
-                        (self.set_data, data)
-                        ]
-        for setter, entry in setter_pairs:
-            run_if_not_none(setter, entry)
-
-    # Returns connected item GUID
-    def get_item_guid(self) -> str:
-        return self.data['value']['Item']['StructProperty']['value']
-
-    def set_item_guid(self, guid: str):
-        self.data['value']['Item']['StructProperty']['value'] = guid
-
-    # Returns targeted event on item
-    def get_event_name(self) -> str:
-        return self.data['value']['EventName']['NameProperty']
-
-    def set_event_name(self, name: str):
-        self.data['value']['EventName']['NameProperty'] = name
-
-    # Returns time delay in seconds
-    def get_delay(self) -> float:
-        return self.data['value']['Delay']['FloatProperty']
-
-    def set_delay(self, delay: float):
-        self.data['value']['Delay']['FloatProperty'] = delay
-
-    # Returns evnet being listened to
-    def get_listener_event_name(self) -> str:
-        return self.data['value']['Item']['StructProperty']['value']
-
-    def set_listener_event_name(self, name: str):
-        self.data['value']['Item']['StructProperty']['value'] = name
-
-    # Returns datatype of attached data
-    def get_datatype(self) -> dict:
-        return self.data['value']['DataType']
-
-    def set_datatype(self, datatype: dict):
-        self.data['value']['DataType'] = datatype
-
-    # Returns datatype of attached data
-    def get_data(self) -> dict:
-        return self.data['value']['Data']
-
-    def set_data(self, data: dict):
-        self.data['value']['Data'] = data
-
-    def get_dict(self) -> dict:
-        return self.data
-
-    def set_dict(self, data):
-        self.data = data
-
-    def to_dict(self) -> dict:
-        return copy.deepcopy(self.data)
-
-    # Needed to call dict(...) on objects of this class type
-    def __iter__(self):
-        for k, v in self.data:
-            yield k, v
 
 
 class TowerObject:
@@ -136,12 +33,6 @@ class TowerObject:
               }
             }''')
 
-    def copy(self) -> 'TowerObject':
-        copied = TowerObject(item=self.item, properties=self.properties)
-        if copied.item is not None:
-            copied.item['guid'] = str(uuid.uuid4()).upper()
-        return copied
-
     def get_name(self) -> str:
         return self.item['name']
 
@@ -154,6 +45,12 @@ class TowerObject:
 
     def get_group_id(self) -> int:
         return self.item['properties']['GroupID']['IntProperty']
+
+    def copy(self) -> 'TowerObject':
+        copied = TowerObject(item=self.item, properties=self.properties)
+        if copied.item is not None:
+            copied.item['guid'] = str(uuid.uuid4()).upper()
+        return copied
 
     @staticmethod
     def copy_group(group: list) -> list['TowerObject']:
@@ -174,10 +71,50 @@ class TowerObject:
 
         # Second pass: replace any references to old guids with new guids
         for obj in copies:
-            replace_guids(obj.item, replacement_table)
-            replace_guids(obj.properties, replacement_table)
+            obj.item = replace_guids(obj.item, replacement_table)
+            obj.properties = replace_guids(obj.properties, replacement_table)
 
         return copies
+
+    def _get_xyz_attr(self, name: str) -> np.ndarray | None:
+        if self.item is None:
+            return None
+        xyz = self.item[name]
+        return np.array([xyz['x'], xyz['y'], xyz['z']])
+
+    def _set_xyz_attr(self, name: str, value: np.ndarray):
+        if self.item is None:
+            logging.warning(f'Attempted to set {name} on a property-only object!')
+            return
+
+        pos = self.item[name]
+        pos['x'] = value[0]
+        pos['y'] = value[1]
+        pos['z'] = value[2]
+
+    @property
+    def position(self) -> np.ndarray | None:
+        return self._get_xyz_attr('position')
+
+    @position.setter
+    def position(self, value: np.ndarray):
+        self._set_xyz_attr('position', value)
+
+    @property
+    def rotation(self) -> np.ndarray | None:
+        return self._get_xyz_attr('rotation')
+
+    @rotation.setter
+    def rotation(self, value: np.ndarray):
+        self._set_xyz_attr('rotation', value)
+
+    @property
+    def scale(self) -> np.ndarray | None:
+        return self._get_xyz_attr('scale')
+
+    @scale.setter
+    def scale(self, value: np.ndarray):
+        self._set_xyz_attr('scale', value)
 
     def add_connection(self, con: ItemConnectionObject):
         connections = self.item['ItemConnections']['ArrayProperty']['StructProperty']['values']
