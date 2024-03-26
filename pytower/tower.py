@@ -156,6 +156,16 @@ def load_tools(verbose=False) -> list[ModuleType, ToolMetadata]:
     return tools
 
 
+class Subcommand:
+    def __init__(self, name: str, num_args: int, func: Callable):
+        self.name = name
+        self.num_args = num_args
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+
 def parse_args(tools: list[ModuleType, ToolMetadata], tool_names):
     parser = argparse.ArgumentParser(prog='PyTower',
                                      description='High-level toolset and Python API for Tower Unite map editing',
