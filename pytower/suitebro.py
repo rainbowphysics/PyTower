@@ -92,6 +92,23 @@ class TowerObject:
         pos['y'] = value[1]
         pos['z'] = value[2]
 
+    def _get_xyzw_attr(self, name: str) -> np.ndarray | None:
+        if self.item is None:
+            return None
+        xyz = self.item[name]
+        return np.array([xyz['x'], xyz['y'], xyz['z'], xyz['w']])
+
+    def _set_xyzw_attr(self, name: str, value: np.ndarray):
+        if self.item is None:
+            logging.warning(f'Attempted to set {name} on a property-only object!')
+            return
+
+        pos = self.item[name]
+        pos['x'] = value[0]
+        pos['y'] = value[1]
+        pos['z'] = value[2]
+        pos['w'] = value[3]
+
     @property
     def position(self) -> np.ndarray | None:
         return self._get_xyz_attr('position')
@@ -102,11 +119,11 @@ class TowerObject:
 
     @property
     def rotation(self) -> np.ndarray | None:
-        return self._get_xyz_attr('rotation')
+        return self._get_xyzw_attr('rotation')
 
     @rotation.setter
     def rotation(self, value: np.ndarray):
-        self._set_xyz_attr('rotation', value)
+        self._set_xyzw_attr('rotation', value)
 
     @property
     def scale(self) -> np.ndarray | None:

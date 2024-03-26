@@ -20,7 +20,10 @@ def main(suitebro: Suitebro, selection: list[TowerObject], params: dict):
     centroid = sum([obj.position for obj in selection]) / len(selection)
 
     for obj in selection:
-        obj.rotation += rot
+        # Since obj.rotation is quaternion, need to convert to/from
+        q = R.from_quat(obj.rotation)
+        p = r * q
+        obj.rotation = p.as_quat()
 
         # Rotate positions around centroid with help from scipy
         obj.position -= centroid
