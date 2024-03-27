@@ -1,6 +1,7 @@
 import importlib
 import os
 import subprocess
+
 from setuptools import setup
 from setuptools.command.install import install
 from distutils.util import convert_path
@@ -15,7 +16,7 @@ def run_command(args, error_context='Error'):
         if process.returncode != 0:
             raise subprocess.CalledProcessError(process.returncode, process.args)
     except Exception as e:
-        print(f"{error_context}: {e}")
+        logging.error(f"{error_context}: {e}")
 
 
 class CustomInstallCommand(install):
@@ -41,7 +42,7 @@ spec = importlib.util.spec_from_file_location('pytower', convert_path('pytower/_
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 version = getattr(module, '__version__')
-logging.info(f'Installing PyTower {version}')
+print(f'Installing PyTower {version}')
 
 setup(
     name='pytower',

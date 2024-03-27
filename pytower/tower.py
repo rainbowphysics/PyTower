@@ -200,6 +200,7 @@ def parse_args(parser=None):
 
     return vars(parser.parse_args())
 
+
 def parse_selection(select_input: str) -> Selection:
     select_input = select_input.strip().casefold()
     if select_input == 'all' or select_input == 'everything':
@@ -303,13 +304,17 @@ def main():
         sys.exit(0)
 
     if len(sys.argv) == 2:
-        subcmd = sys.argv[-1]
-        if subcmd.endswith('version'):
+        subcmd = sys.argv[-1].casefold()
+        if subcmd == 'version':
             print(f'PyTower {__version__}')
             sys.exit(0)
 
-        if subcmd.endswith('info'):
+        if subcmd == 'info':
             print(f'Usage: pytower info <tool_name>. \n\n Available tools: {tool_names}')
+            sys.exit(0)
+
+        if subcmd == 'run':
+            parser.print_help(sys.stdout)
             sys.exit(0)
 
     if len(sys.argv) == 3 and sys.argv[1].endswith('info'):
@@ -322,7 +327,7 @@ def main():
         logging.error(f'Could not find {sys.argv[2]}! \n\n Available tools: {tool_names}')
         sys.exit(1)
 
-    args = parse_args(parser) #TODO screw around with this more, currently doesn't work properly with subcommands
+    args = parse_args(parser)  # TODO screw around with this more, currently doesn't work properly with subcommands
 
     # TODO apply selection and validate args
 
@@ -330,7 +335,7 @@ def main():
 
     save = load_suitebro(args['input'])
 
-    #TODO make sure tool is properly disambiguated before running it -- if two startswith args['tool'], complain
+    # TODO make sure tool is properly disambiguated before running it -- if two startswith args['tool'], complain
     if 'tool' in args:
         for module, meta in tools:
             if meta.tool_name.casefold().startswith(args['tool'].casefold()):
@@ -340,6 +345,7 @@ def main():
                 break
 
     save_suitebro(save, args['output'])
+
 
 if __name__ == '__main__':
     main()
