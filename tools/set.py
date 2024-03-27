@@ -1,4 +1,5 @@
 from pytower import tower
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint
@@ -11,7 +12,7 @@ INFO = '''Sets materials on canvas objects in the given selection.'''
 PARAMETERS = {'material': ToolParameterInfo(dtype=str, description='Material to apply')}
 
 
-def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+def main(save: Suitebro, selection: Selection, params: ParameterDict):
     mat = params.material
     for obj in selection:
         item_props = obj.item['properties']

@@ -1,4 +1,5 @@
 from pytower import tower
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz
@@ -15,7 +16,7 @@ PARAMETERS = {'rotation': ToolParameterInfo(dtype=xyz, description='Rotation to 
               'local': ToolParameterInfo(dtype=bool, description='Whether to only rotate locally', default=False)}
 
 
-def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+def main(save: Suitebro, selection: Selection, params: ParameterDict):
     rot = params.rotation
     r = R.from_euler('xyz', rot, degrees=True)
     centroid = sum([obj.position for obj in selection]) / len(selection)

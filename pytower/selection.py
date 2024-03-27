@@ -1,67 +1,86 @@
+import itertools
+
 from .suitebro import TowerObject
 
 from abc import ABC, abstractmethod
 import re
 
 
-class Selection(ABC):
+class Selection(set):
+    @staticmethod
+    def _group_key(obj: TowerObject):
+        return obj.group_id()
+
+    def groups(self) -> set[tuple[int, 'Selection']]:
+        data = sorted(filter(lambda obj: obj.group_id() >= 0, self), key=Selection._group_key)
+        return {(group_id, Selection(group)) for group_id, group in itertools.groupby(data, Selection._group_key)}
+
+    def ungrouped(self) -> 'Selection':
+        return Selection({obj for obj in self if obj.group_id() < 0})
+
+
+class Selector(ABC):
     def __init__(self, name):
         self.name = name
 
+    # Selectors take in a Selection and output a new Selection.
+    # Can think of these Selectors operating on the set of everything, and selecting a subset.
+    # But nothing's stopping you from then selecting on that subset, and so on, further and further refining the
+    #  selection using Selector objects.
     @abstractmethod
-    def select(self, everything: list[TowerObject]) -> list[TowerObject]:
+    def select(self, everything: Selection) -> Selection:
         pass
 
 
-class NameSelection(Selection):
+class NameSelector(Selector):
     def __init__(self, select_name):
-        super().__init__('NameSelection')
+        super().__init__('NameSelector')
         self.select_name = select_name.casefold()
 
-    def select(self, everything: [TowerObject]) -> [TowerObject]:
-        return [obj for obj in everything if obj.matches_name(self.select_name)]
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if obj.matches_name(self.select_name)})
 
 
-class CustomNameSelection(Selection):
+class CustomNameSelector(Selector):
     def __init__(self, select_name):
-        super().__init__('CustomNameSelection')
+        super().__init__('CustomNameSelector')
         self.select_name = select_name.casefold()
 
-    def select(self, everything: [TowerObject]) -> [TowerObject]:
-        return [obj for obj in everything if obj.get_custom_name().casefold() == self.select_name]
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if obj.get_custom_name().casefold() == self.select_name})
 
 
-class ObjectNameSelection(Selection):
+class ObjectNameSelector(Selector):
     def __init__(self, select_name):
-        super().__init__('ObjectNameSelection')
+        super().__init__('ObjectNameSelector')
         self.select_name = select_name.casefold()
 
-    def select(self, everything: [TowerObject]) -> [TowerObject]:
-        return [obj for obj in everything if obj.get_name().casefold() == self.select_name]
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if obj.get_name().casefold() == self.select_name})
 
 
-class RegexSelection(Selection):
+class RegexSelector(Selector):
     def __init__(self, pattern):
-        super().__init__('RegexSelection')
+        super().__init__('RegexSelector')
         self.pattern = re.compile(pattern)
 
-    def select(self, everything: list[TowerObject]) -> list[TowerObject]:
-        return [obj for obj in everything if self.pattern.match(obj.get_name())
-                or self.pattern.match(obj.get_custom_name())]
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if self.pattern.match(obj.get_name())
+                or self.pattern.match(obj.get_custom_name())})
 
 
-class GroupSelection(Selection):
+class GroupSelector(Selector):
     def __init__(self, group_id):
-        super().__init__('GroupSelection')
+        super().__init__('GroupSelector')
         self.group_id = group_id
 
-    def select(self, everything: list[TowerObject]) -> list[TowerObject]:
-        return [obj for obj in everything if obj.get_group_id() == self.group_id]
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if obj.group_id() == self.group_id})
 
 
-class ItemSelection(Selection):
+class ItemSelector(Selector):
     def __init__(self):
-        super().__init__('ItemSelection')
+        super().__init__('ItemSelector')
 
-    def select(self, everything: list[TowerObject]) -> list[TowerObject]:
-        return [obj for obj in everything if obj.item is not None]
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if obj.item is not None})

@@ -1,4 +1,5 @@
 from pytower import tower
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz
@@ -12,7 +13,7 @@ PARAMETERS = {'scale': ToolParameterInfo(dtype=float, description='Scaling facto
               'origin': ToolParameterInfo(dtype=bool, description='Whether to scale around the origin', default=False)}
 
 
-def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+def main(save: Suitebro, selection: Selection, params: ParameterDict):
     scale = params.scale
 
     # Optional parameter

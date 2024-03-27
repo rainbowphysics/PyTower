@@ -1,4 +1,5 @@
 from pytower import tower
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz
@@ -11,7 +12,7 @@ INFO = '''Translates selection a specified amount (in world coordinates)'''
 PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Translation offset')}
 
 
-def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+def main(save: Suitebro, selection: Selection, params: ParameterDict):
     offset = params.offset
 
     # Scale about the origin

@@ -1,20 +1,16 @@
-import subprocess
-import textwrap
-
-from pytower.util import xyz
-from .selection import *
-from .suitebro import Suitebro, TowerObject
-from . import __version__
-
 import argparse
 import importlib
 import json
 import logging
-from subprocess import Popen, PIPE
-import sys
 import os
-from typing import Callable
+import sys
+from subprocess import Popen, PIPE
 from types import ModuleType
+from typing import Callable
+
+from . import __version__
+from .selection import *
+from .suitebro import Suitebro
 
 
 def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None, overwrite: bool = False):
@@ -101,8 +97,8 @@ class ParameterDict(dict):
             raise AttributeError(f"'ParameterDict' object has no attribute '{key}'")
 
 
-ToolMainType = Callable[[Suitebro, list[TowerObject], ParameterDict], None]
-ToolListType = list[ModuleType, ToolMetadata]
+ToolMainType = Callable[[Suitebro, Selection, ParameterDict], None]
+ToolListType = list[tuple[ModuleType, ToolMetadata]]
 
 
 def load_tool(tools_folder, script, verbose=False) -> tuple[ModuleType, ToolMetadata] | None:
@@ -146,7 +142,7 @@ def load_tool(tools_folder, script, verbose=False) -> tuple[ModuleType, ToolMeta
         logging.error(f"Error executing script '{script}': {e}")
 
 
-def load_tools(verbose=False) -> list[ModuleType, ToolMetadata]:
+def load_tools(verbose=False) -> ToolListType:
     # Get tooling scripts
     tools_folder = 'tools'
     if not os.path.exists(tools_folder):
@@ -170,26 +166,60 @@ def load_tools(verbose=False) -> list[ModuleType, ToolMetadata]:
     return tools
 
 
+class PyTowerParser(argparse.ArgumentParser):
+    def error(self, message):
+        if 'the following arguments are required' in message:
+            self.print_help(sys.stderr)
+            self.exit(2, f'\n{message.capitalize()}')
+        else:
+            super().error(message)
+
+    def add_subparsers(self, **kwargs):
+        kwargs['parser_class'] = PyTowerParser
+        return super().add_subparsers(**kwargs)
+
 def get_parser(tool_names: str):
-    parser = argparse.ArgumentParser(prog='PyTower',
-                                     description='High-level toolset and Python API for Tower Unite map editing',
-                                     epilog=f'Detected tools: {tool_names}')
-    parser.add_argument('-i', '--input', dest='input', type=str, default='CondoData',
-                        help='Input file')
-    parser.add_argument('-o', '--output', dest='output', type=str, default='CondoData_output',
-                        help='Output file')
-    parser.add_argument('-s', '--select', dest='selection', type=str, default='everything',
-                        help='Selection type')
-    parser.add_argument('-v', '--invert', dest='invert', type=bool, default=False,
-                        help='Whether or not to invert selection')
-    parser.add_argument('-t', '--tool', dest='tool', type=str,
-                        help=f'Tool script to use')
-    # TODO fix bang and -j and -v flags to be whether they are inlcluded, not true/false
-    parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool, help='Tool to use')
-    parser.add_argument('-', '--', '--params', '--parameters', dest='parameters', nargs='*',
-                        help='Parameters to pass onto tooling script (must come at end)')
-    parser.add_argument('-j', '--json', dest='json', type=bool, default=False,
-                        help='If --json True, then to-json and to-save steps are skipped')
+    parser = PyTowerParser(prog='PyTower',
+                           description='High-level toolset and Python API for Tower Unite map editing',
+                           epilog=f'Detected tools: {tool_names}')
+
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+
+    subparsers = parser.add_subparsers(dest='subcmd')
+
+    # Help subcommand
+    subparsers.add_parser('help', help='%(prog)s help')
+
+    # Version subcommand
+    subparsers.add_parser('version', help='%(prog)s version')
+
+    # Info subcommand
+    info_parser = subparsers.add_parser('info', help='More information about tool')
+    info_parser.add_argument('tool', type=str, help='Tool to get information about')
+
+    # Run subcommand
+    run_parser = subparsers.add_parser('run', help='Run given tool')
+
+    # Required tool parameter
+    run_parser.add_argument('tool', type=str, help='Tool to use')
+
+    # Run parameters
+    run_parser.add_argument('-i', '--input', dest='input', type=str, default='CondoData',
+                            help='Input file')
+    run_parser.add_argument('-o', '--output', dest='output', type=str, default='CondoData_output',
+                            help='Output file')
+    run_parser.add_argument('-s', '--select', dest='selection', type=str, default='everything',
+                            help='Selection type')
+
+    # Flags
+    run_parser.add_argument('-v', '--invert', dest='invert', type=bool,
+                            action=argparse.BooleanOptionalAction, help='Whether or not to invert selection')
+    run_parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool,
+                            action=argparse.BooleanOptionalAction, help='Whether to overwrite output files')
+    run_parser.add_argument('-j', '--json', dest='json', type=bool, action=argparse.BooleanOptionalAction,
+                            help='Whether to load/save as .json, instead of converting to CondoData')
+    run_parser.add_argument('-', '--', '--params', '--parameters', dest='parameters', nargs='*',
+                            help='Parameters to pass onto tooling script (must come at end)')
 
     return parser
 
@@ -201,10 +231,10 @@ def parse_args(parser=None):
     return vars(parser.parse_args())
 
 
-def parse_selection(select_input: str) -> Selection:
+def parse_selection(select_input: str) -> Selector:
     select_input = select_input.strip().casefold()
     if select_input == 'all' or select_input == 'everything':
-        return ItemSelection()
+        return ItemSelector()
 
 
 def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDict:
@@ -288,63 +318,96 @@ def run(input_filename: str, tool: ToolMainType, params: list = []):
     save = load_suitebro(input_filename)
 
     logging.info(f'Running {mock_metadata.tool_name} with parameters {mock_params}')
-    tool(save, ItemSelection().select(save.objects), mock_params)
+    tool(save, ItemSelector().select(save.objects), mock_params)
 
     save_suitebro(save, f'{input_filename}_output')
 
 
+# Returns tool if could find tool disambiguated, otherwise returns None
+def find_tool(tools: ToolListType, name: str) -> tuple[ModuleType, ToolMetadata] | None:
+    max_prefix_len = 0
+    best_match = None
+    conflict = False
+
+    name = name.casefold().strip()
+    for module, meta in tools:
+        tool_name = meta.tool_name.casefold().strip()
+        # Use os.path.commonprefix as a utility I guess
+        prefix = os.path.commonprefix([name, tool_name])
+        prefix_len = len(prefix)
+        if prefix_len == max_prefix_len:
+            conflict = True
+        elif prefix_len > max_prefix_len:
+            conflict = False
+            max_prefix_len = prefix_len
+            best_match = module, meta
+
+    if best_match is None or conflict:
+        return None
+
+    return best_match
+
+
 def main():
-    tools = load_tools(verbose=True)
+    tools = load_tools(verbose=False)
     tool_names = ', '.join([meta.tool_name for _, meta in tools])
     parser = get_parser(tool_names)
+    args = parse_args(parser)
 
-    # TODO Subcommands
-    if len(sys.argv) == 1:
+    if not args['subcmd']:
         parser.print_help(sys.stdout)
         sys.exit(0)
 
-    if len(sys.argv) == 2:
-        subcmd = sys.argv[-1].casefold()
-        if subcmd == 'version':
-            print(f'PyTower {__version__}')
-            sys.exit(0)
-
-        if subcmd == 'info':
-            print(f'Usage: pytower info <tool_name>. \n\n Available tools: {tool_names}')
-            sys.exit(0)
-
-        if subcmd == 'run':
+    match args['subcmd']:
+        case 'help':
             parser.print_help(sys.stdout)
             sys.exit(0)
-
-    if len(sys.argv) == 3 and sys.argv[1].endswith('info'):
-        tool_name = sys.argv[2].strip().casefold()
-        for _, meta in tools:
-            if meta.tool_name.casefold() == tool_name:
+        case 'version':
+            print(f'PyTower {__version__}')
+            sys.exit(0)
+        case 'info':
+            tool_name = args['tool'].strip().casefold()
+            tool = find_tool(tools, tool_name)
+            if tool:
+                _, meta = tool
                 print(meta.get_info())
                 sys.exit(0)
 
-        logging.error(f'Could not find {sys.argv[2]}! \n\n Available tools: {tool_names}')
-        sys.exit(1)
+            logging.error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
+            sys.exit(1)
+        case 'run':
+            # Parse tool name
+            tool_name = args['tool'].strip().casefold()
+            tool = find_tool(tools, tool_name)
 
-    args = parse_args(parser)  # TODO screw around with this more, currently doesn't work properly with subcommands
+            # Error if could not find specified tool
+            if not tool:
+                logging.error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
+                sys.exit(1)
+
+            module, meta = tool
+
+            #TODO lookahead for overwrite to detect issues and error out before even starting
+
+
+            # Load save
+            save = load_suitebro(args['input'])
+
+            # TODO construct Selector using argument
+            selector = ItemSelector()
+            selection = selector.select(save.objects)
+
+            #TODO proper invert flag
+
+            # Run tool
+            params = parse_parameters(args['parameters'], meta)
+            logging.info(f'Running {meta.tool_name} with parameters {params}')
+            module.main(save, selection, params)
+
+            # Writeback save
+            save_suitebro(save, args['output'])
 
     # TODO apply selection and validate args
-
-    # TODO fix this up using args['output']
-
-    save = load_suitebro(args['input'])
-
-    # TODO make sure tool is properly disambiguated before running it -- if two startswith args['tool'], complain
-    if 'tool' in args:
-        for module, meta in tools:
-            if meta.tool_name.casefold().startswith(args['tool'].casefold()):
-                params = parse_parameters(args['parameters'], meta)
-                logging.info(f'Running {meta.tool_name} with parameters {params}')
-                module.main(save, save.objects, params)
-                break
-
-    save_suitebro(save, args['output'])
 
 
 if __name__ == '__main__':

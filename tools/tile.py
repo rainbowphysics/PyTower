@@ -1,4 +1,5 @@
 from pytower import tower
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint
@@ -12,7 +13,7 @@ PARAMETERS = {'tile': ToolParameterInfo(dtype=xyzint, description='x,y,z tiling 
               'offset': ToolParameterInfo(dtype=xyz, description='x,y,z offsets')}
 
 
-def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+def main(save: Suitebro, selection: Selection, params: ParameterDict):
     nx, ny, nz = params.tile
     dx, dy, dz = params.offset
     for x in range(nx):

@@ -1,4 +1,5 @@
 from pytower import tower
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint
@@ -11,7 +12,7 @@ INFO = '''Sets URL on canvas objects in the given selection.'''
 PARAMETERS = {'url': ToolParameterInfo(dtype=str, description='URL to set')}
 
 
-def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
+def main(save: Suitebro, selection: Selection, params: ParameterDict):
     url = params.url
     for obj in selection:
         item_props = obj.item['properties']

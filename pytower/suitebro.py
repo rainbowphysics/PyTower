@@ -48,7 +48,9 @@ class TowerObject:
         name = name.casefold()
         return self.get_name() == name or self.get_custom_name().casefold() == name
 
-    def get_group_id(self) -> int:
+    def group_id(self) -> int:
+        if 'GroupID' not in self.item['properties']:
+            return -1
         return self.item['properties']['GroupID']['IntProperty']
 
     def copy(self) -> 'TowerObject':
