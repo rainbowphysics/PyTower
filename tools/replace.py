@@ -27,5 +27,5 @@ def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
 
 
 if __name__ == '__main__':
-    tower.main('CondoData', main,
-               args={'parameters': ['material=/Game/Materials/Lobby/Arcade/Cabinets/ArcadeGlassNew.ArcadeGlassNew']})
+    tower.run('CondoData', main,
+              params=['material=/Game/Materials/Lobby/Arcade/Cabinets/ArcadeGlassNew.ArcadeGlassNew'])

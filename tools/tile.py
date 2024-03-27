@@ -35,4 +35,4 @@ def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
 
 
 if __name__ == '__main__':
-    tower.main('CondoData', main, args={'parameters': ['tile=5,5,5', 'offset=70,70,70']})
+    tower.run('CondoData', main, params=['tile=5,5,5', 'offset=70,70,70'])

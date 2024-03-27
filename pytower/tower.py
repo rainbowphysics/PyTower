@@ -93,6 +93,18 @@ class ToolMetadata:
         return default
 
 
+class ParameterDict(dict):
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            raise AttributeError(f"'ParameterDict' object has no attribute '{key}'")
+
+
+ToolMainType = Callable[[Suitebro, list[TowerObject], ParameterDict], None]
+ToolListType = list[ModuleType, ToolMetadata]
+
+
 def load_tool(tools_folder, script, verbose=False) -> tuple[ModuleType, ToolMetadata] | None:
     script_path = os.path.join(tools_folder, script)
     module_name = os.path.splitext(script)[0]
@@ -158,17 +170,7 @@ def load_tools(verbose=False) -> list[ModuleType, ToolMetadata]:
     return tools
 
 
-class Subcommand:
-    def __init__(self, name: str, num_args: int, func: Callable):
-        self.name = name
-        self.num_args = num_args
-        self.func = func
-
-    def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
-
-
-def parse_args(tools: list[ModuleType, ToolMetadata], tool_names):
+def get_parser(tool_names: str):
     parser = argparse.ArgumentParser(prog='PyTower',
                                      description='High-level toolset and Python API for Tower Unite map editing',
                                      epilog=f'Detected tools: {tool_names}')
@@ -189,46 +191,19 @@ def parse_args(tools: list[ModuleType, ToolMetadata], tool_names):
     parser.add_argument('-j', '--json', dest='json', type=bool, default=False,
                         help='If --json True, then to-json and to-save steps are skipped')
 
-    # Subcommands
-    if len(sys.argv) == 1:
-        parser.print_help(sys.stdout)
-        sys.exit(0)
+    return parser
 
-    if len(sys.argv) == 2:
-        subcmd = sys.argv[-1]
-        if subcmd.endswith('version'):
-            print(f'PyTower {__version__}')
-            sys.exit(0)
 
-        if subcmd.endswith('info'):
-            print(f'Usage: pytower info <tool_name>. \n\n Available tools: {tool_names}')
-            sys.exit(0)
-
-    if len(sys.argv) == 3 and sys.argv[1].endswith('info'):
-        tool_name = sys.argv[2].strip().casefold()
-        for _, meta in tools:
-            if meta.tool_name.casefold() == tool_name:
-                print(meta.get_info())
-                sys.exit(0)
-
-        logging.error(f'Could not find {sys.argv[2]}! \n\n Available tools: {tool_names}')
-        sys.exit(1)
+def parse_args(parser=None):
+    if parser is None:
+        parser = get_parser('')
 
     return vars(parser.parse_args())
-
 
 def parse_selection(select_input: str) -> Selection:
     select_input = select_input.strip().casefold()
     if select_input == 'all' or select_input == 'everything':
         return ItemSelection()
-
-
-class ParameterDict(dict):
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            raise AttributeError(f"'ParameterDict' object has no attribute '{key}'")
 
 
 def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDict:
@@ -277,52 +252,25 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDic
     return params
 
 
-def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], ParameterDict], None] = None,
-         tools: list[ModuleType, ToolMetadata] = [], args: dict = None):
-    # TODO remove this chdir fuckery and just let the code run wherever it happens to run, including in the tools
-    #  directory
-    # Make sure script is running in main directory, not tools directory (and not main module directory)
-    if tooling_injection is not None:
-        # Setup mocking
-        tool_file = tooling_injection.__globals__['__file__']
-        mock_tool, mock_metadata = load_tool(os.path.dirname(tool_file), os.path.basename(tool_file), verbose=True)
-        mock_params = parse_parameters(args['parameters'], mock_metadata)
-
-        # By default, mocked tool scripts overwrite files for rapid prototyping
-        if 'overwrite' not in args:
-            args['overwrite'] = True
-
-    # TODO apply selection and validate args
-
-    # TODO fix this up using args['output']
+def load_suitebro(filename: str) -> Suitebro:
     abs_filepath = os.path.realpath(filename)
-    condo_dir = os.path.dirname(abs_filepath)
-    json_output_path = os.path.join(condo_dir, os.path.basename(abs_filepath) + ".json")
-    json_final_path = os.path.join(condo_dir, f'{filename}_output.json')
-    final_output_path = os.path.join(condo_dir, f'{filename}_output')
+    in_dir = os.path.dirname(abs_filepath)
+    json_output_path = os.path.join(in_dir, os.path.basename(abs_filepath) + ".json")
 
     run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
 
-    os.chdir(condo_dir)
-
-    print('Loading JSON file...')
+    logging.info('Loading JSON file...')
     with open(json_output_path, 'r') as fd:
         save_json = json.load(fd)
 
-    save = Suitebro(save_json)
+    return Suitebro(save_json)
 
-    # Run any injected tooling script
-    if tooling_injection is not None:
-        logging.info(f'Running {mock_metadata.tool_name} with parameters {mock_params}')
-        tooling_injection(save, ItemSelection().select(save.objects), mock_params)
 
-    if 'tool' in args:
-        for module, meta in tools:
-            if meta.tool_name.casefold().startswith(args['tool'].casefold()):
-                params = parse_parameters(args['parameters'], meta)
-                logging.info(f'Running {meta.tool_name} with parameters {params}')
-                module.main(save, save.objects, params)
-                break
+def save_suitebro(save: Suitebro, filename: str):
+    abs_filepath = os.path.realpath(filename)
+    out_dir = os.path.dirname(abs_filepath)
+    json_final_path = os.path.join(out_dir, f'{filename}.json')
+    final_output_path = os.path.join(out_dir, f'{filename}')
 
     with open(json_final_path, 'w') as fd:
         json.dump(save.to_dict(), fd, indent=2)
@@ -331,13 +279,67 @@ def main(filename, tooling_injection: Callable[[Suitebro, list[TowerObject], Par
     run_suitebro_parser(json_final_path, True, final_output_path, overwrite=True)
 
 
-def init():
-    tools = load_tools()
+def run(input_filename: str, tool: ToolMainType, params: list = []):
+    tool_file = tool.__globals__['__file__']
+    mock_tool, mock_metadata = load_tool(os.path.dirname(tool_file), os.path.basename(tool_file), verbose=True)
+    mock_params = parse_parameters(params, mock_metadata)
+
+    save = load_suitebro(input_filename)
+
+    logging.info(f'Running {mock_metadata.tool_name} with parameters {mock_params}')
+    tool(save, ItemSelection().select(save.objects), mock_params)
+
+    save_suitebro(save, f'{input_filename}_output')
+
+
+def main():
+    tools = load_tools(verbose=True)
     tool_names = ', '.join([meta.tool_name for _, meta in tools])
-    args = parse_args(tools, tool_names)
+    parser = get_parser(tool_names)
 
-    main(args['input'], tooling_injection=None, tools=tools, args=args)
+    # TODO Subcommands
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stdout)
+        sys.exit(0)
 
+    if len(sys.argv) == 2:
+        subcmd = sys.argv[-1]
+        if subcmd.endswith('version'):
+            print(f'PyTower {__version__}')
+            sys.exit(0)
+
+        if subcmd.endswith('info'):
+            print(f'Usage: pytower info <tool_name>. \n\n Available tools: {tool_names}')
+            sys.exit(0)
+
+    if len(sys.argv) == 3 and sys.argv[1].endswith('info'):
+        tool_name = sys.argv[2].strip().casefold()
+        for _, meta in tools:
+            if meta.tool_name.casefold() == tool_name:
+                print(meta.get_info())
+                sys.exit(0)
+
+        logging.error(f'Could not find {sys.argv[2]}! \n\n Available tools: {tool_names}')
+        sys.exit(1)
+
+    args = parse_args(parser) #TODO screw around with this more, currently doesn't work properly with subcommands
+
+    # TODO apply selection and validate args
+
+    # TODO fix this up using args['output']
+
+    save = load_suitebro(args['input'])
+
+    #TODO make sure tool is properly disambiguated before running it -- if two startswith args['tool'], complain
+    if 'tool' in args:
+        for module, meta in tools:
+            if meta.tool_name.casefold().startswith(args['tool'].casefold()):
+                params = parse_parameters(args['parameters'], meta)
+                logging.info(f'Running {meta.tool_name} with parameters {params}')
+                module.main(save, save.objects, params)
+                break
+
+    save_suitebro(save, args['output'])
 
 if __name__ == '__main__':
-    init()
+    main()

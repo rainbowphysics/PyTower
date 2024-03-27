@@ -33,5 +33,4 @@ def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
 
 
 if __name__ == '__main__':
-    tower.main('CondoData', main,
-               args={'parameters': ['url=https://i.imgur.com/V0pIX9G.png']})
+    tower.run('CondoData', main, params=['url=https://i.imgur.com/V0pIX9G.png'])

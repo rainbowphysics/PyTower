@@ -20,4 +20,4 @@ def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
 
 
 if __name__ == '__main__':
-    tower.main('CondoData', tooling_injection=main, args={'parameters': ['offset=50,50,50']})
+    tower.run('CondoData', main, params=['offset=50,50,50'])
