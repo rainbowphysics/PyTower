@@ -9,7 +9,7 @@ AUTHOR = 'Physics System'
 URL = 'https://github.com/kluberge/PyTower/blob/main/tools/scale.py'
 INFO = '''Scales selection up, either around the centroid (default) or world origin (origin=True)'''
 PARAMETERS = {'scale': ToolParameterInfo(dtype=float, description='Scaling factor'),
-              'origin': ToolParameterInfo(dtype=bool, description='Whether to scale around the origin', optional=True)}
+              'origin': ToolParameterInfo(dtype=bool, description='Whether to scale around the origin', default=False)}
 
 
 def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):

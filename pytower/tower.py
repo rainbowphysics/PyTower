@@ -38,10 +38,10 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
 
 
 class ToolParameterInfo:
-    def __init__(self, dtype=str, description='', optional=False):
+    def __init__(self, dtype=str, description='', default=None):
         self.dtype = dtype
         self.description = description
-        self.optional = optional
+        self.default = default
 
 
 class ToolMetadata:
@@ -68,9 +68,11 @@ class ToolMetadata:
             info_str += f'\n\n{self.info}'
 
         if self.params:
-            param_str = '\n\nRequired parameters:'
+            param_str = '\n\nParameters:'
             for name, info in self.params.items():
                 param_str += f'\n  {name}:{info.dtype.__name__} - {info.description}'
+                if info.default is not None:
+                    param_str += f' (default: {info.default})'
 
             info_str += param_str
 
@@ -220,6 +222,7 @@ def parse_selection(select_input: str) -> Selection:
     if select_input == 'all' or select_input == 'everything':
         return ItemSelection()
 
+
 class ParameterDict(dict):
     def __getattr__(self, key):
         if key in self:
@@ -227,7 +230,8 @@ class ParameterDict(dict):
         else:
             raise AttributeError(f"'ParameterDict' object has no attribute '{key}'")
 
-def parse_parameters(param_input: list[str], meta: ToolMetadata) -> dict:
+
+def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDict:
     # Ensure that all inputs were parsed correctly as strings
     params = {}
     for param in param_input:
@@ -251,16 +255,24 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> dict:
 
     # Make the user input any other required parameters
     for param, info in meta.params.items():
-        if not info.optional and param not in params:
-            value = input(f'Enter value for {param.lower()}: ')
-            try:
-                value = info.dtype(value)
-            except Exception as e:
-                print(f'Invalid value for {param.lower()}: {e}')
-                sys.exit(1)
-            params[param] = value
+        if param in params:
+            continue
 
-    # Add support for accessing parameters using dot notation
+        # If parameter has a default use that, making it optional
+        if info.default is not None:
+            params[param] = info.default
+            continue
+
+        # Load in non-optional parameter: prompt user for input
+        value = input(f'Enter value for {param.lower()}: ')
+        try:
+            value = info.dtype(value)
+        except Exception as e:
+            print(f'Invalid value for {param.lower()}: {e}')
+            sys.exit(1)
+        params[param] = value
+
+    # Add support for accessing parameters using dot notation by constructing ParameterDict
     params = ParameterDict(params)
     return params
 

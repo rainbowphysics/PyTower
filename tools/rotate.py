@@ -12,8 +12,8 @@ AUTHOR = 'Physics System'
 URL = 'https://github.com/kluberge/PyTower/blob/main/tools/rotate.py'
 INFO = '''Rotates selection a specified amount (in world coordinates)'''
 PARAMETERS = {'rotation': ToolParameterInfo(dtype=xyz, description='Rotation to perform (in Euler angles and degrees)'),
-              'centroid': ToolParameterInfo(dtype=bool, description='Whether to rotate around selection centroid '
-                                                                    '(default True)', optional=True)}
+              'centroid': ToolParameterInfo(dtype=bool, description='Whether to rotate around selection centroid',
+                                            default=True)}
 
 
 def main(save: Suitebro, selection: list[TowerObject], params: ParameterDict):
