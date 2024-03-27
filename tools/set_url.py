@@ -3,7 +3,7 @@ from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint
 
-TOOL_NAME = 'Set-URL'
+TOOL_NAME = 'SetURL'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
 URL = 'https://github.com/kluberge/PyTower/blob/main/tools/set_url.py'

@@ -5,7 +5,7 @@ from pytower.util import xyz, xyzint
 
 import tools.set_url
 
-TOOL_NAME = 'Replace-URL'
+TOOL_NAME = 'ReplaceURL'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
 URL = 'https://github.com/kluberge/PyTower/blob/main/tools/replace_url.py'
