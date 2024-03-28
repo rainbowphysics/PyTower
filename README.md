@@ -24,13 +24,18 @@ Example usage:
  - `pytower run CreateImageAtlas --input CondoData`
  - `pytower run Rotate --output RotatedCondo --select group:4 -- rotation=0,0,45 local=true`
 
-### Program arguments
+## `pytower run` arguments
  - -i/--input: Input file to use (default: CondoData)
  - -o/--output: Output file to use (default: CondoData_output)
  - -s/--select: Selection mode to use (default: ItemSelector)
  - -v/--invert: Flag to invert selection
  - -!/--overwrite: Flag overwrite output files
  - -j/--json: Flag to skip Suitebro parser steps
+ - --/--parameters: Everything past this is parsed as a *tool parameter*
+
+### Tool parameter format:
+ - Parameters are separated by spaces and have the format `param=value`
+ - For example, `pytower run MyTool -- offset=0,0,300 foo=42` passes two parameters to MyTool: `offset` with the value `xyz(0,0,300)` and `foo` with the value `42`.
 
 ### Selection modes:
 - ItemSelection (default): Everything except property-only objects (CondoSettingsManager_2, Ultra_Dynamic_Sky_##, CondoWeather_2729, etc.)
