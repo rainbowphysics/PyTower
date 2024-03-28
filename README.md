@@ -1,6 +1,8 @@
 # PyTower 0.1.0
 High-level Python API for editing/generating Tower Unite maps.
 
+Discord community link: https://discord.gg/NUufVuu4Ve
+
 ## Installation Instructions
 1. Download Rust (latest nightly build): https://www.rust-lang.org/tools/install
 2. (On Windows) Download Git Bash: https://git-scm.com/download/win
