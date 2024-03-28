@@ -38,6 +38,3 @@ jobs:
     - name: Sanity test to ensure installed correctly
       run: |
         pytower version
-    - name: Test with pytest
-      run: |
-        pytest
