@@ -178,6 +178,7 @@ class PyTowerParser(argparse.ArgumentParser):
         kwargs['parser_class'] = PyTowerParser
         return super().add_subparsers(**kwargs)
 
+
 def get_parser(tool_names: str):
     parser = PyTowerParser(prog='PyTower',
                            description='High-level toolset and Python API for Tower Unite map editing',
@@ -387,8 +388,7 @@ def main():
 
             module, meta = tool
 
-            #TODO lookahead for overwrite to detect issues and error out before even starting
-
+            # TODO lookahead for overwrite to detect issues and error out before even starting
 
             # Load save
             save = load_suitebro(args['input'])
@@ -397,7 +397,7 @@ def main():
             selector = ItemSelector()
             selection = selector.select(save.objects)
 
-            #TODO proper invert flag
+            # TODO proper invert flag
 
             # Run tool
             params = parse_parameters(args['parameters'], meta)

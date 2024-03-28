@@ -1,6 +1,6 @@
 import copy
 import json
-from .util import run_if_not_none
+from ..util import run_if_not_none
 
 
 class ItemConnectionObject:
