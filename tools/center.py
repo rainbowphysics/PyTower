@@ -7,7 +7,7 @@ from pytower.util import xyz
 TOOL_NAME = 'Center'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/center.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/center.py'
 INFO = '''Centers selection at the world origin'''
 PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Optional offset', default=xyz(0, 0, 0))}
 

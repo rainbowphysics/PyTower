@@ -7,7 +7,7 @@ from pytower.util import xyz
 TOOL_NAME = 'Translate'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/translate.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/translate.py'
 INFO = '''Translates selection a specified amount (in world coordinates)'''
 PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Translation offset')}
 

@@ -10,7 +10,7 @@ from scipy.spatial.transform import Rotation as R
 TOOL_NAME = 'Rotate'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/rotate.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/rotate.py'
 INFO = '''Rotates selection a specified amount (in world coordinates)'''
 PARAMETERS = {'rotation': ToolParameterInfo(dtype=xyz, description='Rotation to perform (in Euler angles and degrees)'),
               'local': ToolParameterInfo(dtype=bool, description='Whether to only rotate locally', default=False)}

@@ -48,7 +48,7 @@ setup(
     name='pytower',
     version=version,
     description='Python API for Tower Unite map-editing',
-    url='https://github.com/kluberge/PyTower',
+    url='https://github.com/rainbowphysics/PyTower',
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',

@@ -7,7 +7,7 @@ from pytower.util import xyz, xyzint
 TOOL_NAME = 'SetURL'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/set_url.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/set_url.py'
 INFO = '''Sets URL on canvas objects in the given selection.'''
 PARAMETERS = {'url': ToolParameterInfo(dtype=str, description='URL to set')}
 

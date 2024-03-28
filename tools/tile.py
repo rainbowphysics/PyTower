@@ -7,7 +7,7 @@ from pytower.util import xyz, xyzint
 TOOL_NAME = 'Tile'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/tile.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/tile.py'
 INFO = '''Tiles selection <tile> times in each dimension at offsets <offset>.'''
 PARAMETERS = {'tile': ToolParameterInfo(dtype=xyzint, description='x,y,z tiling in each dimension'),
               'offset': ToolParameterInfo(dtype=xyz, description='x,y,z offsets')}

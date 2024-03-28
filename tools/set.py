@@ -7,7 +7,7 @@ from pytower.util import xyz, xyzint
 TOOL_NAME = 'Set'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/set.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/set.py'
 INFO = '''Sets materials on canvas objects in the given selection.'''
 PARAMETERS = {'material': ToolParameterInfo(dtype=str, description='Material to apply')}
 

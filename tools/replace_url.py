@@ -9,7 +9,7 @@ import tools.set_url
 TOOL_NAME = 'ReplaceURL'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/replace_url.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/replace_url.py'
 INFO = '''Replaces URL on canvas objects in the given selection.'''
 PARAMETERS = {'url': ToolParameterInfo(dtype=str, description='URL to set'),
               'replace': ToolParameterInfo(dtype=str, description='URL to replace')}

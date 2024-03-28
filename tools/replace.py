@@ -9,7 +9,7 @@ import tools.set
 TOOL_NAME = 'Replace'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
-URL = 'https://github.com/kluberge/PyTower/blob/main/tools/replace.py'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/replace.py'
 INFO = '''Replace materials on canvas objects in the given selection.'''
 PARAMETERS = {'replace': ToolParameterInfo(dtype=str, description='Material to replace'),
               'material': ToolParameterInfo(dtype=str, description='Replacement material to use instead')}
