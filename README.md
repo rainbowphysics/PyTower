@@ -38,12 +38,12 @@ Example usage:
  - For example, `pytower run MyTool -- offset=0,0,300 foo=42` passes two parameters to MyTool: `offset` with the value `xyz(0,0,300)` and `foo` with the value `42`.
 
 ### Selection modes:
-- ItemSelection (default): Everything except property-only objects (CondoSettingsManager_2, Ultra_Dynamic_Sky_##, CondoWeather_2729, etc.)
-- NameSelection: Selects object by name (both custom name and internal object name)
-- CustomNameSelection: Select objects by custom name (name assigned in game)
-- ObjectNameSelection: Select objects by internal object name only
-- GroupSelection: Select objects by group id
-- RegexSelection: Select objects by regular expression pattern (matches both names) 
+- ItemSelector (default): Everything except property-only objects (CondoSettingsManager_2, Ultra_Dynamic_Sky_##, CondoWeather_2729, etc.)
+- NameSelector: Selects object by name (both custom name and internal object name)
+- CustomNameSelector: Select objects by custom name (name assigned in game)
+- ObjectNameSelector: Select objects by internal object name only
+- GroupSelector: Select objects by group id
+- RegexSelector: Select objects by regular expression pattern (matches both names) 
 
 ### Subcommands
 
