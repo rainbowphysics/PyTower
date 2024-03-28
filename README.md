@@ -11,14 +11,22 @@ High-level Python API for editing/generating Tower Unite maps.
  - Once installed, PyTower can be run from command line as `pytower`
  - PyTower can also be run directly using `python -m pytower.tower`
 
+### Available Subcommands:
+ - `pytower help` 
+ - `pytower version`
+ - `pytower list`
+ - `pytower info <TOOLNAME>` 
+ - `pytower run <TOONAME> ...`
+
 Example usage:
- - `pytower --input CondoData --tool CreateImageAtlas`
- - `pytower --input CondoData --output TooledCondoData --tool Rescale -- 2`
+ - `pytower help`
+ - `pytower info Tile`
+ - `pytower run CreateImageAtlas --input CondoData`
+ - `pytower run Rotate --output RotatedCondo --select group:4 -- rotation=0,0,45 local=true`
 
 ### Program arguments
  - -i/--input: Input file to use (default: CondoData)
  - -o/--output: Output file to use (default: CondoData_output)
- - -t/--tool: Tool to use
  - -s/--select: Selection mode to use
  - -v/--invert: Flag to invert selection
  - -!/--overwrite: Flag overwrite output files

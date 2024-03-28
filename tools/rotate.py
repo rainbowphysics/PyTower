@@ -27,10 +27,13 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
         p = r * q
         obj.rotation = p.as_quat()
 
-        # Rotate positions around centroid with help from scipy
-        obj.position -= centroid
-        obj.position = r.apply(obj.position)
-        obj.position += centroid
+        #TODO special treatment of groups--groups are still considered local
+
+        if not params.local:
+            # Rotate positions around centroid with help from scipy
+            obj.position -= centroid
+            obj.position = r.apply(obj.position)
+            obj.position += centroid
 
 
 if __name__ == '__main__':

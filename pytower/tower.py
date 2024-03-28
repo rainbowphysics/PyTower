@@ -180,7 +180,7 @@ class PyTowerParser(argparse.ArgumentParser):
 
 
 def get_parser(tool_names: str):
-    parser = PyTowerParser(prog='PyTower',
+    parser = PyTowerParser(prog='pytower',
                            description='High-level toolset and Python API for Tower Unite map editing',
                            epilog=f'Detected tools: {tool_names}')
 
@@ -193,6 +193,9 @@ def get_parser(tool_names: str):
 
     # Version subcommand
     subparsers.add_parser('version', help='%(prog)s version')
+
+    # List subcommand
+    subparsers.add_parser('list', help='List tools')
 
     # Info subcommand
     info_parser = subparsers.add_parser('info', help='More information about tool')
@@ -213,8 +216,8 @@ def get_parser(tool_names: str):
                             help='Selection type')
 
     # Flags
-    run_parser.add_argument('-v', '--invert', dest='invert', type=bool,
-                            action=argparse.BooleanOptionalAction, help='Whether or not to invert selection')
+    run_parser.add_argument('-v', '--invert', dest='invert', action='store_true',
+                            help='Whether or not to invert selection')
     run_parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool,
                             action=argparse.BooleanOptionalAction, help='Whether to overwrite output files')
     run_parser.add_argument('-j', '--json', dest='json', type=bool, action=argparse.BooleanOptionalAction,
@@ -365,6 +368,16 @@ def main():
             sys.exit(0)
         case 'version':
             print(f'PyTower {__version__}')
+            sys.exit(0)
+        case 'list':
+            print('Available tools:')
+            for _, meta in tools:
+                tool_str = f'  {meta.tool_name}'
+                if meta.version is not None:
+                    tool_str += f' (v{meta.version})'
+                if meta.author is not None:
+                    tool_str += f' by {meta.author}'
+                print(tool_str)
             sys.exit(0)
         case 'info':
             tool_name = args['tool'].strip().casefold()
