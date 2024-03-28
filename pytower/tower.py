@@ -1,5 +1,6 @@
 import argparse
 import importlib
+import pkgutil  # properly imports importlib.util for some reason
 import json
 import logging
 import os
@@ -107,6 +108,7 @@ def load_tool(tools_folder, script, verbose=False) -> tuple[ModuleType, ToolMeta
     if verbose:
         print(f"Loading tool script: {module_name}")
     try:
+        # TODO convert from importlib.util to pkgutil
         spec = importlib.util.spec_from_file_location(module_name, script_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -144,7 +146,7 @@ def load_tool(tools_folder, script, verbose=False) -> tuple[ModuleType, ToolMeta
 
 def load_tools(verbose=False) -> ToolListType:
     # Get tooling scripts
-    tools_folder = 'tools'
+    tools_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tools')
     if not os.path.exists(tools_folder):
         os.mkdir(tools_folder)
 

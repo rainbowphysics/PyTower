@@ -1,9 +1,11 @@
 import importlib
+import pkgutil
 import os
 import subprocess
 
+import setuptools
 from setuptools import setup
-from setuptools.command.install import install
+from setuptools.command.build_py import build_py
 from distutils.util import convert_path
 import logging
 
@@ -19,7 +21,7 @@ def run_command(args, error_context='Error'):
         logging.error(f"{error_context}: {e}")
 
 
-class CustomInstallCommand(install):
+class CustomBuildCommand(build_py):
     def run(self):
         run_command(['git', 'clone', 'https://github.com/brecert/tower-unite-suitebro.git'],
                     error_context='Error cloning Suitebro repository')
@@ -29,10 +31,10 @@ class CustomInstallCommand(install):
         run_command(['git', 'pull'],
                     error_context='Error pulling from Suitebro repository')
         run_command(['cargo', 'build', '--release'],
-                    error_context='Error cloning repository')  # Assuming cargo is installed and in the PATH
+                    error_context='Error building Rust binary')  # Assuming cargo is installed and in the PATH
         os.chdir(cwd)
 
-        install.run(self)
+        super().run()
 
 
 with open('requirements.txt', 'r') as fd:
@@ -52,7 +54,8 @@ setup(
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
-    packages=['pytower', 'tools'],
+    packages=setuptools.find_packages(),
+    package_data={'pytower': ['tower-unite-suitebro/*']},
     install_requires=requirements,
     zip_safe=False,
     entry_points={
@@ -62,7 +65,7 @@ setup(
     },
 
     cmdclass={
-        'install': CustomInstallCommand
+        'build_py': CustomBuildCommand
     },
 
     # https://pypi.org/pypi?%3Aaction=list_classifiers
