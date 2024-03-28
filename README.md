@@ -27,7 +27,7 @@ Example usage:
 ### Program arguments
  - -i/--input: Input file to use (default: CondoData)
  - -o/--output: Output file to use (default: CondoData_output)
- - -s/--select: Selection mode to use
+ - -s/--select: Selection mode to use (default: ItemSelector)
  - -v/--invert: Flag to invert selection
  - -!/--overwrite: Flag overwrite output files
  - -j/--json: Flag to skip Suitebro parser steps
