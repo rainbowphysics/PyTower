@@ -56,6 +56,7 @@ setup(
     license='MIT License',
     packages=setuptools.find_packages(),
     package_data={'pytower': ['tower-unite-suitebro/*']},
+    include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
     entry_points={

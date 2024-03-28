@@ -1,1 +1,1 @@
-from connections import ItemConnectionObject
+from .connections import ItemConnectionObject
