@@ -152,10 +152,12 @@ def load_tools(verbose=False) -> ToolListType:
 
     files = os.listdir(tools_folder)
 
-    python_files = [f for f in files if f.endswith('.py') and not f.endswith('__init__.py')]
+    python_files = [f for f in files if f.endswith('.py') and f != '__init__.py']
     if not python_files:
         logging.warning("No Python scripts found in 'tools' folder.")
         return []
+
+    python_files = sorted(python_files)
 
     # Execute each Python script
     tools = []
@@ -172,7 +174,7 @@ class PyTowerParser(argparse.ArgumentParser):
     def error(self, message):
         if 'the following arguments are required' in message:
             self.print_help(sys.stderr)
-            self.exit(2, f'\n{message.capitalize()}')
+            self.exit(2, f'\n{message.capitalize()}\n')
         else:
             super().error(message)
 
