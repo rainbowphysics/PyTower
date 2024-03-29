@@ -152,7 +152,7 @@ def load_tools(verbose=False) -> ToolListType:
 
     files = os.listdir(tools_folder)
 
-    python_files = [f for f in files if f.endswith('.py')]
+    python_files = [f for f in files if f.endswith('.py') and not f.endswith('__init__.py')]
     if not python_files:
         logging.warning("No Python scripts found in 'tools' folder.")
         return []
