@@ -368,11 +368,11 @@ def get_parser(tool_names: str):
     # Flags
     run_parser.add_argument('-v', '--invert', dest='invert', action='store_true',
                             help='Whether or not to invert selection')
-    run_parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool,
-                            action=argparse.BooleanOptionalAction, help='Whether to overwrite output files')
     run_parser.add_argument('-j', '--json', dest='json', type=bool, action=argparse.BooleanOptionalAction,
                             help='Whether to load/save as .json, instead of converting to CondoData')
-    run_parser.add_argument('-', '--', '--params', '--parameters', dest='parameters', nargs='*',
+    run_parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool,
+                            action=argparse.BooleanOptionalAction, help='Whether to overwrite output files')
+    run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*',
                             help='Parameters to pass onto tooling script (must come at end)')
 
     return parser
@@ -555,7 +555,6 @@ def main():
             else:
                 module, _ = module_or_path
 
-
             # TODO lookahead for overwrite to detect issues and error out before even starting
 
             # Load save
@@ -576,3 +575,7 @@ def main():
             save_suitebro(save, args['output'])
 
     # TODO apply selection and validate args
+
+
+if __name__ == '__main__':
+    main()

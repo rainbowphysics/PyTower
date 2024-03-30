@@ -7,11 +7,13 @@ Discord community link: https://discord.gg/NUufVuu4Ve
 1. Download Rust (latest nightly build): https://www.rust-lang.org/tools/install
 2. (On Windows) Download Git Bash: https://git-scm.com/download/win
 3. Ensure that `git` and `cargo` are added to the PATH environment variable. You can test this by running `git --version` and `cargo --version` in command line.
-4. In the root repository directory, run `pip install .`
+4. Install Build Tools for Visual Studio (2017 or later): https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022
+5. In the root repository directory, run `pip install -e .`
 
 ## Running PyTower
  - Once installed, PyTower can be run from command line as `pytower`
  - PyTower can also be run directly using `python -m pytower.tower`
+ - PyTower can also be imported into other Python projects with `import pytower`
 
 ### Available Subcommands:
  - `pytower help` 
@@ -24,20 +26,20 @@ Example usage:
  - `pytower help`
  - `pytower info Tile`
  - `pytower run CreateImageAtlas --input CondoData`
- - `pytower run Rotate --output RotatedCondo --select group:4 -- rotation=0,0,45 local=true`
+ - `pytower run Rotate --output RotatedCondo --select group:4 -@ parameters rotation=0,0,45 local=true`
 
 ## `pytower run` arguments
  - -i/--input: Input file to use (default: CondoData)
  - -o/--output: Output file to use (default: CondoData_output)
  - -s/--select: Selection mode to use (default: ItemSelector)
  - -v/--invert: Flag to invert selection
+ - -j/--json: Flag to skip Suitebro parser steps 
  - -!/--overwrite: Flag overwrite output files
- - -j/--json: Flag to skip Suitebro parser steps
- - --/--parameters: Everything past this is parsed as a *tool parameter*
+ - -@/--parameters: Beginning of *tool parameters*
 
 ### Tool parameter format:
  - Parameters are separated by spaces and have the format `param=value`
- - For example, `pytower run MyTool -- offset=0,0,300 foo=42` passes two parameters to MyTool: `offset` with the value `xyz(0,0,300)` and `foo` with the value `42`.
+ - For example, `pytower run MyTool -@ offset=0,0,300 foo=42` passes two parameters to MyTool: `offset` with the value `xyz(0,0,300)` and `foo` with the value `42`.
 
 ### Selection modes:
 - ItemSelector (default): Everything except property-only objects (CondoSettingsManager_2, Ultra_Dynamic_Sky_##, CondoWeather_2729, etc.)
@@ -45,9 +47,7 @@ Example usage:
 - CustomNameSelector: Select objects by custom name (name assigned in game)
 - ObjectNameSelector: Select objects by internal object name only
 - GroupSelector: Select objects by group id
-- RegexSelector: Select objects by regular expression pattern (matches both names) 
-
-### Subcommands
+- RegexSelector: Select objects by regular expression pattern (matches both names)
 
 ## Writing tools scripts
 To register a new tool to use with PyTower, simply create a new script in the tools folder with a main method.
@@ -58,13 +58,13 @@ To register a new tool to use with PyTower, simply create a new script in the to
 - `AUTHOR`: Script author
 - `URL`: External URL for more information (e.g., a link to a forum post)
 - `INFO`: Further info printed when calling `pytower info <toolname>`
-- `PARAMETERS`: Dictionary of required parameters and their types (`dict[str, ToolParameterInfo]`)
+- `PARAMETERS`: Dictionary of required parameters and their types (registered as `ToolParameterInfo` instances)
 - `IGNORE=True`: Tells PyTower to skip over this script. Useful for shared libraries or utility scripts
 
 ## Contributing
 This project is open source and open to public contributions. 
 
-To make a contribution, submit a pull request following PEP 8: https://peps.python.org/pep-0008/.
+To make a contribution, create a new branch/fork and submit a pull request. Contributions should follow the PEP 8 styleguide: https://peps.python.org/pep-0008/.
 
 ## Important Notice:
 #### This API is not officially affiliated with PixelTail Games nor Tower Unite, please do not ask for help regarding tooling/scripts in the official Discord server nor on the official forums, except for in the megathread or in any other relevant threads.
