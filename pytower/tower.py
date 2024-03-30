@@ -123,7 +123,7 @@ class ToolMetadata:
 
         # Special handling for parameters
         data['params'] = {}  # Need fresh dictionary, make sure pointers dont get shared
-        for p_name, p_info in data['params'].items():
+        for p_name, p_info in self.params.items():
             data['params'][p_name] = p_info.to_dict()
 
         return data
