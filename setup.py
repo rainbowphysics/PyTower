@@ -10,7 +10,7 @@ from setuptools.command.install import install
 from distutils.util import convert_path
 import logging
 
-def run_command(args, error_context='Error'):
+def run_command(args, error_context='Error', can_fail=False):
     try:
         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
         for line in process.stdout:
@@ -20,6 +20,8 @@ def run_command(args, error_context='Error'):
             raise subprocess.CalledProcessError(process.returncode, process.args)
     except Exception as e:
         logging.error(f"{error_context}: {e}")
+        if can_fail:
+            raise e
 
 
 def get_suitebro_parser():
@@ -27,11 +29,19 @@ def get_suitebro_parser():
                 error_context='Error cloning Suitebro repository')
 
     cwd = os.getcwd()
-    os.chdir('tower-unite-suitebro')
-    run_command(['git', 'pull'],
-                error_context='Error pulling from Suitebro repository')
-    run_command(['cargo', 'build', '--release'],
-                error_context='Error building Rust binary')  # Assuming cargo is installed and in the PATH
+
+    # Exit if git clone failed (i.e., git is not installed or repo details have changed)
+    try:
+        os.chdir('tower-unite-suitebro')
+    except OSError:
+        raise SystemExit(1, 'Failed to install suitebro parser https://github.com/brecert/tower-unite-suitebro.git')
+
+    # In case repo is already present, make sure it's up to date
+    run_command(['git', 'pull'], error_context='Error pulling from Suitebro repository')
+
+    # Assuming cargo is installed and in the PATH
+    run_command(['cargo', 'build', '--release'], error_context='Error building Rust binary', can_fail=True)
+
     os.chdir(cwd)
 
 
