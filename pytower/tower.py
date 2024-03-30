@@ -1,4 +1,5 @@
 import argparse
+import collections
 import importlib
 import pkgutil  # properly imports importlib.util for some reason
 import json
@@ -9,14 +10,17 @@ from subprocess import Popen, PIPE
 from types import ModuleType
 from typing import Callable
 
-from . import __version__
+import numpy as np
+
+from . import __version__, root_directory
 from .selection import *
 from .suitebro import Suitebro
+from .util import xyz, xyzint, xyz_to_string
 
 
 def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None, overwrite: bool = False):
     curr_cwd = os.getcwd()
-    suitebro_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tower-unite-suitebro')
+    suitebro_path = os.path.join(root_directory, 'tower-unite-suitebro')
     os.chdir(suitebro_path)
 
     process = Popen(f'cargo run --release {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
@@ -35,10 +39,33 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
 
 
 class ToolParameterInfo:
-    def __init__(self, dtype=str, description='', default=None):
+    def __init__(self, dtype: Callable = str, description='', default=None):
         self.dtype = dtype
         self.description = description
         self.default = default
+
+    def to_dict(self) -> dict:
+        data = {}
+        data['dtype'] = self.dtype.__name__
+        data['description'] = self.description
+
+        if self.default is not None and (self.dtype == xyz or self.dtype == xyzint):
+            data['default'] = xyz_to_string(self.default)
+        else:
+            data['default'] = self.default
+        return data
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ToolParameterInfo':
+        # Define conversion to/from registered parameter types
+        type_table = {'str': str, 'bool': bool, 'int': int, 'float': float, 'xyz': xyz, 'xyzint': xyzint}
+
+        # Load values
+        dtype = type_table[data['dtype']]
+        description = data['description']
+        default = data['default'] if 'default' in data else None
+
+        return ToolParameterInfo(dtype, description, default)
 
 
 class ToolMetadata:
@@ -66,6 +93,8 @@ class ToolMetadata:
 
         if self.params:
             param_str = '\n\nParameters:'
+            print(vars(self))
+            print(self.params)
             for name, info in self.params.items():
                 param_str += f'\n  {name}:{info.dtype.__name__} - {info.description}'
                 if info.default is not None:
@@ -89,6 +118,33 @@ class ToolMetadata:
 
         return default
 
+    def to_dict(self) -> dict:
+        data = {varname: value for (varname, value) in vars(self).items() if varname != 'params' and value is not None}
+
+        # Special handling for parameters
+        data['params'] = {}  # Need fresh dictionary, make sure pointers dont get shared
+        for p_name, p_info in data['params'].items():
+            data['params'][p_name] = p_info.to_dict()
+
+        return data
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ToolMetadata':
+        # Convert the input dict into a defaultdict so that missing entries become None
+        data_or_none = collections.defaultdict(lambda: None, data)
+        tool_name = data_or_none['tool_name']
+        version = data_or_none['version']
+        author = data_or_none['author']
+        url = data_or_none['url']
+        info = data_or_none['info']
+
+        # Handle parameter list
+        params = data_or_none['params']
+        for p_name, p_info_dict in params.items():
+            params[p_name] = ToolParameterInfo.from_dict(p_info_dict)
+
+        return ToolMetadata(tool_name, params, version, author, url, info)
+
 
 class ParameterDict(dict):
     def __getattr__(self, key):
@@ -100,10 +156,11 @@ class ParameterDict(dict):
 
 ToolMainType = Callable[[Suitebro, Selection, ParameterDict], None]
 ToolListType = list[tuple[ModuleType, ToolMetadata]]
+PartialToolListType = list[tuple[ModuleType | str, ToolMetadata]]
 
 
-def load_tool(tools_folder, script, verbose=False) -> tuple[ModuleType, ToolMetadata] | None:
-    script_path = os.path.join(tools_folder, script)
+def load_tool(script_path, verbose=True) -> tuple[ModuleType, ToolMetadata] | None:
+    script = os.path.basename(script_path)
     module_name = os.path.splitext(script)[0]
     if verbose:
         print(f"Loading tool script: {module_name}")
@@ -141,16 +198,40 @@ def load_tool(tools_folder, script, verbose=False) -> tuple[ModuleType, ToolMeta
         return module, ToolMetadata(tool_name, params, version, author, url, info)
 
     except Exception as e:
-        logging.error(f"Error executing script '{script}': {e}")
+        logging.error(f"Error loading tool '{script}': {e}")
 
 
-def load_tools(verbose=False) -> ToolListType:
-    # Get tooling scripts
-    tools_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tools')
-    if not os.path.exists(tools_folder):
-        os.mkdir(tools_folder)
+TOOLS_PATH = os.path.join(root_directory, 'tools')
+TOOLS_INDEX_NAME = 'tools-index.json'
+TOOLS_INDEX_PATH = os.path.join(root_directory, TOOLS_INDEX_NAME)
 
-    files = os.listdir(tools_folder)
+
+def make_tools_index(tools: PartialToolListType):
+    tools_dict = {}
+    for module_or_path, meta in tools:
+        # Convert tool metadata to dictionary
+        tool_data = meta.to_dict()
+
+        # Get path name
+        if isinstance(module_or_path, ModuleType):
+            tool_path = module_or_path.__file__
+        else:
+            tool_path = module_or_path
+
+        # Extra important detail, need time last modified
+        tool_data['last_modified'] = os.path.getmtime(tool_path)
+
+        # Add to output
+        tools_dict[tool_path] = tool_data
+
+    # Simply dump dictionary to .json file now
+    with open(TOOLS_INDEX_PATH, 'w') as fd:
+        json.dump(tools_dict, fd, indent=2)
+
+
+# Get tool scripts as absolute paths
+def get_tool_scripts() -> list[str]:
+    files = os.listdir(TOOLS_PATH)
 
     python_files = [f for f in files if f.endswith('.py') and f != '__init__.py']
     if not python_files:
@@ -159,13 +240,80 @@ def load_tools(verbose=False) -> ToolListType:
 
     python_files = sorted(python_files)
 
-    # Execute each Python script
+    # Convert to absolute paths and return
+    return [os.path.join(TOOLS_PATH, filename) for filename in python_files]
+
+
+def get_indexed_tools() -> PartialToolListType | None:
+    try:
+        with open(TOOLS_INDEX_PATH, 'r') as fd:
+            tools_index = json.load(fd)
+    except (OSError, json.JSONDecodeError):
+        logging.debug('Failed to load tools index... Will regenerate')
+        return None
+
+    output_tools = []
+    for tool_path, meta_dict in tools_index.items():
+        # First check if tool_path exists and is file...
+        if not os.path.isfile(tool_path):
+            continue
+
+        # Check modify time
+        index_mtime = meta_dict['last_modified']
+        actual_mtime = os.path.getmtime(tool_path)
+
+        # If the file has been changed, reload the tool script...
+        if index_mtime != actual_mtime:
+            tool_tuple = load_tool(tool_path)
+            if tool_tuple is None:
+                print(f'Failed to load tool from index: {tool_path}')
+                continue
+
+            output_tools.append(tool_tuple)
+        else:
+            output_tools.append((tool_path, ToolMetadata.from_dict(meta_dict)))
+
+    # Process any added tools
+    for script_path in get_tool_scripts():
+        if script_path not in tools_index:
+            tool_tuple = load_tool(script_path)
+            if tool_tuple is None:
+                print(f'Failed to load tool: {script_path}')
+                continue
+
+            output_tools.append(tool_tuple)
+
+    # Sort tools alphabetically by tool name
+    output_tools.sort(key=lambda tool_tuple: tool_tuple[-1].tool_name)
+    return output_tools
+
+
+def load_tools(verbose=True) -> PartialToolListType:
+    # First load the index
+    logging.debug('Loading index file...')
+    tools_index = get_indexed_tools()
+
+    # If we were successful in loading the tools index, perfect we're done!
+    if tools_index:
+        make_tools_index(tools_index)
+        return tools_index
+
+    # Get all tooling scripts
+    if not os.path.exists(TOOLS_PATH):
+        os.mkdir(TOOLS_PATH)
+
+    tool_paths = get_tool_scripts()
+
+    # Append each successfully loaded tool to the output
     tools = []
-    for script in python_files:
-        load_result = load_tool(tools_folder, script, verbose=verbose)
+    for path in tool_paths:
+        load_result = load_tool(path, verbose=verbose)
         if load_result is None:
             continue
         tools.append(load_result)
+
+    # Create index for future execution
+    make_tools_index(tools)
 
     return tools
 
@@ -319,8 +467,8 @@ def save_suitebro(save: Suitebro, filename: str):
 
 
 def run(input_filename: str, tool: ToolMainType, params: list = []):
-    tool_file = tool.__globals__['__file__']
-    mock_tool, mock_metadata = load_tool(os.path.dirname(tool_file), os.path.basename(tool_file), verbose=True)
+    tool_path = tool.__globals__['__file__']
+    mock_tool, mock_metadata = load_tool(tool_path)
     mock_params = parse_parameters(params, mock_metadata)
 
     save = load_suitebro(input_filename)
@@ -332,13 +480,13 @@ def run(input_filename: str, tool: ToolMainType, params: list = []):
 
 
 # Returns tool if could find tool disambiguated, otherwise returns None
-def find_tool(tools: ToolListType, name: str) -> tuple[ModuleType, ToolMetadata] | None:
+def find_tool(tools: ToolListType, name: str) -> tuple[ModuleType | str, ToolMetadata] | None:
     max_prefix_len = 0
     best_match = None
     conflict = False
 
     name = name.casefold().strip()
-    for module, meta in tools:
+    for module_or_path, meta in tools:
         tool_name = meta.tool_name.casefold().strip()
         # Use os.path.commonprefix as a utility I guess
         prefix = os.path.commonprefix([name, tool_name])
@@ -348,7 +496,7 @@ def find_tool(tools: ToolListType, name: str) -> tuple[ModuleType, ToolMetadata]
         elif prefix_len > max_prefix_len:
             conflict = False
             max_prefix_len = prefix_len
-            best_match = module, meta
+            best_match = module_or_path, meta
 
     if best_match is None or conflict:
         return None
@@ -357,7 +505,7 @@ def find_tool(tools: ToolListType, name: str) -> tuple[ModuleType, ToolMetadata]
 
 
 def main():
-    tools = load_tools(verbose=False)
+    tools = load_tools(verbose=True)
     tool_names = ', '.join([meta.tool_name for _, meta in tools])
     parser = get_parser(tool_names)
     args = parse_args(parser)
@@ -403,7 +551,11 @@ def main():
                 logging.error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
                 sys.exit(1)
 
-            module, meta = tool
+            module_or_path, meta = tool
+            if not isinstance(module_or_path, ModuleType):
+                module = load_tool(module_or_path)
+            else:
+                module = module_or_path
 
             # TODO lookahead for overwrite to detect issues and error out before even starting
 
@@ -425,7 +577,3 @@ def main():
             save_suitebro(save, args['output'])
 
     # TODO apply selection and validate args
-
-
-if __name__ == '__main__':
-    main()

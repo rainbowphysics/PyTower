@@ -4,10 +4,16 @@ import os
 import requests
 import asyncio
 
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
+from pytower.tower import ParameterDict
 from pytower.util import dict_walk
 
-TOOL_NAME = 'CreateImageAtlas'
+TOOL_NAME = 'BackupResources'
+VERSION = '1.0'
+AUTHOR = 'Physics System'
+URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/backup.py'
+INFO = '''Backs up all URL sources, such as canvases, as a local resource atlas.'''
 
 
 def hash_image(data: bytes):
@@ -37,7 +43,7 @@ async def download_images(urls, img_dir):
     return await asyncio.gather((download_image(url, img_dir) for url in urls))
 
 
-def main(suitebro: Suitebro, selection: list[TowerObject], args):
+def main(save: Suitebro, selection: Selection, params: ParameterDict):
     urls = set()
 
     def url_processor(dict_entry):
@@ -46,7 +52,7 @@ def main(suitebro: Suitebro, selection: list[TowerObject], args):
             if k == 'URL':
                 urls.add(v['StrProperty'])
 
-    for obj in suitebro.objects:
+    for obj in save.objects:
         dict_walk(obj.item, url_processor)
 
     # TODO add dating to this, so that each atlas is a true back-up

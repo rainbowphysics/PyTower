@@ -171,3 +171,6 @@ tools/CondoData_output
 
 # Suitebro parser
 tower-unite-suitebro/
+
+# Tool script index
+tools-index.json

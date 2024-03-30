@@ -50,6 +50,8 @@ def xyz(*args):
 
     return np.array([x, y, z])
 
-
 def xyzint(*args):
     return np.int_(xyz(*args) + .5)
+
+def xyz_to_string(data: np.ndarray):
+    return f'{data[0]},{data[1]},{data[2]}'
