@@ -63,7 +63,7 @@ class ToolParameterInfo:
         # Load values
         dtype = type_table[data['dtype']]
         description = data['description']
-        default = data['default'] if 'default' in data else None
+        default = dtype(data['default']) if 'default' in data and data['default'] is not None else None
 
         return ToolParameterInfo(dtype, description, default)
 
@@ -93,8 +93,6 @@ class ToolMetadata:
 
         if self.params:
             param_str = '\n\nParameters:'
-            print(vars(self))
-            print(self.params)
             for name, info in self.params.items():
                 param_str += f'\n  {name}:{info.dtype.__name__} - {info.description}'
                 if info.default is not None:
@@ -480,7 +478,7 @@ def run(input_filename: str, tool: ToolMainType, params: list = []):
 
 
 # Returns tool if could find tool disambiguated, otherwise returns None
-def find_tool(tools: ToolListType, name: str) -> tuple[ModuleType | str, ToolMetadata] | None:
+def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, ToolMetadata] | None:
     max_prefix_len = 0
     best_match = None
     conflict = False
@@ -553,9 +551,10 @@ def main():
 
             module_or_path, meta = tool
             if not isinstance(module_or_path, ModuleType):
-                module = load_tool(module_or_path)
+                module, _ = load_tool(module_or_path)
             else:
-                module = module_or_path
+                module, _ = module_or_path
+
 
             # TODO lookahead for overwrite to detect issues and error out before even starting
 

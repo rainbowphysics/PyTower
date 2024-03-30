@@ -9,7 +9,7 @@ VERSION = '1.0'
 AUTHOR = 'Physics System'
 URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/center.py'
 INFO = '''Centers selection at the world origin'''
-PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Optional offset', default=xyz(0, 0, 0))}
+PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Optional offset', default=xyz(0.0, 0.0, 0.0))}
 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
