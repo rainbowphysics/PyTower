@@ -5,7 +5,8 @@ import subprocess
 
 import setuptools
 from setuptools import setup
-from setuptools.command.build_py import build_py
+from setuptools.command.develop import develop
+from setuptools.command.install import install
 from distutils.util import convert_path
 import logging
 
@@ -21,20 +22,23 @@ def run_command(args, error_context='Error'):
         logging.error(f"{error_context}: {e}")
 
 
-class CustomBuildCommand(build_py):
+def get_suitebro_parser():
+    run_command(['git', 'clone', 'https://github.com/brecert/tower-unite-suitebro.git'],
+                error_context='Error cloning Suitebro repository')
+
+    cwd = os.getcwd()
+    os.chdir('tower-unite-suitebro')
+    run_command(['git', 'pull'],
+                error_context='Error pulling from Suitebro repository')
+    run_command(['cargo', 'build', '--release'],
+                error_context='Error building Rust binary')  # Assuming cargo is installed and in the PATH
+    os.chdir(cwd)
+
+
+class CustomDevelopBuildCommand(develop):
     def run(self):
-        run_command(['git', 'clone', 'https://github.com/brecert/tower-unite-suitebro.git'],
-                    error_context='Error cloning Suitebro repository')
-
-        cwd = os.getcwd()
-        os.chdir('tower-unite-suitebro')
-        run_command(['git', 'pull'],
-                    error_context='Error pulling from Suitebro repository')
-        run_command(['cargo', 'build', '--release'],
-                    error_context='Error building Rust binary')  # Assuming cargo is installed and in the PATH
-        os.chdir(cwd)
-
-        super().run()
+        get_suitebro_parser()
+        develop.run(self)
 
 
 with open('requirements.txt', 'r') as fd:
@@ -55,8 +59,6 @@ setup(
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
     packages=setuptools.find_packages(),
-    package_data={'pytower': ['tower-unite-suitebro/*']},
-    include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
     entry_points={
@@ -66,7 +68,7 @@ setup(
     },
 
     cmdclass={
-        'build_py': CustomBuildCommand
+        'develop': CustomDevelopBuildCommand
     },
 
     # https://pypi.org/pypi?%3Aaction=list_classifiers
