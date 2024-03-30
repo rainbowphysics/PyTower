@@ -227,7 +227,7 @@ def make_tools_index(tools: PartialToolListType):
         json.dump(tools_dict, fd, indent=2)
 
 
-# Get tool scripts as absolute paths
+# Get tool scripts as absolute, case-normalized paths
 def get_tool_scripts() -> list[str]:
     files = os.listdir(TOOLS_PATH)
 
@@ -239,7 +239,7 @@ def get_tool_scripts() -> list[str]:
     python_files = sorted(python_files)
 
     # Convert to absolute paths and return
-    return [os.path.join(TOOLS_PATH, filename) for filename in python_files]
+    return [os.path.normcase(os.path.join(TOOLS_PATH, filename)) for filename in python_files]
 
 
 def get_indexed_tools() -> PartialToolListType | None:
@@ -252,6 +252,9 @@ def get_indexed_tools() -> PartialToolListType | None:
 
     output_tools = []
     for tool_path, meta_dict in tools_index.items():
+        # Normalize tool_path for Windows
+        tool_path = os.path.normcase(tool_path)
+
         # First check if tool_path exists and is file...
         if not os.path.isfile(tool_path):
             continue
@@ -273,6 +276,7 @@ def get_indexed_tools() -> PartialToolListType | None:
 
     # Process any added tools
     for script_path in get_tool_scripts():
+        # If tool not found in index, load and add it
         if script_path not in tools_index:
             tool_tuple = load_tool(script_path)
             if tool_tuple is None:
@@ -553,7 +557,7 @@ def main():
             if not isinstance(module_or_path, ModuleType):
                 module, _ = load_tool(module_or_path)
             else:
-                module, _ = module_or_path
+                module = module_or_path
 
             # TODO lookahead for overwrite to detect issues and error out before even starting
 
