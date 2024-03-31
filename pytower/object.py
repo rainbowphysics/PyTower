@@ -5,6 +5,7 @@ import uuid
 
 import numpy as np
 
+from . import tower
 from .connections import ItemConnectionObject
 
 
@@ -14,9 +15,9 @@ def replace_guids(datadict, replacement_table):
         encoding = encoding.replace(target, replacement)
     return json.loads(encoding)
 
+
 class TowerObject:
-    def __init__(self, save: 'Suitebro', item: dict | None = None, properties: dict | None = None):
-        self.save = save
+    def __init__(self, item: dict | None = None, properties: dict | None = None):
         self.item = copy.deepcopy(item)
         self.properties = copy.deepcopy(properties)
 
@@ -62,7 +63,7 @@ class TowerObject:
             del self.item['properties']['GroupID']
 
     def copy(self) -> 'TowerObject':
-        copied = TowerObject(self.save, item=self.item, properties=self.properties)
+        copied = TowerObject(item=self.item, properties=self.properties)
         if copied.item is not None:
             copied.item['guid'] = str(uuid.uuid4()).upper()
         return copied
@@ -82,8 +83,9 @@ class TowerObject:
             old_group_id = obj.group_id()
             if old_group_id >= 0:
                 if old_group_id not in new_groups:
-                    obj.save.update_groups_meta()
-                    new_groupid = obj.save.get_max_groupid() + 1
+                    save = tower.get_active_save()
+                    save.update_groups_meta()
+                    new_groupid = save.get_max_groupid() + 1
                     new_groups[old_group_id] = new_groupid
 
                 copied.set_group_id(new_groups[old_group_id])
@@ -199,7 +201,7 @@ class TowerObject:
         return self.item['name'] < other.item['name']
 
     def __repl__(self):
-        return f'TowerObject({self.save}, {self.item}, {self.properties})'
+        return f'TowerObject({self.item}, {self.properties})'
 
     def __str__(self):
         return self.__repl__()

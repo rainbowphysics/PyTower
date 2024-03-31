@@ -16,10 +16,10 @@ class Suitebro:
             p = prop_section[x]
             i = item_section[item_idx]
             if p['name'].startswith(i['name']):
-                self.objects[x] = TowerObject(self, item=i, properties=p)
+                self.objects[x] = TowerObject(item=i, properties=p)
                 item_idx += 1
             else:
-                self.objects[x] = TowerObject(self, item=None, properties=p)
+                self.objects[x] = TowerObject(item=None, properties=p)
 
     def add_object(self, obj):
         self.objects += [obj]

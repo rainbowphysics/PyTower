@@ -17,6 +17,13 @@ from .selection import *
 from .suitebro import Suitebro
 from .util import xyz, xyzint, xyz_to_string
 
+# _active_saves is a stack
+_active_saves: list[Suitebro] = []
+
+
+def get_active_save() -> Suitebro:
+    return _active_saves[-1] if len(_active_saves) > 0 else None
+
 
 def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None, overwrite: bool = False):
     curr_cwd = os.getcwd()
@@ -452,7 +459,10 @@ def load_suitebro(filename: str) -> Suitebro:
     with open(json_output_path, 'r') as fd:
         save_json = json.load(fd)
 
-    return Suitebro(save_json)
+    save = Suitebro(save_json)
+    _active_saves.append(save)
+
+    return save
 
 
 def save_suitebro(save: Suitebro, filename: str):
@@ -466,6 +476,9 @@ def save_suitebro(save: Suitebro, filename: str):
 
     # Finally run!
     run_suitebro_parser(json_final_path, True, final_output_path, overwrite=True)
+
+    # Remove from active saves
+    _active_saves.remove(save)
 
 
 def run(input_filename: str, tool: ToolMainType, params: list = []):
