@@ -602,9 +602,9 @@ def main():
                     bad_sel = True
                 elif sel_input == 'item' or sel_input == 'items':
                     selector = ItemSelector()
-                elif sel_input == 'everything':
+                elif sel_input == 'all' or sel_input == 'everything':
                     selector = EverythingSelector()
-                elif sel_input == 'nothing':
+                elif sel_input == 'none' or sel_input == 'nothing':
                     selector = NothingSelector()
                 elif sel_input.startswith('group:'):
                     gid_input = sel_split[1]
@@ -628,7 +628,7 @@ def main():
                 if bad_sel:
                     print(f'Invalid selection: {sel_input}')
                     print('\nAvailable selection options: name:<NAME>, customname:<NAME>, objname:<NAME>, group:<ID>,'
-                          ' items, everything, nothing, regex:<PATTERN>')
+                          ' items, all, none, regex:<PATTERN>')
                     print('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
                     sys.exit(1)
 
