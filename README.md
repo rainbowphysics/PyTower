@@ -2,7 +2,7 @@
 High-level Python API for editing/generating Tower Unite maps.
 
 <p align="center">
-  <img width=1024 height=1024 src="https://github.com/rainbowphysics/PyTower/blob/main/logo.png?raw=true" />
+  <img src="https://github.com/rainbowphysics/PyTower/blob/main/logo.png?raw=true" width="512" height="512" />
 </p>
 
 Discord community link: https://discord.gg/NUufVuu4Ve
