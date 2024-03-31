@@ -1,6 +1,6 @@
 import itertools
 
-from .suitebro import TowerObject
+from .object import TowerObject
 
 from abc import ABC, abstractmethod
 import re
@@ -17,6 +17,9 @@ class Selection(set):
 
     def ungrouped(self) -> 'Selection':
         return Selection({obj for obj in self if obj.group_id() < 0})
+
+    def __hash__(self):
+        return hash(tuple(self))
 
 
 class Selector(ABC):
