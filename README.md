@@ -19,6 +19,9 @@ Discord community link: https://discord.gg/NUufVuu4Ve
  - PyTower can also be run directly using `python -m pytower.tower`
  - PyTower can also be imported into other Python projects with `import pytower`
 
+## Current Issues
+- Currently `run --select` and `run --invert` still need implementations, along with a few more of the `run` options. The current workaround is to modify the selection directly from within the tool scripts
+
 ### Available Subcommands:
  - `pytower help` 
  - `pytower version`
@@ -35,10 +38,9 @@ Example usage:
 ## `pytower run` arguments
  - -i/--input: Input file to use (default: CondoData)
  - -o/--output: Output file to use (default: CondoData_output)
- - -s/--select: Selection mode to use (default: ItemSelector)
+ - -s/--select: Selection mode to use (default: `items`)
  - -v/--invert: Flag to invert selection
- - -j/--json: Flag to skip Suitebro parser steps 
- - -!/--overwrite: Flag overwrite output files
+ - -j/--json: Flag to skip Suitebro parser steps
  - -@/--parameters: Beginning of *tool parameters*
 
 ### Tool parameter format:
@@ -46,12 +48,14 @@ Example usage:
  - For example, `pytower run MyTool -@ offset=0,0,300 foo=42` passes two parameters to MyTool: `offset` with the value `xyz(0,0,300)` and `foo` with the value `42`.
 
 ### Selection modes:
-- ItemSelector (default): Everything except property-only objects (CondoSettingsManager_2, Ultra_Dynamic_Sky_##, CondoWeather_2729, etc.)
-- NameSelector: Selects object by name (both custom name and internal object name)
-- CustomNameSelector: Select objects by custom name (name assigned in game)
-- ObjectNameSelector: Select objects by internal object name only
-- GroupSelector: Select objects by group id
-- RegexSelector: Select objects by regular expression pattern (matches both names)
+- `items` (ItemSelector) (default): Everything except property-only objects (CondoSettingsManager_2, Ultra_Dynamic_Sky_##, CondoWeather_2729, etc.)`
+- `name:<NAME>` (NameSelector): Selects object by name (both custom name and internal object name)
+- `customname:<NAME>` (CustomNameSelector): Select objects by custom name (name assigned in game)
+- `objname:<NAME>` (ObjectNameSelector): Select objects by internal object name only
+- `group:<ID>` (GroupSelector): Select objects by group id
+- `regex:<PATTERN>` (RegexSelector): Select objects by regular expression pattern (matches both custom name and object name)
+- `everything`: Everything including property-only objects
+- `nothing`: Nothing (can be useful for generation tools)
 
 ## Writing tools scripts
 To register a new tool to use with PyTower, simply create a new script in the tools folder with a main method.

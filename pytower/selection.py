@@ -69,7 +69,7 @@ class RegexSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         return Selection({obj for obj in everything if self.pattern.match(obj.get_name())
-                or self.pattern.match(obj.get_custom_name())})
+                          or self.pattern.match(obj.get_custom_name())})
 
 
 class GroupSelector(Selector):
@@ -87,3 +87,18 @@ class ItemSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         return Selection({obj for obj in everything if obj.item is not None})
+
+
+class EverythingSelector(Selector):
+    def __init__(self):
+        super().__init__('EverythingSelector')
+
+    def select(self, everything: Selection) -> Selection:
+        return everything
+
+class NothingSelector(Selector):
+    def __init__(self):
+        super().__init__('NothingSelector')
+
+    def select(self, everything: Selection) -> Selection:
+        return Selection()

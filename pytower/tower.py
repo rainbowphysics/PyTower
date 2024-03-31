@@ -373,16 +373,16 @@ def get_parser(tool_names: str):
                             help='Input file')
     run_parser.add_argument('-o', '--output', dest='output', type=str, default='CondoData_output',
                             help='Output file')
-    run_parser.add_argument('-s', '--select', dest='selection', type=str, default='everything',
+    run_parser.add_argument('-s', '--select', dest='selection', type=str, default='items',
                             help='Selection type')
 
     # Flags
     run_parser.add_argument('-v', '--invert', dest='invert', action='store_true',
                             help='Whether or not to invert selection')
+    run_parser.add_argument('-vf', '--invert-full', dest='invert-full', action='store_true',
+                            help='Whether or not to do a full inversion (included property-only objects)')
     run_parser.add_argument('-j', '--json', dest='json', type=bool, action=argparse.BooleanOptionalAction,
                             help='Whether to load/save as .json, instead of converting to CondoData')
-    run_parser.add_argument('-!', '--overwrite', dest='overwrite', type=bool,
-                            action=argparse.BooleanOptionalAction, help='Whether to overwrite output files')
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*',
                             help='Parameters to pass onto tooling script (must come at end)')
 
@@ -448,12 +448,13 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDic
     return params
 
 
-def load_suitebro(filename: str) -> Suitebro:
+def load_suitebro(filename: str, only_json=False) -> Suitebro:
     abs_filepath = os.path.realpath(filename)
     in_dir = os.path.dirname(abs_filepath)
     json_output_path = os.path.join(in_dir, os.path.basename(abs_filepath) + ".json")
 
-    run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
+    if not only_json:
+        run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
 
     logging.info('Loading JSON file...')
     with open(json_output_path, 'r') as fd:
@@ -465,7 +466,7 @@ def load_suitebro(filename: str) -> Suitebro:
     return save
 
 
-def save_suitebro(save: Suitebro, filename: str):
+def save_suitebro(save: Suitebro, filename: str, only_json=False):
     abs_filepath = os.path.realpath(filename)
     out_dir = os.path.dirname(abs_filepath)
     json_final_path = os.path.join(out_dir, f'{filename}.json')
@@ -475,7 +476,8 @@ def save_suitebro(save: Suitebro, filename: str):
         json.dump(save.to_dict(), fd, indent=2)
 
     # Finally run!
-    run_suitebro_parser(json_final_path, True, final_output_path, overwrite=True)
+    if not only_json:
+        run_suitebro_parser(json_final_path, True, final_output_path, overwrite=True)
 
     # Remove from active saves
     _active_saves.remove(save)
@@ -574,14 +576,72 @@ def main():
 
             # TODO lookahead for overwrite to detect issues and error out before even starting
 
+            # Input file name
+            input_filename = args['input']
+
+            # Whether or not to only use json
+            only_json = not args['json']
+            if only_json:
+                # Remove .json to be consistent with rest of program
+                if input_filename.endswith('.json'):
+                    input_filename = input_filename[:-5]
+
             # Load save
-            save = load_suitebro(args['input'])
+            save = load_suitebro(input_filename, only_json=only_json)
 
-            # TODO construct Selector using argument
+            # Default selector is ItemSelector
             selector = ItemSelector()
-            selection = selector.select(save.objects)
 
-            # TODO proper invert flag
+            # If --select argument provided, choose different selector
+            if 'selection' in args:
+                sel_input: str = args['selection'].casefold().strip()
+                sel_split = sel_input.split(':')
+
+                bad_sel = False
+                if len(sel_split) > 2:
+                    bad_sel = True
+                elif sel_input == 'item' or sel_input == 'items':
+                    selector = ItemSelector()
+                elif sel_input == 'everything':
+                    selector = EverythingSelector()
+                elif sel_input == 'nothing':
+                    selector = NothingSelector()
+                elif sel_input.startswith('group:'):
+                    gid_input = sel_split[1]
+                    try:
+                        group_id = int(gid_input)
+                        selector = GroupSelector(group_id)
+                    except ValueError:
+                        print(f'{gid_input} is not valid group_id!')
+                        bad_sel = True
+                elif sel_input.startswith('regex:'):
+                    selector = RegexSelector(sel_split[1])
+                elif sel_input.startswith('name:'):
+                    selector = NameSelector(sel_split[1])
+                elif sel_input.startswith('customname:'):
+                    selector = CustomNameSelector(sel_split[1])
+                elif sel_input.startswith('objname:'):
+                    selector = CustomNameSelector(sel_split[1])
+                else:
+                    bad_sel = True
+
+                if bad_sel:
+                    print(f'Invalid selection: {sel_input}')
+                    print('\nAvailable selection options: name:<NAME>, customname:<NAME>, objname:<NAME>, group:<ID>,'
+                          ' items, everything, nothing, regex:<PATTERN>')
+                    print('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
+                    sys.exit(1)
+
+            selection = selector.select(Selection(save.objects))
+
+            if args['invert-full'] and args['invert']:
+                print('--invert-all and --invert cannot be used at the same time!')
+                sys.exit(1)
+
+            if args['invert-full']:
+                selection = Selection(save.objects) - selection
+            if args['invert']:
+                selection = ItemSelector().select(Selection(save.objects)) - selection
 
             # Run tool
             params = parse_parameters(args['parameters'], meta)
@@ -589,10 +649,7 @@ def main():
             module.main(save, selection, params)
 
             # Writeback save
-            save_suitebro(save, args['output'])
-
-    # TODO apply selection and validate args
-
+            save_suitebro(save, args['output'], only_json=only_json)
 
 if __name__ == '__main__':
     main()
