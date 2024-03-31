@@ -1,5 +1,6 @@
 import hashlib
 import os
+import sys
 
 import requests
 import asyncio
@@ -44,6 +45,8 @@ async def download_images(urls, img_dir):
 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
+    print(f'{TOOL_NAME} tool is not implemented yet!')
+    sys.exit(1)
     urls = set()
 
     def url_processor(dict_entry):

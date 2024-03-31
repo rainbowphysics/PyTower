@@ -1,1 +1,2 @@
 recursive-include tools *.py
+include requirements.txt

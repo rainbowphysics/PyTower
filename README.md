@@ -1,6 +1,10 @@
 # PyTower 0.1.0
 High-level Python API for editing/generating Tower Unite maps.
 
+<p align="center">
+  <img src="https://github.com/rainbowphysics/PyTower/logo.png" />
+</p>
+
 Discord community link: https://discord.gg/NUufVuu4Ve
 
 ## Installation Instructions
