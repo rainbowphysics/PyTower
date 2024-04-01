@@ -483,7 +483,7 @@ def save_suitebro(save: Suitebro, filename: str, only_json=False):
     _active_saves.remove(save)
 
 
-def run(input_filename: str, tool: ToolMainType, params: list = []):
+def run(input_filename: str, tool: ToolMainType, selector: Selector = None, params: list = []):
     tool_path = tool.__globals__['__file__']
     mock_tool, mock_metadata = load_tool(tool_path)
     mock_params = parse_parameters(params, mock_metadata)
@@ -491,7 +491,11 @@ def run(input_filename: str, tool: ToolMainType, params: list = []):
     save = load_suitebro(input_filename)
 
     logging.info(f'Running {mock_metadata.tool_name} with parameters {mock_params}')
-    tool(save, ItemSelector().select(save.objects), mock_params)
+
+    if selector is None:
+        selector = ItemSelector()
+
+    tool(save, selector.select(Selection(save.objects)), mock_params)
 
     save_suitebro(save, f'{input_filename}_output')
 

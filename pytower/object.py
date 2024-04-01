@@ -39,6 +39,8 @@ class TowerObject:
                 and (self.get_name().startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props))
 
     def get_name(self) -> str:
+        if self.item is None:
+            return self.properties['name']
         return self.item['name']
 
     def get_custom_name(self) -> str:
