@@ -18,7 +18,7 @@ Discord community link: https://discord.gg/NUufVuu4Ve
 3. Download Rust (latest nightly build): https://www.rust-lang.org/tools/install
 4. Ensure that Rust `cargo` is added to the PATH environment variable by running `cargo --version`.
 5. Install Build Tools for Visual Studio (2017 or later) with Visual C++: https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022
-6. In the root repository directory, run `pip install -e .`. Note that the `-e` flag is important the install will break without it
+6. In the root repository directory, run `pip install -e .`. Note that the `-e` flag is important and the install will break without it
 
 ## Running PyTower
  - Once installed, PyTower can be run from command line as `pytower`
