@@ -29,13 +29,13 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
     curr_cwd = os.getcwd()
     suitebro_path = os.path.join(root_directory, 'tower-unite-suitebro')
     os.chdir(suitebro_path)
-
+    
     process = Popen(f'cargo run --release {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
-                    f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE)
+                    f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE, shell=True)
     (output, err) = process.communicate()
-    print(output, file=sys.stderr)
+    #print(output, file=sys.stderr)
     for line in output.splitlines(False):
-        print(line)
+        print(line.decode('ascii'))
 
     exit_code = process.wait()
 
@@ -355,6 +355,10 @@ def get_parser(tool_names: str):
     # Version subcommand
     subparsers.add_parser('version', help='%(prog)s version')
 
+    # Convert subcommand
+    convert_parser = subparsers.add_parser('convert', help='Convert given file to .json or CondoData')
+    convert_parser.add_argument('filename', type=str, help='File to use as input')
+
     # List subcommand
     subparsers.add_parser('list', help='List tools')
 
@@ -541,6 +545,18 @@ def main():
             sys.exit(0)
         case 'version':
             print(f'PyTower {__version__}')
+            sys.exit(0)
+        case 'convert':
+            filename = args['filename'].strip()
+            abs_filepath = os.path.realpath(filename)
+            in_dir = os.path.dirname(abs_filepath)
+
+            if filename.endswith('.json'):
+                output = os.path.join(in_dir, filename[:-5])
+                run_suitebro_parser(abs_filepath, True, output, overwrite=True)
+            else:
+                output = os.path.join(in_dir, os.path.basename(abs_filepath) + '.json')
+                run_suitebro_parser(abs_filepath, False, output, overwrite=True)
             sys.exit(0)
         case 'list':
             print('Available tools:')
