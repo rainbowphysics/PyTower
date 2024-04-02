@@ -7,12 +7,18 @@ A high-level Python API for editing/generating Tower Unite maps
 
 Discord community link: https://discord.gg/NUufVuu4Ve
 
-## Installation Instructions
-1. Download Rust (latest nightly build): https://www.rust-lang.org/tools/install
-2. (On Windows) Download Git Bash: https://git-scm.com/download/win
-3. Ensure that `git` and `cargo` are added to the PATH environment variable. You can test this by running `git --version` and `cargo --version` in command line.
-4. Install Build Tools for Visual Studio (2017 or later): https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022
-5. In the root repository directory, run `pip install -e .`
+## Dependencies
+ - Python 3.9+
+ - numpy, scipy, requests (automatically installed by pip)
+ - Rust (nightly build)
+
+## Recommened Installation Instructions
+1. (On Windows) Download Git Bash: https://git-scm.com/download/win. 
+2. Clone the repository using `git clone https://github.com/rainbowphysics/PyTower.git`. If typing `git` into the command line does nothing, you may have to add git manually to your PATH environment variable.
+3. Download Rust (latest nightly build): https://www.rust-lang.org/tools/install
+4. Ensure that Rust `cargo` is added to the PATH environment variable by running `cargo --version`.
+5. Install Build Tools for Visual Studio (2017 or later) with Visual C++: https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022
+6. In the root repository directory, run `pip install -e .`. Note that the `-e` flag is important the install will break without it
 
 ## Running PyTower
  - Once installed, PyTower can be run from command line as `pytower`
