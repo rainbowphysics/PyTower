@@ -28,6 +28,7 @@ Discord community link: https://discord.gg/NUufVuu4Ve
 ### Available Subcommands:
  - `pytower help` 
  - `pytower version`
+ - `pytower convert`
  - `pytower list`
  - `pytower info <TOOLNAME>` 
  - `pytower run <TOONAME> ...`
