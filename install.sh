@@ -1,1 +1,1 @@
-pip install --editable .
+pip install --editable . --log-file install-log.txt
