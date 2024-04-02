@@ -6,9 +6,10 @@ import subprocess
 import setuptools
 from setuptools import setup
 from setuptools.command.develop import develop
-from setuptools.command.install import install
+from setuptools.command.build_py import build_py
 from distutils.util import convert_path
 import logging
+
 
 def run_command(args, error_context='Error', can_fail=False):
     try:
@@ -51,6 +52,14 @@ class CustomDevelopBuildCommand(develop):
         develop.run(self)
 
 
+class CustomBuildCommand(build_py):
+    def run(self):
+        # Call parent class run() method
+        build_py.run(self)
+        # Build/install Suitebro parser
+        get_suitebro_parser()
+
+
 with open('requirements.txt', 'r') as fd:
     requirements = fd.readlines()
 
@@ -78,7 +87,8 @@ setup(
     },
 
     cmdclass={
-        'develop': CustomDevelopBuildCommand
+        'develop': CustomDevelopBuildCommand,
+        'build_py': CustomBuildCommand
     },
 
     # https://pypi.org/pypi?%3Aaction=list_classifiers
