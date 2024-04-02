@@ -29,11 +29,11 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
     curr_cwd = os.getcwd()
     suitebro_path = os.path.join(root_directory, 'tower-unite-suitebro')
     os.chdir(suitebro_path)
-    
+
     process = Popen(f'cargo run --release {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
                     f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE, shell=True)
     (output, err) = process.communicate()
-    #print(output, file=sys.stderr)
+    # print(output, file=sys.stderr)
     for line in output.splitlines(False):
         print(line.decode('ascii'))
 
@@ -387,6 +387,8 @@ def get_parser(tool_names: str):
                             help='Whether or not to do a full inversion (included property-only objects)')
     run_parser.add_argument('-j', '--json', dest='json', type=bool, action=argparse.BooleanOptionalAction,
                             help='Whether to load/save as .json, instead of converting to CondoData')
+    run_parser.add_argument('-g', '--groups', '--per-group', dest='per_group', action='store_true',
+                            help='Whether or not to apply the tool per group')
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*',
                             help='Parameters to pass onto tooling script (must come at end)')
 
@@ -666,10 +668,22 @@ def main():
             # Run tool
             params = parse_parameters(args['parameters'], meta)
             logging.info(f'Running {meta.tool_name} with parameters {params}')
-            module.main(save, selection, params)
+
+            if not args['per_group']:
+                # Normal execution
+                module.main(save, selection, params)
+            else:
+                # Per group execution
+                for (group_id, group) in selection.groups():
+                    module.main(save, group, params)
+
+                # Ungrouped items are treated as being in a group by themselves
+                for obj in selection.ungrouped():
+                    module.main(save, Selection({obj}), params)
 
             # Writeback save
             save_suitebro(save, args['output'], only_json=only_json)
+
 
 if __name__ == '__main__':
     main()

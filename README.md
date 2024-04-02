@@ -45,6 +45,7 @@ Example usage:
  - -s/--select: Selection mode to use (default: `items`)
  - -v/--invert: Flag to invert selection
  - -j/--json: Flag to skip Suitebro parser steps
+ - -g/--per-group: Flag to apply the tool separately per group
  - -@/--parameters: Beginning of *tool parameters*
 
 ### Tool parameter format:
