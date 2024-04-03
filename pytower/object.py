@@ -40,7 +40,7 @@ class TowerObject:
         return self.item['name']
 
     def get_custom_name(self) -> str:
-        if self.item is None:
+        if self.item is None or 'ItemCustomName' not in self.item['properties']:
             return ''
         return self.item['properties']['ItemCustomName']['NameProperty']
 

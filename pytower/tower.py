@@ -10,7 +10,10 @@ from subprocess import Popen, PIPE
 from types import ModuleType
 from typing import Callable
 
+import colorama
 import numpy as np
+
+from colorama import Fore, Back, Style
 
 from . import __version__, root_directory
 from .selection import *
@@ -20,12 +23,23 @@ from .util import xyz, xyzint, xyz_to_string
 # _active_saves is a stack
 _active_saves: list[Suitebro] = []
 
+IO_GW_ITEMS = ['AmmoPickup', 'CustomSpawnPoint', 'HealthPickup', 'SDNL_ArmorPickup', 'GW_SDNLOddball', 'GW_SDNLFlag',
+               'GW_BallRaceFinish', 'GW_BallRaceSpawn', 'LaserBeam', 'LeverBasic', 'ButtonShapes', 'PhysicsSlot',
+               'WeaponPickupIO', 'ButtonCanvas', 'LocationVolumeIO', 'DamageHealVolume', 'BlockingVolume',
+               'WaterVolume', 'CommentVolume', 'DialogueVolume', 'GravityVolume', 'ButtonVolume', 'HitTargetVolume',
+               'LadderVolume', 'PlayerMovementVolume', 'PostProcessVolume', 'PushVolume', 'SizeVolume',
+               'SkyProcessVolume', 'SpawnPointTagVolume', 'TriggerVolume', 'WeaponStripVolume', 'TeleportVolume',
+               'GameWorldEvents', 'LaserBeamReciever', 'Mover', 'Counter', 'LogicGateAnd', 'SwitchBoolean',
+               'LogicGateNot', 'LogicGateOr', 'LogicGateXor', 'Random', 'Relay', 'Timer', 'Toggle', 'WorldControl',
+               'LeverLightSwitch', 'MoverAdvanced', 'MoverPlayerSlide', 'MoverTrain']
+
 
 def get_active_save() -> Suitebro:
     return _active_saves[-1] if len(_active_saves) > 0 else None
 
 
-def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None, overwrite: bool = False):
+def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None,
+                        overwrite: bool = False) -> bool:
     curr_cwd = os.getcwd()
     suitebro_path = os.path.join(root_directory, 'tower-unite-suitebro')
     os.chdir(suitebro_path)
@@ -40,7 +54,8 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
     exit_code = process.wait()
 
     if exit_code != 0:
-        logging.warning('Suitebro to-json did not complete successfully!')
+        logging.error('Suitebro parser did not complete successfully!')
+        return False
 
     os.chdir(curr_cwd)
 
@@ -389,7 +404,7 @@ def get_parser(tool_names: str):
                             help='Whether to load/save as .json, instead of converting to CondoData')
     run_parser.add_argument('-g', '--groups', '--per-group', dest='per_group', action='store_true',
                             help='Whether or not to apply the tool per group')
-    run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*',
+    run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default={},
                             help='Parameters to pass onto tooling script (must come at end)')
 
     return parser
@@ -532,6 +547,9 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
 
 
 def main():
+    # Initialize colorama for pretty printing
+    colorama.init(convert=True)
+
     tools = load_tools(verbose=True)
     tool_names = ', '.join([meta.tool_name for _, meta in tools])
     parser = get_parser(tool_names)
@@ -602,7 +620,7 @@ def main():
             input_filename = args['input']
 
             # Whether or not to only use json
-            only_json = not args['json']
+            only_json = args['json']
             if only_json:
                 # Remove .json to be consistent with rest of program
                 if input_filename.endswith('.json'):
@@ -618,6 +636,7 @@ def main():
             if 'selection' in args:
                 sel_input: str = args['selection'].casefold().strip()
                 sel_split = sel_input.split(':')
+                sel_split_case_sensitive = args['selection'].strip().split(':')
 
                 bad_sel = False
                 if len(sel_split) > 2:
@@ -637,7 +656,7 @@ def main():
                         print(f'{gid_input} is not valid group_id!')
                         bad_sel = True
                 elif sel_input.startswith('regex:'):
-                    selector = RegexSelector(sel_split[1])
+                    selector = RegexSelector(sel_split_case_sensitive[1])
                 elif sel_input.startswith('name:'):
                     selector = NameSelector(sel_split[1])
                 elif sel_input.startswith('customname:'):
@@ -683,6 +702,16 @@ def main():
 
             # Writeback save
             save_suitebro(save, args['output'], only_json=only_json)
+
+            # Display items in save
+            print(Fore.GREEN + f'\nSuccessfully exported to {args["output"]}!')
+            print(Style.RESET_ALL)
+            print('Make sure you have the following items in your inventory before loading the map:')
+            inventory_items = [obj for obj in save.objects if obj.item is not None and obj.properties is not None
+                               and obj.get_name() not in IO_GW_ITEMS]
+            inventory_items = sorted(inventory_items, key=TowerObject.get_name)
+            for name, objs in itertools.groupby(inventory_items, TowerObject.get_name):
+                print(f'    {name}: {len(list(objs))}')
 
 
 if __name__ == '__main__':
