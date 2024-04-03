@@ -40,6 +40,8 @@ def get_suitebro_parser():
     # In case repo is already present, make sure it's up to date
     run_command(['git', 'pull'], error_context='Error pulling from Suitebro repository')
 
+    run_command(['git', 'checkout', '1a90045f16c58a856e941b78f857560d0b5ce5de'], error_context='Error checking out non-uesave version')
+
     # Assuming cargo is installed and in the PATH
     run_command(['cargo', 'build', '--release'], error_context='Error building Rust binary', can_fail=True)
 
