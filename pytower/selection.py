@@ -63,13 +63,13 @@ class ObjectNameSelector(Selector):
 
 
 class RegexSelector(Selector):
-    def __init__(self, pattern):
+    def __init__(self, pattern: str):
         super().__init__('RegexSelector')
-        self.pattern = re.compile(pattern)
+        self.pattern = re.compile(pattern.casefold())
 
     def select(self, everything: Selection) -> Selection:
-        return Selection({obj for obj in everything if self.pattern.match(obj.get_name())
-                          or self.pattern.match(obj.get_custom_name())})
+        return Selection({obj for obj in everything if self.pattern.match(obj.get_name().casefold())
+                          or self.pattern.match(obj.get_custom_name().casefold())})
 
 
 class GroupSelector(Selector):
