@@ -538,7 +538,7 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
 
 def main():
     # Initialize colorama for pretty printing
-    colorama.init(convert=True)
+    colorama.init(convert=sys.platform == 'win32')
 
     tools = load_tools(verbose=True)
     tool_names = ', '.join([meta.tool_name for _, meta in tools])
