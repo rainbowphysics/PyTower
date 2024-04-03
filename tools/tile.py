@@ -1,6 +1,7 @@
 from pytower import tower
+from pytower.copy import copy_selection
 from pytower.selection import Selection
-from pytower.suitebro import Suitebro, TowerObject
+from pytower.suitebro import Suitebro
 from pytower.tower import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint
 
@@ -24,7 +25,7 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
                     continue
 
                 # Copy selection
-                copies = TowerObject.copy_selection(selection)
+                copies = copy_selection(selection)
 
                 # Set position of copy
                 offset = xyz(x * dx, y * dy, z * dz)

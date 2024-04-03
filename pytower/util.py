@@ -1,8 +1,8 @@
 import io
 import os
-import sys
-from typing import Any, Callable
 from collections import deque
+from typing import Any, Callable
+
 import numpy as np
 
 
