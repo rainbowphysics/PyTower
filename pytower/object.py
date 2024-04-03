@@ -55,12 +55,16 @@ class TowerObject:
 
     def set_group_id(self, group_id: int):
         self.item['properties']['GroupID'] = {'IntProperty': group_id}
-        self.properties['properties']['GroupID'] = {'IntProperty': group_id}
+        if self.properties is not None:
+            self.properties['properties']['GroupID'] = {'IntProperty': group_id}
 
     # Removes group info from self
     def ungroup(self):
-        if 'GroupID' in self.item['properties']:
+        if self.item is not None and 'GroupID' in self.item['properties']:
             del self.item['properties']['GroupID']
+
+            if self.properties is not None:
+                del self.properties['properties']['GroupID']
 
     def copy(self) -> 'TowerObject':
         copied = TowerObject(item=self.item, properties=self.properties)
@@ -76,7 +80,7 @@ class TowerObject:
 
     def _set_xyz_attr(self, name: str, value: np.ndarray):
         if self.item is None:
-            logging.warning(f'Attempted to set {name} on a property-only object!')
+            logging.warning(f'Attempted to xyz set {name} on a property-only object!')
             return
 
         pos = self.item[name]
@@ -92,7 +96,7 @@ class TowerObject:
 
     def _set_xyzw_attr(self, name: str, value: np.ndarray):
         if self.item is None:
-            logging.warning(f'Attempted to set {name} on a property-only object!')
+            logging.warning(f'Attempted to xyzw set {name} on a property-only object!')
             return
 
         pos = self.item[name]
@@ -127,10 +131,11 @@ class TowerObject:
 
     def add_connection(self, con: ItemConnectionObject):
         assert self.item is not None
-        assert self.properties is not None
         connections = self.item['ItemConnections']['ArrayProperty']['StructProperty']['values']
         connections += con.to_dict()
-        self.properties['ItemConnections'] = self.item['ItemConnections']
+
+        if self.properties is not None:
+            self.properties['ItemConnections'] = self.item['ItemConnections']
 
     def get_connections(self) -> list[ItemConnectionObject]:
         assert self.item is not None
@@ -146,6 +151,9 @@ class TowerObject:
 
         self.item['ItemConnections']['ArrayProperty']['StructProperty']['values'] \
             = list(map(lambda con: con.to_dict(), cons))
+
+        if self.properties is not None:
+            self.properties['ItemConnections'] = self.item['ItemConnections']
 
     def __lt__(self, other):
         if not isinstance(other, TowerObject):
