@@ -4,6 +4,16 @@ from .object import TowerObject
 ITEM_ONLY_OBJECTS = ['SDNL_ArmorPickup', 'AmmoPickup', 'HealthPickup', 'GW_SDNLFlag', 'GW_SDNLOddball',
                      'WeaponPickupIO']
 
+IO_GW_ITEMS = ['AmmoPickup', 'CustomSpawnPoint', 'HealthPickup', 'SDNL_ArmorPickup', 'GW_SDNLOddball', 'GW_SDNLFlag',
+               'GW_BallRaceFinish', 'GW_BallRaceSpawn', 'LaserBeam', 'LeverBasic', 'ButtonShapes', 'PhysicsSlot',
+               'WeaponPickupIO', 'ButtonCanvas', 'LocationVolumeIO', 'DamageHealVolume', 'BlockingVolume',
+               'WaterVolume', 'CommentVolume', 'DialogueVolume', 'GravityVolume', 'ButtonVolume', 'HitTargetVolume',
+               'LadderVolume', 'PlayerMovementVolume', 'PostProcessVolume', 'PushVolume', 'SizeVolume',
+               'SkyProcessVolume', 'SpawnPointTagVolume', 'TriggerVolume', 'WeaponStripVolume', 'TeleportVolume',
+               'GameWorldEvents', 'LaserBeamReciever', 'Mover', 'Counter', 'LogicGateAnd', 'SwitchBoolean',
+               'LogicGateNot', 'LogicGateOr', 'LogicGateXor', 'Random', 'Relay', 'Timer', 'Toggle', 'WorldControl',
+               'LeverLightSwitch', 'MoverAdvanced', 'MoverPlayerSlide', 'MoverTrain']
+
 
 class Suitebro:
     def __init__(self, data: dict):
@@ -75,6 +85,10 @@ class Suitebro:
     # Returns all non-property TowerObjects
     def items(self) -> list[TowerObject]:
         return [obj for obj in self.objects if obj.item is not None]
+
+    def inventory_items(self) -> list[TowerObject]:
+        return [obj for obj in self.objects if obj.item is not None and obj.properties is not None
+                and obj.get_name() not in IO_GW_ITEMS]
 
     # Convert item list back into a dict
     def to_dict(self):

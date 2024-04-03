@@ -23,16 +23,6 @@ from .util import xyz, xyzint, xyz_to_string
 # _active_saves is a stack
 _active_saves: list[Suitebro] = []
 
-IO_GW_ITEMS = ['AmmoPickup', 'CustomSpawnPoint', 'HealthPickup', 'SDNL_ArmorPickup', 'GW_SDNLOddball', 'GW_SDNLFlag',
-               'GW_BallRaceFinish', 'GW_BallRaceSpawn', 'LaserBeam', 'LeverBasic', 'ButtonShapes', 'PhysicsSlot',
-               'WeaponPickupIO', 'ButtonCanvas', 'LocationVolumeIO', 'DamageHealVolume', 'BlockingVolume',
-               'WaterVolume', 'CommentVolume', 'DialogueVolume', 'GravityVolume', 'ButtonVolume', 'HitTargetVolume',
-               'LadderVolume', 'PlayerMovementVolume', 'PostProcessVolume', 'PushVolume', 'SizeVolume',
-               'SkyProcessVolume', 'SpawnPointTagVolume', 'TriggerVolume', 'WeaponStripVolume', 'TeleportVolume',
-               'GameWorldEvents', 'LaserBeamReciever', 'Mover', 'Counter', 'LogicGateAnd', 'SwitchBoolean',
-               'LogicGateNot', 'LogicGateOr', 'LogicGateXor', 'Random', 'Relay', 'Timer', 'Toggle', 'WorldControl',
-               'LeverLightSwitch', 'MoverAdvanced', 'MoverPlayerSlide', 'MoverTrain']
-
 
 def get_active_save() -> Suitebro:
     return _active_saves[-1] if len(_active_saves) > 0 else None
@@ -614,8 +604,6 @@ def main():
             else:
                 module = module_or_path
 
-            # TODO lookahead for overwrite to detect issues and error out before even starting
-
             # Input file name
             input_filename = args['input']
 
@@ -628,6 +616,9 @@ def main():
 
             # Load save
             save = load_suitebro(input_filename, only_json=only_json)
+
+            inv_items = save.inventory_items()
+            num_inv_items = len(inv_items)
 
             # Default selector is ItemSelector
             selector = ItemSelector()
@@ -703,15 +694,18 @@ def main():
             # Writeback save
             save_suitebro(save, args['output'], only_json=only_json)
 
-            # Display items in save
             print(Fore.GREEN + f'\nSuccessfully exported to {args["output"]}!')
             print(Style.RESET_ALL)
-            print('Make sure you have the following items in your inventory before loading the map:')
-            inventory_items = [obj for obj in save.objects if obj.item is not None and obj.properties is not None
-                               and obj.get_name() not in IO_GW_ITEMS]
-            inventory_items = sorted(inventory_items, key=TowerObject.get_name)
-            for name, objs in itertools.groupby(inventory_items, TowerObject.get_name):
-                print(f'    {name}: {len(list(objs))}')
+
+            # Display items in save
+            final_inv_items = save.inventory_items()
+            # TODO really this should check whether the quantity of a single item type has increased, but this is
+            #  probably fine
+            if len(final_inv_items) > num_inv_items:
+                print('Make sure you have the following items in your inventory before loading the map:')
+                final_inv_items = sorted(final_inv_items, key=TowerObject.get_name)
+                for name, objs in itertools.groupby(final_inv_items, TowerObject.get_name):
+                    print(f'    {name}: {len(list(objs))}')
 
 
 if __name__ == '__main__':
