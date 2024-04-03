@@ -290,10 +290,17 @@ def get_indexed_tools() -> PartialToolListType | None:
     for script_path in get_tool_scripts():
         # If tool not found in index, load and add it
         if script_path not in tools_index:
-            tool_tuple = load_tool(script_path)
-            if tool_tuple is None:
-                print(f'Failed to load tool: {script_path}')
-                continue
+            print(f'NEW TOOL SCRIPT DETECTED: {os.path.basename(script_path)} (located in '
+                  f'{os.path.dirname(script_path)})')
+            response = input('Are you sure you want to trust this script? (Y/n)\n').strip().casefold()
+            if response == 'y' or response == 'ye' or response == 'yes':
+                tool_tuple = load_tool(script_path)
+                if tool_tuple is None:
+                    print(f'Failed to load tool: {script_path}')
+                    continue
+            else:
+                print('Aborting program.')
+                sys.exit(0)
 
             output_tools.append(tool_tuple)
 
@@ -312,6 +319,7 @@ def load_tools(verbose=True) -> PartialToolListType:
         make_tools_index(tools_index)
         return tools_index
 
+    # First time execution!
     # Get all tooling scripts
     if not os.path.exists(TOOLS_PATH):
         os.mkdir(TOOLS_PATH)
