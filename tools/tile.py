@@ -24,7 +24,7 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
                     continue
 
                 # Copy selection
-                copies = TowerObject.copy_group(selection)
+                copies = TowerObject.copy_selection(selection)
 
                 # Set position of copy
                 offset = xyz(x * dx, y * dy, z * dz)

@@ -1,10 +1,8 @@
+import tools.set
 from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
-from pytower.util import xyz, xyzint
-
-import tools.set
 
 TOOL_NAME = 'Replace'
 VERSION = '1.0'

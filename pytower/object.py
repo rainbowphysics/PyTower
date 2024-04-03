@@ -1,12 +1,14 @@
 import copy
 import json
 import logging
+import typing
 import uuid
 
 import numpy as np
 
 from . import tower
 from .connections import ItemConnectionObject
+from .selection import Selection
 
 
 def replace_guids(datadict, replacement_table):
@@ -34,9 +36,11 @@ class TowerObject:
             }''')
 
     def is_canvas(self) -> bool:
+        if self.item is None:
+            return False
+
         item_props = self.item['properties']
-        return (self.item is not None
-                and (self.get_name().startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props))
+        return self.get_name().startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props
 
     def get_name(self) -> str:
         if self.item is None:
@@ -44,6 +48,8 @@ class TowerObject:
         return self.item['name']
 
     def get_custom_name(self) -> str:
+        if self.item is None:
+            return ''
         return self.item['properties']['ItemCustomName']['NameProperty']
 
     def matches_name(self, name) -> bool:
@@ -70,13 +76,14 @@ class TowerObject:
             copied.item['guid'] = str(uuid.uuid4()).upper()
         return copied
 
+    # Returns new selection containing the new copied objects
     @staticmethod
-    def copy_group(group: list) -> list['TowerObject']:
+    def copy_selection(selection: Selection) -> Selection:
         # First pass: new guids and setup replacement table
         replacement_table = {}
-        copies = [None] * len(group)
+        copies: list[TowerObject | None] = [None] * len(selection)
         new_groups = {}
-        for x, obj in enumerate(group):
+        for x, obj in enumerate(selection):
             if obj.item is not None:
                 old_guid = obj.item['guid']
 
@@ -103,7 +110,7 @@ class TowerObject:
             obj.item = replace_guids(obj.item, replacement_table)
             obj.properties = replace_guids(obj.properties, replacement_table)
 
-        return copies
+        return Selection(copies)
 
     def _get_xyz_attr(self, name: str) -> np.ndarray | None:
         if self.item is None:
@@ -163,11 +170,15 @@ class TowerObject:
         self._set_xyz_attr('scale', value)
 
     def add_connection(self, con: ItemConnectionObject):
+        assert self.item is not None
+        assert self.properties is not None
         connections = self.item['ItemConnections']['ArrayProperty']['StructProperty']['values']
         connections += con.to_dict()
         self.properties['ItemConnections'] = self.item['ItemConnections']
 
     def get_connections(self) -> list[ItemConnectionObject]:
+        assert self.item is not None
+
         cons = []
         for data in self.item['ItemConnections']['ArrayProperty']['StructProperty']['values']:
             cons.append(ItemConnectionObject(data))
@@ -175,6 +186,8 @@ class TowerObject:
         return cons
 
     def set_connections(self, cons: list[ItemConnectionObject]):
+        assert self.item is not None
+
         self.item['ItemConnections']['ArrayProperty']['StructProperty']['values'] \
             = list(map(lambda con: con.to_dict(), cons))
 

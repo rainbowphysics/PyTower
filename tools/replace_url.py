@@ -1,10 +1,8 @@
+import tools.set_url
 from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tower import ToolParameterInfo, ParameterDict
-from pytower.util import xyz, xyzint
-
-import tools.set_url
 
 TOOL_NAME = 'ReplaceURL'
 VERSION = '1.0'

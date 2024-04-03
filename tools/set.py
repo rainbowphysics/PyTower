@@ -1,8 +1,7 @@
 from pytower import tower
 from pytower.selection import Selection
-from pytower.suitebro import Suitebro, TowerObject
+from pytower.suitebro import Suitebro
 from pytower.tower import ToolParameterInfo, ParameterDict
-from pytower.util import xyz, xyzint
 
 TOOL_NAME = 'Set'
 VERSION = '1.0'
@@ -15,6 +14,9 @@ PARAMETERS = {'material': ToolParameterInfo(dtype=str, description='Material to 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
     mat = params.material
     for obj in selection:
+        if obj.item is None or obj.properties is None:
+            continue
+
         item_props = obj.item['properties']
 
         # Skip over non-canvas items

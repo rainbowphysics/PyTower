@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import re
 
 
-class Selection(set):
+class Selection(set[TowerObject]):
     @staticmethod
     def _group_key(obj: TowerObject):
         return obj.group_id()

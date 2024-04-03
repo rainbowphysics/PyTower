@@ -1,8 +1,7 @@
 from pytower import tower
 from pytower.selection import Selection
-from pytower.suitebro import Suitebro, TowerObject
+from pytower.suitebro import Suitebro
 from pytower.tower import ToolParameterInfo, ParameterDict
-from pytower.util import xyz
 
 TOOL_NAME = 'Scale'
 VERSION = '1.0'
