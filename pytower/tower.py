@@ -552,10 +552,8 @@ def main():
     match args['subcmd']:
         case 'help':
             parser.print_help(sys.stdout)
-            sys.exit(0)
         case 'version':
             print(f'PyTower {__version__}')
-            sys.exit(0)
         case 'convert':
             filename = args['filename'].strip()
             abs_filepath = os.path.realpath(filename)
@@ -567,7 +565,6 @@ def main():
             else:
                 output = os.path.join(in_dir, os.path.basename(abs_filepath) + '.json')
                 run_suitebro_parser(abs_filepath, False, output, overwrite=True)
-            sys.exit(0)
         case 'list':
             print('Available tools:')
             for _, meta in tools:
@@ -577,7 +574,6 @@ def main():
                 if meta.author is not None:
                     tool_str += f' by {meta.author}'
                 print(tool_str)
-            sys.exit(0)
         case 'info':
             tool_name = args['tool'].strip().casefold()
             tool = find_tool(tools, tool_name)
@@ -705,7 +701,11 @@ def main():
                 print('Make sure you have the following items in your inventory before loading the map:')
                 final_inv_items = sorted(final_inv_items, key=TowerObject.get_name)
                 for name, objs in itertools.groupby(final_inv_items, TowerObject.get_name):
-                    print(f'    {name}: {len(list(objs))}')
+                    quantity = len(list(objs))
+                    print(f'{quantity:>9,}x {name}')
+
+    if len(_active_saves) > 0:
+        print('WARNING: Saves are still loaded in PyTower! Is this a bug?')
 
 
 if __name__ == '__main__':
