@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "You are free to use this software how ever you wish according to the MIT License. If you wish to reference it, a citation is provided below."
+authors:
+- family-names: "Physics"
+  given-names: "Rainbow"
+title: "PyTower"
+version: 0.1.0
+date-released: 2024-03-31
+url: "https://github.com/rainbowphysics/PyTower"
