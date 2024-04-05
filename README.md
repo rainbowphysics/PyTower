@@ -9,8 +9,8 @@ Discord community link: https://discord.gg/NUufVuu4Ve
 
 ## Dependencies
  - Python 3.9+
- - numpy, scipy, requests (automatically installed by pip)
- - Rust (nightly build)
+ - Rust (latest release)
+ - (On Windows) Git Bash and Build Tools for Visual Studio 2017
 
 ## Recommened Installation Instructions
 1. (On Windows) Download Git Bash: https://git-scm.com/download/win. 
