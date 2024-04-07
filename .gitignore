@@ -169,6 +169,7 @@ tools/CondoData.json
 tools/CondoData_output.json
 tools/CondoData_output
 saves/
+backup/
 
 # Suitebro parser
 tower-unite-suitebro/
