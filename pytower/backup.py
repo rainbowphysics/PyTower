@@ -80,7 +80,10 @@ def save_resources(save: Suitebro):
 
     # If save is just default "CondoData", use parent folder for name
     if save_name == 'CondoData':
-        save_name = save.directory
+        save_name = os.path.basename(save.directory)
+
+    # Sanitize save_name a little more
+    save_name = save_name.replace(' ', '-').strip()
 
     cur_time = datetime.datetime.now()
     timestamp = str(cur_time).replace(' ', '-').replace(':', '-')
