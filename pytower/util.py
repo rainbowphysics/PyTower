@@ -6,17 +6,21 @@ from typing import Any, Callable
 import numpy as np
 
 
+# Iteratively walks through dictionary using breadth-first search
 def dict_walk(data: dict, func: Callable[[list | dict | Any], Any]):
+    if data is None:
+        return
+
     q = deque([data])
     while len(q) > 0:
         elem = q.popleft()
         func(elem)
-        if isinstance(elem, list):
+        if isinstance(elem, list) or isinstance(elem, tuple):
             for item in elem:
                 q.append(item)
         elif isinstance(elem, dict):
             for k, v in elem.items():
-                q.append(k, v)
+                q.append((k, v))
 
 
 def read_bytearray(fd: io.BytesIO, buf_size: int) -> bytearray:

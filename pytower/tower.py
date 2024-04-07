@@ -16,6 +16,7 @@ import numpy as np
 from colorama import Fore, Back, Style
 
 from . import __version__, root_directory
+from .backup import save_resources
 from .selection import *
 from .suitebro import Suitebro
 from .util import xyz, xyzint, xyz_to_string
@@ -374,6 +375,11 @@ def get_parser(tool_names: str):
     convert_parser = subparsers.add_parser('convert', help='Convert given file to .json or CondoData')
     convert_parser.add_argument('filename', type=str, help='File to use as input')
 
+    # Backup subcommand
+    backup_parser = subparsers.add_parser('backup', help='Backup or restore canvases for save files')
+    backup_parser.add_argument('mode', type=str, help='Mode to use (save or restore)')
+    backup_parser.add_argument('filename', type=str, help='Name of file to use')
+
     # List subcommand
     subparsers.add_parser('list', help='List tools')
 
@@ -485,7 +491,7 @@ def load_suitebro(filename: str, only_json=False) -> Suitebro:
     with open(json_output_path, 'r') as fd:
         save_json = json.load(fd)
 
-    save = Suitebro(save_json)
+    save = Suitebro(filename, save_json)
     _active_saves.append(save)
 
     return save
@@ -582,6 +588,18 @@ def main():
             else:
                 output = os.path.join(in_dir, os.path.basename(abs_filepath) + '.json')
                 run_suitebro_parser(abs_filepath, False, output, overwrite=True)
+        case 'backup':
+            match args['mode']:
+                case 'save':
+                    filename = args['filename']
+                    if not os.path.isfile(filename):
+                        print(f'Could not find {filename}!')
+                        sys.exit(1)
+
+                    save = load_suitebro(filename)
+                    save_resources(save)
+                case 'restore':
+                    pass
         case 'list':
             print('Available tools:')
             for _, meta in tools:
@@ -754,7 +772,7 @@ def main():
                     print(f'{quantity:>9,}x {name}')
 
     if len(_active_saves) > 0:
-        print('WARNING: Saves are still loaded in PyTower! Is this a bug?')
+        logging.debug('WARNING: Saves are still loaded in PyTower! Is this a bug?')
 
 
 if __name__ == '__main__':

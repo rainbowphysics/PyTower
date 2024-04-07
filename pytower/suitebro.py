@@ -16,7 +16,8 @@ IO_GW_ITEMS = ['AmmoPickup', 'CustomSpawnPoint', 'HealthPickup', 'SDNL_ArmorPick
 
 
 class Suitebro:
-    def __init__(self, data: dict):
+    def __init__(self, filename: str, data: dict):
+        self.filename = filename
         self.data: dict = data
 
         # Parse objects

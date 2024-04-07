@@ -1,0 +1,103 @@
+import hashlib
+import json
+import os
+import sys
+import datetime
+
+import requests
+import asyncio
+
+import pytower
+from pytower.suitebro import Suitebro
+from pytower.util import dict_walk
+
+
+def hash_image(data: bytes):
+    return hashlib.sha1(data, usedforsecurity=False).hexdigest()[:10]
+
+
+BACKUP_DIR = os.path.join(pytower.root_directory, 'backup')
+
+
+async def _download_image(url):
+    try:
+        # Send a GET request to the URL
+        response = requests.get(url)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            file_hash = hash_image(response.content)
+
+            # Write the content to a file, using the hash to ensure uniqueness
+            file_type = url.split('.')[-1]
+            filename = f'{file_hash}.{file_type}'
+            with open(filename, 'wb') as f:
+                f.write(response.content)
+
+            print(f'{url} downloaded successfully.')
+
+            return url, filename
+        else:
+            print(f"Failed to download {url}. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+async def _download_images(urls):
+    results = await asyncio.gather(*[_download_image(url) for url in urls])
+    if results[0] is None:
+        return
+
+    print(results)
+
+    # Create backup index
+    index = {}
+    for url, filename in results:
+        index[url] = filename
+
+    with open('index.json', 'w') as fd:
+        json.dump(index, fd, indent=2)
+
+    # Now create replacement index
+    replacements = {}
+    for url, _ in results:
+        replacements[url] = None
+
+    with open('replacement_index.json', 'w') as fd:
+        json.dump(replacements, fd, indent=2)
+
+
+def save_resources(save: Suitebro):
+    # First make the folder for the backup
+    save_name = save.filename
+    cur_time = datetime.datetime.now()
+    timestamp = str(cur_time).replace(' ', '-').replace(':', '-')
+
+    backup_path = os.path.join(BACKUP_DIR, f'{save_name}_{timestamp}')
+    os.makedirs(backup_path)
+
+    # chdir to it
+    old_cwd = os.getcwd()
+    os.chdir(backup_path)
+
+    # Gather all URLs
+    urls = set()
+
+    def url_processor(dict_entry):
+        if isinstance(dict_entry, tuple) and len(dict_entry) == 2:
+            k, v = dict_entry
+            if k == 'URL' or k == 'CanvasURL':
+                urls.add(v['StrProperty'])
+
+    for obj in save.objects:
+        dict_walk(obj.item, url_processor)
+        dict_walk(obj.properties, url_processor)
+
+    # Process URLs further
+    urls = {url.strip() for url in urls if url.strip() != ''}
+
+    # Now that all the URLs have been added to urls set, download them all
+    asyncio.run(_download_images(urls))
+
+    # Return to previous cwd
+    os.chdir(old_cwd)
