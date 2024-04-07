@@ -379,6 +379,10 @@ def get_parser(tool_names: str):
     info_parser = subparsers.add_parser('info', help='More information about tool')
     info_parser.add_argument('tool', type=str, help='Tool to get information about')
 
+    # Scan subcommand
+    scan_parser = subparsers.add_parser('scan', help='Scan given directory for tools')
+    scan_parser.add_argument('path', type=str, help='Path to use (use "." for current directory)')
+
     # Run subcommand
     run_parser = subparsers.add_parser('run', help='Run given tool')
 
@@ -592,6 +596,35 @@ def main():
 
             logging.error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
             sys.exit(1)
+        case 'scan':
+            for file in os.listdir(args['path']):
+                if file.endswith('.py') and file != '__init__.py' and file != '__main__.py':
+                    abs_path = os.path.normcase(os.path.abspath(file))
+
+                    # Check if files already exist before registering them
+                    exists = False
+                    for tool_tuple in tools:
+                        module_or_path, _ = tool_tuple
+                        if isinstance(module_or_path, ModuleType):
+                            path = os.path.normcase(module_or_path.__file__)
+                        else:
+                            path = module_or_path
+
+                        if abs_path == path:
+                            exists = True
+                            break
+
+                    if exists:
+                        print(f'Found already registered script {file}')
+                        continue
+
+                    # At this point, the tool script must be novel so load it
+                    tool_tuple = load_tool(file)
+                    if tool_tuple is not None:
+                        tools.append(tool_tuple)
+
+            # Finally update tools index
+            make_tools_index(tools)
         case 'run':
             # Parse tool name
             tool_name = args['tool'].strip().casefold()
