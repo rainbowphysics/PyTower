@@ -22,7 +22,7 @@ BACKUP_DIR = os.path.join(pytower.root_directory, 'backup')
 async def _download_image(url):
     try:
         # Send a GET request to the URL
-        response = requests.get(url)
+        response = requests.get(url, headers={'User-agent': 'PyTower'})
 
         # Check if the request was successful (status code 200)
         if response.status_code == 200:
