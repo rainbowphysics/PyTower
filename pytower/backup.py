@@ -22,6 +22,8 @@ BACKUP_DIR = os.path.join(pytower.root_directory, 'backup')
 async def _download_image(url):
     try:
         # Send a GET request to the URL
+        if not url.startswith('https://') and not url.startswith('http://'):
+            url = 'http://' + url
         response = requests.get(url, headers={'User-agent': 'PyTower'})
 
         # Check if the request was successful (status code 200)
@@ -42,26 +44,26 @@ async def _download_image(url):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+    return url, None
+
 
 async def _download_images(urls):
     results = await asyncio.gather(*[_download_image(url) for url in urls])
-    if results[0] is None:
-        return
-
-    print(results)
 
     # Create backup index
     index = {}
     for url, filename in results:
-        index[url] = filename
+        if filename is not None:
+            index[url] = filename
 
     with open('index.json', 'w') as fd:
         json.dump(index, fd, indent=2)
 
     # Now create replacement index
     replacements = {}
-    for url, _ in results:
-        replacements[url] = None
+    for url, filename in results:
+        if filename is not None:
+            replacements[url] = None
 
     with open('replacement_index.json', 'w') as fd:
         json.dump(replacements, fd, indent=2)
@@ -70,6 +72,11 @@ async def _download_images(urls):
 def save_resources(save: Suitebro):
     # First make the folder for the backup
     save_name = save.filename
+
+    # If save is just default "CondoData", use parent folder for name
+    if save_name == 'CondoData':
+        save_name = save.directory
+
     cur_time = datetime.datetime.now()
     timestamp = str(cur_time).replace(' ', '-').replace(':', '-')
 

@@ -491,7 +491,7 @@ def load_suitebro(filename: str, only_json=False) -> Suitebro:
     with open(json_output_path, 'r') as fd:
         save_json = json.load(fd)
 
-    save = Suitebro(filename, save_json)
+    save = Suitebro(filename, in_dir, save_json)
     _active_saves.append(save)
 
     return save
