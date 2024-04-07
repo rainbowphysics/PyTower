@@ -6,20 +6,25 @@ import datetime
 
 import requests
 import asyncio
+from threading import Lock
 
 import pytower
 from pytower.suitebro import Suitebro
 from pytower.util import dict_walk
+
+PRINT_LOCK = Lock()
+BACKUP_DIR = os.path.join(pytower.root_directory, 'backup')
 
 
 def hash_image(data: bytes):
     return hashlib.sha1(data, usedforsecurity=False).hexdigest()[:10]
 
 
-BACKUP_DIR = os.path.join(pytower.root_directory, 'backup')
+def print_safe(msg: str):
+    with PRINT_LOCK:
+        print(msg)
 
-
-async def _download_image(url):
+def _download_image(url):
     try:
         # Send a GET request to the URL
         if not url.startswith('https://') and not url.startswith('http://'):
@@ -36,19 +41,19 @@ async def _download_image(url):
             with open(filename, 'wb') as f:
                 f.write(response.content)
 
-            print(f'{url} downloaded successfully.')
+            print_safe(f'{url} downloaded successfully.')
 
             return url, filename
         else:
-            print(f"Failed to download {url}. Status code: {response.status_code}")
+            print_safe(f"Failed to download {url}. Status code: {response.status_code}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print_safe(f"An error occurred: {e}")
 
     return url, None
 
 
 async def _download_images(urls):
-    results = await asyncio.gather(*[_download_image(url) for url in urls])
+    results = await asyncio.gather(*[asyncio.to_thread(_download_image, url) for url in urls])
 
     # Create backup index
     index = {}
