@@ -31,6 +31,7 @@ Discord community link: https://discord.gg/NUufVuu4Ve
  - `pytower convert`
  - `pytower list`
  - `pytower info <TOOLNAME>` 
+ - `pytower scan <PATH>`
  - `pytower run <TOONAME> ...`
 
 Example usage:
@@ -72,7 +73,7 @@ To register a new tool to use with PyTower, simply create a new script in the to
 - `URL`: External URL for more information (e.g., a link to a forum post)
 - `INFO`: Further info printed when calling `pytower info <toolname>`
 - `PARAMETERS`: Dictionary of required parameters and their types (registered as `ToolParameterInfo` instances)
-- `IGNORE=True`: Tells PyTower to skip over this script. Useful for shared libraries or utility scripts
+- `HIDDEN=True`: Tells PyTower to hide and skip over this script. Useful for shared libraries
 
 ## Contributing
 This project is open source and open to public contributions. 

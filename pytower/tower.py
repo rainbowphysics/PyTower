@@ -82,13 +82,14 @@ class ToolParameterInfo:
 
 class ToolMetadata:
     def __init__(self, tool_name: str, params: dict[str, ToolParameterInfo], version: str, author: str, url: str,
-                 info: str):
+                 info: str, hidden: bool):
         self.tool_name = tool_name
         self.params = params
         self.version = version
         self.author = author
         self.url = url
         self.info = info
+        self.hidden = hidden
 
     def get_info(self) -> str:
         info_str = f'{self.tool_name} Information:'
@@ -147,13 +148,14 @@ class ToolMetadata:
         author = data_or_none['author']
         url = data_or_none['url']
         info = data_or_none['info']
+        hidden = data_or_none['hidden']
 
         # Handle parameter list
         params = data_or_none['params']
         for p_name, p_info_dict in params.items():
             params[p_name] = ToolParameterInfo.from_dict(p_info_dict)
 
-        return ToolMetadata(tool_name, params, version, author, url, info)
+        return ToolMetadata(tool_name, params, version, author, url, info, hidden)
 
 
 class ParameterDict(dict):
@@ -180,10 +182,6 @@ def load_tool(script_path, verbose=True) -> tuple[ModuleType, ToolMetadata] | No
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        # Check if module should be ignored before proceeding
-        if hasattr(module, 'IGNORE') and getattr(module, 'IGNORE'):
-            return None
-
         # Get script directives/metadata variables
         tool_name = ToolMetadata.strattr_or_default(module, 'TOOL_NAME', module_name)
         params = ToolMetadata.attr_or_default(module, 'PARAMETERS', {})
@@ -191,10 +189,12 @@ def load_tool(script_path, verbose=True) -> tuple[ModuleType, ToolMetadata] | No
         author = ToolMetadata.strattr_or_default(module, 'AUTHOR', None)
         url = ToolMetadata.strattr_or_default(module, 'URL', None)
         info = ToolMetadata.strattr_or_default(module, 'INFO', None)
+        hidden = ToolMetadata.strattr_or_default(module, 'HIDDEN', False)
 
         # Check if the module has a main function before registering it
-        if not hasattr(module, 'main') and verbose:
-            logging.warning(f"No 'main' function found in tool '{tool_name}'. Skipping.")
+        if not hasattr(module, 'main') and not hidden:
+            if verbose:
+                logging.warning(f"No 'main' function found in tool '{tool_name}'. Skipping.")
             return None
 
         if verbose:
@@ -203,9 +203,11 @@ def load_tool(script_path, verbose=True) -> tuple[ModuleType, ToolMetadata] | No
                 success_message += f' {version}'
             if author is not None:
                 success_message += f' by {author}'
-            logging.info(success_message)
 
-        return module, ToolMetadata(tool_name, params, version, author, url, info)
+            if not hidden and verbose:
+                logging.info(success_message)
+
+        return module, ToolMetadata(tool_name, params, version, author, url, info, hidden)
 
     except Exception as e:
         logging.error(f"Error loading tool '{script}': {e}")
@@ -531,6 +533,9 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
 
     name = name.casefold().strip()
     for module_or_path, meta in tools:
+        if meta.hidden:
+            continue
+
         tool_name = meta.tool_name.casefold().strip()
         # Use os.path.commonprefix as a utility I guess
         prefix = os.path.commonprefix([name, tool_name])
@@ -553,7 +558,7 @@ def main():
     colorama.init(convert=sys.platform == 'win32')
 
     tools = load_tools(verbose=True)
-    tool_names = ', '.join([meta.tool_name for _, meta in tools])
+    tool_names = ', '.join([meta.tool_name for _, meta in tools if not meta.hidden])
     parser = get_parser(tool_names)
     args = parse_args(parser)
 
@@ -580,6 +585,9 @@ def main():
         case 'list':
             print('Available tools:')
             for _, meta in tools:
+                if meta.hidden:
+                    continue
+
                 tool_str = f'  {meta.tool_name}'
                 if meta.version is not None:
                     tool_str += f' (v{meta.version})'
@@ -598,7 +606,7 @@ def main():
             sys.exit(1)
         case 'scan':
             for file in os.listdir(args['path']):
-                if file.endswith('.py') and file != '__init__.py' and file != '__main__.py':
+                if file.endswith('.py') and file != '__init__.py' and file != '__main__.py' and file != 'setup.py':
                     abs_path = os.path.normcase(os.path.abspath(file))
 
                     # Check if files already exist before registering them
