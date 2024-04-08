@@ -2,6 +2,7 @@ import importlib
 import pkgutil
 import os
 import subprocess
+import sys
 
 import setuptools
 from setuptools import setup
@@ -22,7 +23,7 @@ def run_command(args, error_context='Error', can_fail=False):
     except Exception as e:
         logging.error(f"{error_context}: {e}")
         if can_fail:
-            raise e
+            sys.exit(1)
 
 
 def get_suitebro_parser():
