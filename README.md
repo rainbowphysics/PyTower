@@ -13,9 +13,9 @@ Discord community link: https://discord.gg/NUufVuu4Ve
  - (On Windows) Git Bash and Build Tools for Visual Studio 2017
 
 ## Recommened Installation Instructions
-1. (On Windows) Download Git Bash: https://git-scm.com/download/win. 
+1. (On Windows) Install Git Bash: https://git-scm.com/download/win. 
 2. Clone the repository using `git clone https://github.com/rainbowphysics/PyTower.git`. If typing `git` into the command line does nothing, you may have to add git manually to your PATH environment variable.
-3. Download Rust (latest nightly build): https://www.rust-lang.org/tools/install
+3. Install Rust (latest stable build): https://www.rust-lang.org/tools/install
 4. Ensure that Rust `cargo` is added to the PATH environment variable by running `cargo --version`.
 5. Install Build Tools for Visual Studio (2017 or later) with Visual C++: https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022
 6. In the root repository directory, run `pip install -e .`. Note that the `-e` flag is important and the install will break without it
