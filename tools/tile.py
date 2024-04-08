@@ -3,7 +3,7 @@ from pytower.copy import copy_selection
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
 from pytower.tower import ToolParameterInfo, ParameterDict
-from pytower.util import xyz, xyzint
+from pytower.util import xyz, xyzint, xyz_max
 
 TOOL_NAME = 'Tile'
 VERSION = '1.0'
@@ -15,7 +15,8 @@ PARAMETERS = {'tile': ToolParameterInfo(dtype=xyzint, description='x,y,z tiling 
 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
-    nx, ny, nz = params.tile
+    # Get tile/offset parameters, and handle edge-case for 0-entries
+    nx, ny, nz = xyz_max(params.tile, xyzint(1, 1, 1))
     dx, dy, dz = params.offset
     for x in range(nx):
         for y in range(ny):

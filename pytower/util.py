@@ -61,3 +61,15 @@ def xyzint(*args):
 
 def xyz_to_string(data: np.ndarray):
     return f'{data[0]},{data[1]},{data[2]}'
+
+
+def xyz_max(x1: np.ndarray, x2: np.ndarray):
+    return np.maximum(x1, x2)
+
+
+def xyz_min(x1: np.ndarray, x2: np.ndarray):
+    return np.minimum(x1, x2)
+
+
+def xyz_clamp(x: np.ndarray, min_clamp: np.ndarray, max_clamp: np.ndarray):
+    return xyz_max(xyz_min(x, max_clamp), min_clamp)
