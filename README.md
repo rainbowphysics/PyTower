@@ -8,7 +8,7 @@ A high-level Python API for editing/generating Tower Unite maps
 Discord community link: https://discord.gg/NUufVuu4Ve
 
 ## Dependencies
- - Python 3.9+
+ - Python 3.10+
  - Rust (latest release)
  - (On Windows) Git Bash and Build Tools for Visual Studio 2017
 
