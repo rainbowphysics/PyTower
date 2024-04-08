@@ -26,19 +26,20 @@ Discord community link: https://discord.gg/NUufVuu4Ve
  - PyTower can also be imported into other Python projects with `import pytower`
 
 ### Available Subcommands:
- - `pytower help` 
- - `pytower version`
- - `pytower convert`
- - `pytower list`
- - `pytower info <TOOLNAME>` 
- - `pytower scan <PATH>`
- - `pytower run <TOONAME> ...`
+ - `pytower help`: General help page
+ - `pytower version`: PyTower version
+ - `pytower convert`: Convert between CondoData and .json
+ - `pytower backup`: (WIP) Canvas backup tool
+ - `pytower scan <PATH>`: Scans path/directory for tool scripts
+ - `pytower list`: List all detected tools
+ - `pytower info <TOOLNAME>`: Get detailed information about `<TOOLNAME>` 
+ - `pytower run <TOONAME> ...`: Run tool
 
 Example usage:
- - `pytower help`
- - `pytower info Tile`
- - `pytower run CreateImageAtlas --input CondoData`
- - `pytower run Rotate --output RotatedCondo --select group:4 -@ parameters rotation=0,0,45 local=true`
+ - `pytower help`: Displays help about PyTower
+ - `pytower info Tile`: Gets advanced info/help for tool "Tile"
+ - `pytower scan .`: Scans current directory for tool scripts to add
+ - `pytower run Rotate --output RotatedCondo --select group:4 -@ rotation=0,0,45 local=true`: Runs the "Rotate" tool with a group selection and passed-through parameters
 
 ## `pytower run` arguments
  - -i/--input: Input file to use (default: CondoData)
