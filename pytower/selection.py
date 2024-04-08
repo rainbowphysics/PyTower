@@ -18,6 +18,33 @@ class Selection(set[TowerObject]):
     def ungrouped(self) -> 'Selection':
         return Selection({obj for obj in self if obj.group_id() < 0})
 
+    def get(self) -> TowerObject:
+        return next(iter(self))
+
+    def __add__(self, other: 'Selection') -> 'Selection':
+        if not isinstance(other, Selection):
+            raise ValueError(f'Cannot add Selection with {type(other)}!')
+
+        return Selection(self.union(other))
+
+    def __iadd__(self, other: 'Selection') -> None:
+        if not isinstance(other, Selection):
+            raise ValueError(f'Cannot add Selection with {type(other)}!')
+
+        self.update(other)
+
+    def __mul__(self, other: 'Selection') -> 'Selection':
+        if not isinstance(other, Selection):
+            raise ValueError(f'Cannot multiply Selection with {type(other)}!')
+
+        return Selection(self.intersection(other))
+
+    def __imul__(self, other: 'Selection') -> None:
+        if not isinstance(other, Selection):
+            raise ValueError(f'Cannot multiply Selection with {type(other)}!')
+
+        self.intersection_update(other)
+
     def __hash__(self):
         return hash(tuple(self))
 
@@ -95,6 +122,7 @@ class EverythingSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         return everything
+
 
 class NothingSelector(Selector):
     def __init__(self):

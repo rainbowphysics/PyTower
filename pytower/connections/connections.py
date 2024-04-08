@@ -74,10 +74,10 @@ class ItemConnectionObject:
 
     # Returns evnet being listened to
     def get_listener_event_name(self) -> str:
-        return self.data['value']['Item']['StructProperty']['value']
+        return self.data['value']['ListenerEventName']['NameProperty']
 
     def set_listener_event_name(self, name: str):
-        self.data['value']['Item']['StructProperty']['value'] = name
+        self.data['value']['ListenerEventName']['NameProperty'] = name
 
     # Returns datatype of attached data
     def get_datatype(self) -> dict:

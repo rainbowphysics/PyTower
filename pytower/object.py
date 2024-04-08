@@ -46,7 +46,7 @@ class TowerObject:
 
     def matches_name(self, name) -> bool:
         name = name.casefold()
-        return self.get_name() == name or self.get_custom_name().casefold() == name
+        return self.get_name().casefold() == name or self.get_custom_name().casefold() == name
 
     def group_id(self) -> int:
         if self.item is None or 'GroupID' not in self.item['properties']:
@@ -71,6 +71,9 @@ class TowerObject:
         if copied.item is not None:
             copied.item['guid'] = str(uuid.uuid4()).upper()
         return copied
+
+    def guid(self) -> str:
+        return self.item['guid']
 
     def _get_xyz_attr(self, name: str) -> np.ndarray | None:
         if self.item is None:
@@ -131,17 +134,17 @@ class TowerObject:
 
     def add_connection(self, con: ItemConnectionObject):
         assert self.item is not None
-        connections = self.item['ItemConnections']['ArrayProperty']['StructProperty']['values']
-        connections += con.to_dict()
+        connections = self.item['properties']['ItemConnections']['ArrayProperty']['StructProperty']['values']
+        connections.append(con.to_dict())
 
         if self.properties is not None:
-            self.properties['ItemConnections'] = self.item['ItemConnections']
+            self.properties['properties']['ItemConnections'] = self.item['properties']['ItemConnections']
 
     def get_connections(self) -> list[ItemConnectionObject]:
         assert self.item is not None
 
         cons = []
-        for data in self.item['ItemConnections']['ArrayProperty']['StructProperty']['values']:
+        for data in self.item['properties']['ItemConnections']['ArrayProperty']['StructProperty']['values']:
             cons.append(ItemConnectionObject(data))
 
         return cons
@@ -149,11 +152,11 @@ class TowerObject:
     def set_connections(self, cons: list[ItemConnectionObject]):
         assert self.item is not None
 
-        self.item['ItemConnections']['ArrayProperty']['StructProperty']['values'] \
+        self.item['properties']['ItemConnections']['ArrayProperty']['StructProperty']['values'] \
             = list(map(lambda con: con.to_dict(), cons))
 
         if self.properties is not None:
-            self.properties['ItemConnections'] = self.item['ItemConnections']
+            self.properties['properties']['ItemConnections'] = self.item['properties']['ItemConnections']
 
     def __lt__(self, other):
         if not isinstance(other, TowerObject):

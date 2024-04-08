@@ -35,11 +35,16 @@ def run_if_not_none(func, data):
 
 
 def xyz(*args):
+    # Return argument if already is xyz
+    if len(args) == 1 and isinstance(args[0], np.ndarray):
+        return args[0]
+
     # Constructor 1: x,y,z triplet
     if len(args) == 3:
         x, y, z = args
         for var in [x, y, z]:
-            if not isinstance(var, float) and not isinstance(var, int):
+            if (not isinstance(var, float) and not isinstance(var, int) and not isinstance(var, np.int32)
+                    and not isinstance(var, np.float32)):
                 raise ValueError(f'xyz expected float or int but got {type(var)}: {args}')
 
     # Constructor 2: 'x,y,z' string
