@@ -12,13 +12,14 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    uses: "./.github/workflows/test.yml"
   tagged-release:
     name: "Tagged Release"
     runs-on: "ubuntu-latest"
 
     steps:
       - uses: actions/checkout@v3
-      - uses: "./.github/workflows/test.yml"
       - name: "Run sdist"
         run: |
           python setup.py sdist --formats=zip,gztar
