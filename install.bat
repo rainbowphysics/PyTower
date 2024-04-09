@@ -1,2 +1,1 @@
-START pip install --editable . --log-file install-log.txt
-PAUSE
+pip install --editable . --log-file install-log.txt
