@@ -14,10 +14,12 @@ class TowerConfig:
         self._save()
 
     def _load_config(self) -> dict:
+        # Create empty .json if need to
         if not os.path.isfile(self.path):
             with open(self.path, 'w') as fd:
                 fd.write('{}\n')
 
+        # Try to load config
         with open(self.path, 'r') as fd:
             try:
                 config = json.load(fd)
@@ -25,11 +27,8 @@ class TowerConfig:
                 config = {}
 
         # Get the default config
-        default_install = r'"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Tower Unite"' if sys.platform == 'win32' \
-            else os.path.join(os.path.expanduser('~'), '.local/share/steamapps/common/Tower Unite')
-
         default = json.loads(fr'''{{
-            "tower_install_path": {default_install}
+            "tower_install_path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Tower Unite"
         }}''')
 
         # Assign any defaults not in config
