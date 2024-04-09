@@ -5,6 +5,8 @@ from typing import Any
 
 from .tower import root_directory
 
+KEY_INSTALL_PATH = 'tower_install_path'
+
 
 class TowerConfig:
     def __init__(self, filename):
@@ -12,6 +14,9 @@ class TowerConfig:
         self.path = os.path.join(root_directory, filename)
         self.config = self._load_config()
         self._save()
+
+        global CONFIG
+        CONFIG = self
 
     def _load_config(self) -> dict:
         # Create empty .json if need to
@@ -26,9 +31,12 @@ class TowerConfig:
             except json.decoder.JSONDecodeError:
                 config = {}
 
+        default_install = r'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Tower Unite' if sys.platform == 'win32' \
+            else os.path.join(os.path.expanduser('~'), '.local/share/steamapps/common/Tower Unite')
+
         # Get the default config
         default = json.loads(fr'''{{
-            "tower_install_path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Tower Unite"
+            "{KEY_INSTALL_PATH}": "{default_install}"
         }}''')
 
         # Assign any defaults not in config
@@ -57,3 +65,6 @@ class TowerConfig:
 
     def __getitem__(self, key):
         return self.config[key]
+
+
+CONFIG: TowerConfig | None = None

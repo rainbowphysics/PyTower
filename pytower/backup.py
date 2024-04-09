@@ -9,12 +9,13 @@ import requests
 import asyncio
 from threading import Lock
 
-import pytower
-from pytower.suitebro import Suitebro
-from pytower.util import dict_walk
+from . import root_directory
+from .config import KEY_INSTALL_PATH
+from .suitebro import Suitebro
+from .util import dict_walk
 
 PRINT_LOCK = Lock()
-BACKUP_DIR = os.path.join(pytower.root_directory, 'backup')
+BACKUP_DIR = os.path.join(root_directory, 'backup')
 
 
 def _hash_image(data: bytes):
@@ -26,8 +27,8 @@ def print_safe(msg: str):
         print(msg)
 
 
-def _tower_hash(url: str):
-    return hashlib.md5(url.encode('ascii'), usedforsecurity=False)
+def _url_hash(url: str):
+    return hashlib.md5(url.encode('ascii'), usedforsecurity=False).hexdigest()
 
 
 def _read_cacheline(cache_path):
@@ -38,12 +39,32 @@ def _read_cacheline(cache_path):
     # Based on https://github.com/brecert/tower-unite-cache/blob/main/hexpats/cache.hexpat
     data_size, = struct.unpack('<I', buf[:4])
     url_size, = struct.unpack('<I', buf[4:8])
-    url = buf[8:(8 + url_size)].decode('ascii')
+    _url = buf[8:(8 + url_size)].decode('ascii')
     data = buf[(8 + url_size):(8 + url_size + data_size)]
     return data
 
 
-def _download_image(url):
+def _write_image(url, data) -> str:
+    file_hash = _hash_image(data)
+
+    # Write the content to a file, using the hash to ensure uniqueness
+    file_type = url.split('.')[-1]
+    filename = f'{file_hash}.{file_type}'
+    with open(filename, 'wb') as f:
+        f.write(data)
+
+    return filename
+
+
+def _download_image(url, cache):
+    # First check to see if url is in cache
+    urlhash = _url_hash(url)
+    if urlhash in cache:
+        file_data = _read_cacheline(cache[urlhash])
+        filename = _write_image(url, file_data)
+        print_safe(f'Successfully retrieved {url} from the cache!')
+        return url, filename
+
     try:
         # Send a GET request to the URL
         if not url.startswith('https://') and not url.startswith('http://'):
@@ -52,13 +73,7 @@ def _download_image(url):
 
         # Check if the request was successful (status code 200)
         if response.status_code == 200:
-            file_hash = _hash_image(response.content)
-
-            # Write the content to a file, using the hash to ensure uniqueness
-            file_type = url.split('.')[-1]
-            filename = f'{file_hash}.{file_type}'
-            with open(filename, 'wb') as f:
-                f.write(response.content)
+            filename = _write_image(url, response.content)
 
             print_safe(f'{url} downloaded successfully.')
 
@@ -71,8 +86,21 @@ def _download_image(url):
     return url, None
 
 
-async def _download_images(urls):
-    results = await asyncio.gather(*[asyncio.to_thread(_download_image, url) for url in urls])
+async def _download_images(urls, install_dir):
+    # Try to locate canvas cache
+    cache_path = os.path.join(os.path.join(os.path.join(install_dir, 'Tower'), 'Cache'), 'Canvas')
+    canvas_cache = {}
+    if os.path.isdir(cache_path):
+        subdirs = [os.path.join(cache_path, subdir) for subdir in os.listdir(cache_path)]
+        subdirs = [d for d in subdirs if os.path.isdir(d)]
+        for subdir in subdirs:
+            cachelines = [os.path.join(subdir, f) for f in os.listdir(subdir)]
+            cachelines = [f for f in cachelines if os.path.isfile(f)]
+            for cacheline in cachelines:
+                md5_hash = os.path.basename(cacheline)[:-6]
+                canvas_cache[md5_hash] = cacheline
+
+    results = await asyncio.gather(*[asyncio.to_thread(_download_image, url, canvas_cache) for url in urls])
 
     # Create backup index
     index = {}
@@ -131,7 +159,9 @@ def save_resources(save: Suitebro):
     urls = {url.strip() for url in urls if url.strip() != ''}
 
     # Now that all the URLs have been added to urls set, download them all
-    asyncio.run(_download_images(urls))
+    from .config import CONFIG
+    install_dir = CONFIG.get(KEY_INSTALL_PATH)
+    asyncio.run(_download_images(urls, install_dir))
 
     # Return to previous cwd
     os.chdir(old_cwd)
