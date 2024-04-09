@@ -20,7 +20,7 @@ def main():
     encoded = base64.b64encode(archive).decode()
 
     # Define VERSION and ARCHIVE variables in install-pytower.py script
-    source_code = [f"VERSION = '{args.version}'\n", f"ARCHIVE = '{encoded}'\n"] + source_code
+    source_code = [f"VERSION = '{args.version}'\n", f"ARCHIVE = '{encoded}'\n"] + source_code[2:]
 
     # Write as version-specific install script
     with open(f'install-pytower-{args.version}.py', 'w') as fd:
