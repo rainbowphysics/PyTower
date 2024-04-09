@@ -52,7 +52,7 @@ def _download_image(url):
 
         # Check if the request was successful (status code 200)
         if response.status_code == 200:
-            file_hash = hash_image(response.content)
+            file_hash = _hash_image(response.content)
 
             # Write the content to a file, using the hash to ensure uniqueness
             file_type = url.split('.')[-1]
