@@ -17,6 +17,7 @@ from colorama import Fore, Back, Style
 
 from . import __version__, root_directory
 from .backup import save_resources
+from .config import TowerConfig
 from .selection import *
 from .suitebro import Suitebro
 from .util import xyz, xyzint, xyz_to_string
@@ -417,6 +418,16 @@ def get_parser(tool_names: str):
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default={},
                             help='Parameters to pass onto tooling script (must come at end)')
 
+    # Config subcommand
+    config_parser = subparsers.add_parser('config', help='PyTower Configuration')
+    config_subparsers = config_parser.add_subparsers(dest='config_mode', required=True)
+    config_get_parser = config_subparsers.add_parser('get', help='Get value in config')
+    config_get_parser.add_argument('key', type=str, help='Key to get in config')
+    config_set_parser = config_subparsers.add_parser('set', help='Set value in config')
+    config_set_parser.add_argument('key', type=str, help='Key to set in config')
+    config_set_parser.add_argument('value', type=str, help='Value to set within config')
+    config_view_parser = config_subparsers.add_parser('view', help='View config')
+
     return parser
 
 
@@ -562,6 +573,8 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
 def main():
     # Initialize colorama for pretty printing
     colorama.init(convert=sys.platform == 'win32')
+
+    config = TowerConfig('config.json')
 
     tools = load_tools(verbose=True)
     tool_names = ', '.join([meta.tool_name for _, meta in tools if not meta.hidden])
@@ -770,6 +783,21 @@ def main():
                 for name, objs in itertools.groupby(final_inv_items, TowerObject.get_name):
                     quantity = len(list(objs))
                     print(f'{quantity:>9,}x {name}')
+        case 'config':
+            match args['config_mode']:
+                case 'get':
+                    print(config.get(args['key']))
+                case 'set':
+                    k, v = args['key'], args['value']
+                    try:
+                        config.set(k, v)
+                    except ValueError:
+                        print(f'{k} is not in config!')
+                        print(f'List of config keys: {"".join(config.keys())}')
+                    print(f'{k} is now set to {v}')
+                case 'view':
+                    for k, v in dict(config).items():
+                        print(f'{k}: {v}')
 
     if len(_active_saves) > 0:
         logging.debug('WARNING: Saves are still loaded in PyTower! Is this a bug?')

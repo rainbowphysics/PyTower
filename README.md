@@ -34,6 +34,7 @@ Discord community link: https://discord.gg/NUufVuu4Ve
  - `pytower list`: List all detected tools
  - `pytower info <TOOLNAME>`: Get detailed information about `<TOOLNAME>` 
  - `pytower run <TOONAME> ...`: Run tool
+ - `pytower config`: (WIP) Access config
 
 Example usage:
  - `pytower help`: Displays help about PyTower

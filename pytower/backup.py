@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import struct
 import sys
 import datetime
 
@@ -16,13 +17,29 @@ PRINT_LOCK = Lock()
 BACKUP_DIR = os.path.join(pytower.root_directory, 'backup')
 
 
-def hash_image(data: bytes):
+def _hash_image(data: bytes):
     return hashlib.sha1(data, usedforsecurity=False).hexdigest()[:10]
 
 
 def print_safe(msg: str):
     with PRINT_LOCK:
         print(msg)
+
+
+def _tower_hash(url: str):
+    return hashlib.md5(url.encode('ascii'), usedforsecurity=False)
+
+def _read_cacheline(cache_path, ):
+    buf = bytearray(os.path.getsize(path))
+    with open(path, 'rb') as fd:
+        fd.readinto(buf)
+
+    # Based on https://github.com/brecert/tower-unite-cache/blob/main/hexpats/cache.hexpat
+    data_size, = struct.unpack('<I', buf[:4])
+    url_size, = struct.unpack('<I', buf[4:8])
+    url = buf[8:(8+url_size)].decode('ascii')
+    data = buf[(8+url_size):(8+url_size+data_size)]
+
 
 def _download_image(url):
     try:
