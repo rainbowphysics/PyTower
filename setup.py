@@ -137,7 +137,7 @@ setup(
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
-    packages=['pytower', 'pytower.connections', 'pytower.tools'],
+    packages=['pytower', 'pytower.connections'],
     install_requires=requirements,
     zip_safe=False,
     entry_points={

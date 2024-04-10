@@ -20,12 +20,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: "Pip dependencies"
+        run : |
+          python -m pip install -r requirements.txt
       - name: "Run sdist"
         run: |
           python setup.py sdist --formats=zip,gztar
       - name: "Create install-pytower script"
         run: |
-          python bootstrap.py -v ${{ github.ref_name }}
+          python .github/bootstrap.py -v ${{ github.ref_name }}
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
