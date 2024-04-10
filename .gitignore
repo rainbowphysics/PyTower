@@ -184,3 +184,6 @@ install*.py
 
 # Install log
 install-log.txt
+
+# tools symlink
+pytower/tools

@@ -12,9 +12,10 @@ from distutils.util import convert_path
 import logging
 
 
-def run_command(args, error_context='Error', can_fail=False):
+def run_command(args, error_context='Error', can_fail=False, shell=False):
     try:
-        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True,
+                                   shell=shell)
         for line in process.stdout:
             print(line, end='')
         process.communicate()
@@ -41,7 +42,8 @@ def get_suitebro_parser():
     # In case repo is already present, make sure it's up to date
     run_command(['git', 'pull'], error_context='Error pulling from Suitebro repository')
 
-    run_command(['git', 'checkout', '1a90045f16c58a856e941b78f857560d0b5ce5de'], error_context='Error checking out non-uesave version')
+    run_command(['git', 'checkout', '1a90045f16c58a856e941b78f857560d0b5ce5de'],
+                error_context='Error checking out non-uesave version')
 
     # Assuming cargo is installed and in the PATH
     run_command(['cargo', 'build', '--release'], error_context='Error building Rust binary', can_fail=True)
@@ -49,18 +51,50 @@ def get_suitebro_parser():
     os.chdir(cwd)
 
 
+def is_junction(path: str) -> bool:
+    try:
+        return bool(os.readlink(path))
+    except OSError:
+        return False
+
+
+def make_tools_symlink():
+    cwd = os.getcwd()
+    os.chdir('pytower')
+
+    # Do nothing if symlink already exists
+    if os.path.islink('tools') or is_junction('tools'):
+        os.chdir(cwd)
+        return
+
+    # Create a junction on Windows and symlink on Unix
+    args = ['mklink', '/J', 'tools', '..\\tools'] if sys.platform == 'win32' else ['ln', '-sf', '../tools', 'tools']
+    run_command(args, error_context='Error creating symlink', can_fail=True, shell=True)
+
+    # Change cwd back
+    os.chdir(cwd)
+
+
+def install():
+    print(f'Installing PyTower {version}')
+
+    # Build/install Suitebro parser
+    get_suitebro_parser()
+
+    # Make symlink for `import pytower.tools`
+    make_tools_symlink()
+
+
 class CustomDevelopBuildCommand(develop):
     def run(self):
-        get_suitebro_parser()
+        install()
         develop.run(self)
 
 
 class CustomBuildCommand(build_py):
     def run(self):
-        # Call parent class run() method
         build_py.run(self)
-        # Build/install Suitebro parser
-        get_suitebro_parser()
+        install()
 
 
 with open('requirements.txt', 'r') as fd:
@@ -70,7 +104,6 @@ spec = importlib.util.spec_from_file_location('pytower', convert_path('pytower/_
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 version = getattr(module, '__version__')
-print(f'Installing PyTower {version}')
 
 setup(
     name='pytower',
@@ -80,7 +113,7 @@ setup(
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
-    packages=setuptools.find_packages(),
+    packages=['pytower', 'pytower.connections'],
     install_requires=requirements,
     zip_safe=False,
     entry_points={
