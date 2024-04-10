@@ -4,7 +4,6 @@ import os
 import subprocess
 import sys
 
-import setuptools
 from setuptools import setup
 from setuptools.command.develop import develop
 from setuptools.command.build_py import build_py
@@ -75,26 +74,51 @@ def make_tools_symlink():
     os.chdir(cwd)
 
 
-def install():
+def install(from_src=False):
     print(f'Installing PyTower {version}')
 
     # Build/install Suitebro parser
-    get_suitebro_parser()
+    if from_src:
+        get_suitebro_parser()
 
     # Make symlink for `import pytower.tools`
     make_tools_symlink()
 
 
 class CustomDevelopBuildCommand(develop):
+    user_options = develop.user_options + [
+        ('src', None, 'build from source'),
+    ]
+
+    def initialize_options(self):
+        develop.initialize_options(self)
+        self.src = 0
+
+    def finalize_options(self):
+        develop.finalize_options(self)
+
     def run(self):
-        install()
+        from_src = self.src == 1
+        install(from_src=from_src)
         develop.run(self)
 
 
 class CustomBuildCommand(build_py):
+    user_options = build_py.user_options + [
+        ('src', None, 'build from source'),
+    ]
+
+    def initialize_options(self):
+        build_py.initialize_options(self)
+        self.src = 0
+
+    def finalize_options(self):
+        build_py.finalize_options(self)
+
     def run(self):
         build_py.run(self)
-        install()
+        from_src = self.src == 1
+        install(from_src=from_src)
 
 
 with open('requirements.txt', 'r') as fd:
@@ -108,12 +132,12 @@ version = getattr(module, '__version__')
 setup(
     name='pytower',
     version=version,
-    description='Python API for Tower Unite map-editing',
+    description='Python API for editing CondoData/.map files',
     url='https://github.com/rainbowphysics/PyTower',
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
-    packages=['pytower', 'pytower.connections'],
+    packages=['pytower', 'pytower.connections', 'pytower.tools'],
     install_requires=requirements,
     zip_safe=False,
     entry_points={

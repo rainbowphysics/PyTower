@@ -32,6 +32,11 @@ def get_active_save() -> Suitebro:
 
 
 def get_suitebro_path():
+    # For cases when want to build suitebro parser from source, for whatever reason
+    source_dir = os.path.join(root_directory, 'tower-unite-suitebro')
+    if os.path.isdir(source_dir):
+        return source_dir
+
     if sys.platform == 'win32':
         subdir = os.path.join(os.path.join('lib', 'win64'), 'tower-unite-save-x86_64-pc-windows-msvc.exe')
     elif sys.platform == 'darwin':
@@ -83,7 +88,7 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
         logging.error('Suitebro parser did not complete successfully!')
         return False
 
-    print(Fore.GREEN + f'Converted {pretty_path(input_path)} to {pretty_path(output_path)}' + Style.RESET_ALL)
+    print(Fore.GREEN + f'Successfully converted {pretty_path(input_path)} to {pretty_path(output_path)}' + Style.RESET_ALL)
     return True
 
 
