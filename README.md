@@ -13,12 +13,11 @@ Discord community link: https://discord.gg/NUufVuu4Ve
 ## Quick Installation
 1. Download the install-pytower script from latest release
 2. Run the installer script from command line using Python. For example, `python install-pytower-v0.2.0.py`
-3. Follow the installation instructions and enjoy using PyTower!
 
 ## Recommened Installation Instructions
 1. (On Windows) Install Git Bash: https://git-scm.com/download/win. 
 2. Clone the repository using `git clone https://github.com/rainbowphysics/PyTower.git`. If typing `git` into the command line does nothing, you may have to add git manually to your PATH environment variable.
-3. In the root repository directory, run `pip install -e .`. Note that the `-e` flag is important and the install will break without it
+3. Run `install.bat` (on Windows) or `install.sh` (on Linux). Alternatively, directly run `pip install -e .` (Note the `-e` flag, install will break without it!) 
 
 ## Running PyTower
  - Once installed, PyTower can be run from command line as `pytower`
