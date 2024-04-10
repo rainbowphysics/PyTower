@@ -594,6 +594,13 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
             continue
 
         tool_name = meta.tool_name.casefold().strip()
+
+        # Handles aliased/duplicated tool names
+        if name == tool_name:
+            best_match = module_or_path, meta
+            conflict = False
+            break
+
         # Use os.path.commonprefix as a utility I guess
         prefix = os.path.commonprefix([name, tool_name])
         prefix_len = len(prefix)
