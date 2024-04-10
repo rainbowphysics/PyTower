@@ -9,6 +9,23 @@ import numpy as np
 from . import tower
 from .connections import ItemConnectionObject
 
+ITEMCONNECTIONS_DEFAULT = json.loads('''{
+              "Array": {
+                "array_type": "StructProperty",
+                "value": {
+                  "Struct": {
+                    "_type": "ItemConnections",
+                    "name": "StructProperty",
+                    "struct_type": {
+                      "Struct": "ItemConnectionData"
+                    },
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "value": []
+                  }
+                } 
+              }
+            }''')
+
 
 class TowerObject:
     def __init__(self, item: dict | None = None, properties: dict | None = None):
@@ -16,16 +33,7 @@ class TowerObject:
         self.properties = copy.deepcopy(properties)
 
         if self.item is not None and 'ItemConnections' not in self.item.keys():
-            self.item['ItemConnections'] = json.loads('''{
-              "ArrayProperty": {
-                "StructProperty": {
-                  "field_name": "ItemConnections",
-                  "value_type": "StructProperty",
-                  "struct_type": "ItemConnectionData",
-                  "values": []
-                }
-              }
-            }''')
+            self.item['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
 
     def is_canvas(self) -> bool:
         if self.item is None:
@@ -42,7 +50,7 @@ class TowerObject:
     def get_custom_name(self) -> str:
         if self.item is None or 'ItemCustomName' not in self.item['properties']:
             return ''
-        return self.item['properties']['ItemCustomName']['NameProperty']
+        return self.item['properties']['ItemCustomName']['Name']['value']
 
     def matches_name(self, name) -> bool:
         name = name.casefold()
@@ -51,12 +59,12 @@ class TowerObject:
     def group_id(self) -> int:
         if self.item is None or 'GroupID' not in self.item['properties']:
             return -1
-        return self.item['properties']['GroupID']['IntProperty']
+        return self.item['properties']['GroupID']['Int']['value']
 
     def set_group_id(self, group_id: int):
-        self.item['properties']['GroupID'] = {'IntProperty': group_id}
+        self.item['properties']['GroupID'] = {'Int': {'value': group_id}}
         if self.properties is not None:
-            self.properties['properties']['GroupID'] = {'IntProperty': group_id}
+            self.properties['properties']['GroupID'] = {'Int': {'value': group_id}}
 
     # Removes group info from self
     def ungroup(self):
@@ -69,7 +77,7 @@ class TowerObject:
     def copy(self) -> 'TowerObject':
         copied = TowerObject(item=self.item, properties=self.properties)
         if copied.item is not None:
-            copied.item['guid'] = str(uuid.uuid4()).upper()
+            copied.item['guid'] = str(uuid.uuid4()).lower()
         return copied
 
     def guid(self) -> str:
@@ -134,7 +142,7 @@ class TowerObject:
 
     def add_connection(self, con: ItemConnectionObject):
         assert self.item is not None
-        connections = self.item['properties']['ItemConnections']['ArrayProperty']['StructProperty']['values']
+        connections = self.item['properties']['ItemConnections']['Array']['value']['Struct']['value']
         connections.append(con.to_dict())
 
         if self.properties is not None:
@@ -144,7 +152,7 @@ class TowerObject:
         assert self.item is not None
 
         cons = []
-        for data in self.item['properties']['ItemConnections']['ArrayProperty']['StructProperty']['values']:
+        for data in self.item['properties']['ItemConnections']['Array']['value']['Struct']['value']:
             cons.append(ItemConnectionObject(data))
 
         return cons
@@ -152,7 +160,7 @@ class TowerObject:
     def set_connections(self, cons: list[ItemConnectionObject]):
         assert self.item is not None
 
-        self.item['properties']['ItemConnections']['ArrayProperty']['StructProperty']['values'] \
+        self.item['properties']['ItemConnections']['Array']['value']['Struct']['value'] \
             = list(map(lambda con: con.to_dict(), cons))
 
         if self.properties is not None:
