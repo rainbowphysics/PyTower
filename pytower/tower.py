@@ -12,6 +12,7 @@ from typing import Callable
 
 import colorama
 import numpy as np
+import platform
 
 from colorama import Fore, Back, Style
 
@@ -30,16 +31,49 @@ def get_active_save() -> Suitebro:
     return _active_saves[-1] if len(_active_saves) > 0 else None
 
 
+def get_suitebro_path():
+    if sys.platform == 'win32':
+        subdir = os.path.join(os.path.join('lib', 'win64'), 'tower-unite-save-x86_64-pc-windows-msvc.exe')
+    elif sys.platform == 'darwin':
+        machine = platform.machine().lower()
+        is_arm = machine.startswith('arm') or machine.startswith('aarch') or platform.processor().lower() == 'apple arm'
+        if is_arm:
+            subdir = os.path.join(os.path.join('lib', 'apple-aarch64'), 'tower-unite-save-aarch64-apple-darwin')
+        else:
+            subdir = os.path.join(os.path.join('lib', 'apple-x86'), 'tower-unite-save-x86_64-apple-darwin')
+    elif sys.platform == 'linux':
+        is_docker = False
+        with open('/proc/1/cgroup', 'rt') as f:
+            for line in f:
+                if 'docker' in line:
+                    is_docker = True
+
+        if is_docker:
+            subdir = os.path.join(os.path.join('lib', 'linux-container'), 'tower-unite-save-x86_64-unknown-linux-musl')
+        else:
+            subdir = os.path.join(os.path.join('lib', 'linux'), 'tower-unite-save-x86_64-unknown-linux-gnu')
+    else:
+        print(f'{sys.platform} is not supported :( try running in json-only mode with the -j flag', file=sys.stderr)
+        sys.exit(1)
+
+    return os.path.join(root_directory, subdir)
+
+
+def pretty_path(path: str) -> str:
+    relpath = os.path.relpath(path, root_directory)
+    abspath = os.path.abspath(path)
+    if len(relpath) < len(abspath):
+        return relpath
+    else:
+        return abspath
+
+
 def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None,
                         overwrite: bool = False) -> bool:
-    curr_cwd = os.getcwd()
-    suitebro_path = os.path.join(root_directory, 'tower-unite-suitebro')
-    os.chdir(suitebro_path)
-
-    process = Popen(f'cargo run --release {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
+    exe_path = get_suitebro_path()
+    process = Popen(f'\"{exe_path}\" {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
                     f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE, shell=True)
     (output, err) = process.communicate()
-    # print(output, file=sys.stderr)
     for line in output.splitlines(False):
         print(line.decode('ascii'))
 
@@ -49,7 +83,8 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
         logging.error('Suitebro parser did not complete successfully!')
         return False
 
-    os.chdir(curr_cwd)
+    print(Fore.GREEN + f'Converted {pretty_path(input_path)} to {pretty_path(output_path)}' + Style.RESET_ALL)
+    return True
 
 
 class ToolParameterInfo:
