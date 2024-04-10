@@ -67,7 +67,7 @@ def make_tools_symlink():
         return
 
     # Create a junction on Windows and symlink on Unix
-    args = ['mklink', '/J', 'tools', '..\\tools'] if sys.platform == 'win32' else ['ln', '-sf', '../tools', 'tools']
+    args = ['mklink', '/J', 'tools', '..\\tools'] if sys.platform == 'win32' else 'ln -sf ../tools tools'
     run_command(args, error_context='Error creating symlink', can_fail=True, shell=True)
 
     # Change cwd back
