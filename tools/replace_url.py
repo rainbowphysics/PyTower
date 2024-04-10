@@ -21,7 +21,7 @@ def should_replace(obj: TowerObject, url: str) -> bool:
 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
-    selection = [obj for obj in selection if should_replace(obj, params.replace)]
+    selection = Selection({obj for obj in selection if should_replace(obj, params.replace)})
     tools.set_url.main(save, selection, params)
 
 
