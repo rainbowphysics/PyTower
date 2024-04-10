@@ -32,9 +32,6 @@ class TowerObject:
         self.item = copy.deepcopy(item)
         self.properties = copy.deepcopy(properties)
 
-        if self.item is not None and 'ItemConnections' not in self.item.keys():
-            self.item['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
-
     def is_canvas(self) -> bool:
         if self.item is None:
             return False
@@ -140,8 +137,14 @@ class TowerObject:
     def scale(self, value: np.ndarray):
         self._set_xyz_attr('scale', value)
 
+    def _check_connetions(self):
+        if self.item is not None and 'ItemConnections' not in self.item.keys():
+            self.item['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
+
     def add_connection(self, con: ItemConnectionObject):
         assert self.item is not None
+        self._check_connetions()
+
         connections = self.item['properties']['ItemConnections']['Array']['value']['Struct']['value']
         connections.append(con.to_dict())
 
@@ -150,6 +153,7 @@ class TowerObject:
 
     def get_connections(self) -> list[ItemConnectionObject]:
         assert self.item is not None
+        self._check_connetions()
 
         cons = []
         for data in self.item['properties']['ItemConnections']['Array']['value']['Struct']['value']:
@@ -159,6 +163,7 @@ class TowerObject:
 
     def set_connections(self, cons: list[ItemConnectionObject]):
         assert self.item is not None
+        self._check_connetions()
 
         self.item['properties']['ItemConnections']['Array']['value']['Struct']['value'] \
             = list(map(lambda con: con.to_dict(), cons))
