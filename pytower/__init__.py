@@ -1,5 +1,12 @@
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
-import os
+from scoping import scoping
 
-root_directory = os.path.dirname(os.path.dirname(__file__))
+# Scope so that pytower doesn't always import os
+with scoping():
+    import os
+
+    root_directory = os.path.dirname(os.path.dirname(__file__))
+    scoping.keep('root_directory')
+
+del scoping
