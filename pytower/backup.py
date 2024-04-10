@@ -149,7 +149,7 @@ def make_backup(save: Suitebro):
         if isinstance(dict_entry, tuple) and len(dict_entry) == 2:
             k, v = dict_entry
             if k == 'URL' or k == 'CanvasURL':
-                urls.add(v['Str'])
+                urls.add(v['Str']['value'])
 
     for obj in save.objects:
         dict_walk(obj.item, url_processor)

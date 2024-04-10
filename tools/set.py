@@ -28,11 +28,11 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
             del item_props['URL']
 
         # Set material
-        item_props['SurfaceMaterial'] = {'ObjectProperty': mat}
+        item_props['SurfaceMaterial'] = {'Object': {'value': mat}}
 
         # Ensure other object properties agree
-        obj.properties['properties']['SurfaceMaterial'] = {'ObjectProperty': mat}
-        obj.properties['properties']['URL'] = {'StrProperty': ''}
+        obj.properties['properties']['SurfaceMaterial'] = {'Object': {'value': mat}}
+        obj.properties['properties']['URL'] = {'Str': {'value': ''}}
 
 
 if __name__ == '__main__':
