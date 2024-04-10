@@ -23,6 +23,9 @@ jobs:
       - name: "Run sdist"
         run: |
           python setup.py sdist --formats=zip,gztar
+      - name: "Create install-pytower script"
+        run: |
+          python bootstrap.py -v ${{ github.ref_name }}
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
@@ -31,3 +34,4 @@ jobs:
           files: |
             dist/*.zip
             dist/*.tar.gz
+            install-pytower-*.py
