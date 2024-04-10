@@ -16,7 +16,7 @@ import numpy as np
 from colorama import Fore, Back, Style
 
 from . import __version__, root_directory
-from .backup import save_resources
+from .backup import make_backup
 from .config import TowerConfig
 from .selection import *
 from .suitebro import Suitebro
@@ -610,7 +610,7 @@ def main():
                         sys.exit(1)
 
                     save = load_suitebro(filename)
-                    save_resources(save)
+                    make_backup(save)
                 case 'restore':
                     pass
         case 'list':

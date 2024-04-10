@@ -121,7 +121,7 @@ async def _download_images(urls, install_dir):
         json.dump(replacements, fd, indent=2)
 
 
-def save_resources(save: Suitebro):
+def make_backup(save: Suitebro):
     # First make the folder for the backup
     save_name = save.filename
 
@@ -165,3 +165,11 @@ def save_resources(save: Suitebro):
 
     # Return to previous cwd
     os.chdir(old_cwd)
+
+
+def restore_backup(path):
+    index_path = os.path.join(path, 'index.json')
+    with open(index_path, 'r') as fd:
+        index = json.load(fd)
+
+    

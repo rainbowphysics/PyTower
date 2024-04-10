@@ -6,6 +6,7 @@ from typing import Any
 from .tower import root_directory
 
 KEY_INSTALL_PATH = 'tower_install_path'
+KEY_IMGUR_CLIENT_ID = 'imgur_client_id'
 
 
 class TowerConfig:
@@ -36,7 +37,8 @@ class TowerConfig:
 
         # Get the default config
         default = json.loads(fr'''{{
-            "{KEY_INSTALL_PATH}": "{default_install}"
+            "{KEY_INSTALL_PATH}": "{default_install}",
+            "{KEY_IMGUR_CLIENT_ID}": null
         }}''')
 
         # Assign any defaults not in config
