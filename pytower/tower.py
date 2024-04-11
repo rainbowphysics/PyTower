@@ -12,16 +12,17 @@ from typing import Callable
 
 import colorama
 import numpy as np
+import platform
 
 from colorama import Fore, Back, Style
 
-from pytower.tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
-    make_tools_index
 from . import __version__, root_directory, backup
 from .backup import make_backup
 from .config import TowerConfig
 from .selection import *
 from .suitebro import Suitebro, load_suitebro, save_suitebro, run_suitebro_parser
+from .tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
+    make_tools_index
 from .util import xyz, xyzint, xyz_to_string
 
 
@@ -206,6 +207,13 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
             continue
 
         tool_name = meta.tool_name.casefold().strip()
+
+        # Handles aliased/duplicated tool names
+        if name == tool_name:
+            best_match = module_or_path, meta
+            conflict = False
+            break
+
         # Use os.path.commonprefix as a utility I guess
         prefix = os.path.commonprefix([name, tool_name])
         prefix_len = len(prefix)

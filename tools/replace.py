@@ -17,11 +17,11 @@ def should_replace(obj: TowerObject, material: str) -> bool:
     if not obj.is_canvas():
         return False
 
-    return obj.is_canvas() and obj.properties['properties']['SurfaceMaterial']['ObjectProperty'] == material
+    return obj.is_canvas() and obj.properties['properties']['SurfaceMaterial']['Object']['value'] == material
 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
-    selection = [obj for obj in selection if should_replace(obj, params.replace)]
+    selection = Selection({obj for obj in selection if should_replace(obj, params.replace)})
     tools.set.main(save, selection, params)
 
 

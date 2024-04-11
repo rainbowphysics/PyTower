@@ -5,15 +5,15 @@ from argparse import ArgumentParser
 def main():
     # Basic argpase
     parser = ArgumentParser(prog='bootstrap', description='Install script bootstrapper')
-    parser.add_argument('-i', '--input', dest='input', type=str, help='Input file path', required=True)
     parser.add_argument('-v', '--version', dest='version', type=str, help='Version', required=True)
-    parser.add_argument('-z', '--zip', dest='zip', type=str, help='Path to zip archive', required=True)
     args = parser.parse_args()
 
     # Open up the install script and zip
-    with open(args.input, 'r') as fd:
+    with open('.github/install-pytower.py', 'r') as fd:
         source_code = fd.readlines()
-    with open(args.zip, 'rb') as fd:
+
+    # Find zip file then load into memory
+    with open(f'dist/pytower-{args.version[1:]}.zip', 'rb') as fd:
         archive = fd.read()
 
     # Convert zip into base64 blob

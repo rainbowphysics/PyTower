@@ -2,27 +2,29 @@
 A high-level Python API for editing/generating Tower Unite maps
 
 <p align="center">
-  <img src="https://github.com/rainbowphysics/PyTower/blob/main/logo.png?raw=true" width="512" height="512" />
+  <img src="https://github.com/rainbowphysics/PyTower/blob/main/logo.png?raw=true" width="512px" alt="PyTower logo"/>
 </p>
 
 Discord community link: https://discord.gg/NUufVuu4Ve
 
 ## Dependencies
  - Python 3.10+
- - Rust (latest release)
- - (On Windows) Git Bash and Build Tools for Visual Studio 2017
+
+## Quick Installation
+1. Download the `install-pytower.py` script from latest release
+2. Run the installer script from command line using Python. For example, `python install-pytower-v0.2.0.py`. 
+    - Alternatively, (on Windows) you can drag the install script onto python.exe or otherwise open the install script with python.exe
 
 ## Recommened Installation Instructions
 1. (On Windows) Install Git Bash: https://git-scm.com/download/win. 
-2. Clone the repository using `git clone https://github.com/rainbowphysics/PyTower.git`. If typing `git` into the command line does nothing, you may have to add git manually to your PATH environment variable.
-3. Install Rust (latest stable build): https://www.rust-lang.org/tools/install
-4. Ensure that Rust `cargo` is added to the PATH environment variable by running `cargo --version`.
-5. Install Build Tools for Visual Studio (2017 or later) with Visual C++: https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022
-6. In the root repository directory, run `pip install -e .`. Note that the `-e` flag is important and the install will break without it
+2. Clone the repository using `git clone https://github.com/rainbowphysics/PyTower.git`. 
+    - If typing `git` into the command line does nothing, you may have to add git manually to your PATH environment variable.
+3. Run `install.bat` (on Windows) or `install.sh` (on Linux). 
+    - Alternatively, directly run `pip install -e .`. (`-e` flag must be included, install will break without it!) 
 
 ## Running PyTower
  - Once installed, PyTower can be run from command line as `pytower`
- - PyTower can also be run directly using `python -m pytower.tower`
+ - PyTower can also be run directly using `python -m pytower`
  - PyTower can also be imported into other Python projects with `import pytower`
 
 ### Available Subcommands:
@@ -36,21 +38,25 @@ Discord community link: https://discord.gg/NUufVuu4Ve
  - `pytower run <TOONAME> ...`: Run tool
  - `pytower config`: (WIP) Access config
 
-Example usage:
- - `pytower help`: Displays help about PyTower
- - `pytower info Tile`: Gets advanced info/help for tool "Tile"
- - `pytower scan .`: Scans current directory for tool scripts to add
- - `pytower run Rotate --output RotatedCondo --select group:4 -@ rotation=0,0,45 local=true`: Runs the "Rotate" tool with a group selection and passed-through parameters
+Example usages:
+ - `pytower help`
+    - Displays help about PyTower
+ - `pytower info Tile`
+    - Gets advanced info/help for tool "Tile"
+ - `pytower scan .`
+    - Scans current directory for tool scripts to add
+ - `pytower run Rotate --output RotatedCondo --select group:4 -@ rotation=0,0,45 local=true`
+    - Runs the "Rotate" tool with a group selection and passed-through parameters
 
 ## `pytower run` arguments
- - -i/--input: Input file to use (default: CondoData)
- - -o/--output: Output file to use (default: CondoData_output)
- - -s/--select: Selection mode to use (default: `items`)
- - -v/--invert: Flag to invert selection
- - -j/--json: Flag to skip Suitebro parser steps
- - -g/--per-group: Flag to apply the tool separately per group
- - -@/--parameters: Beginning of *tool parameters*
-
+ - `-i`/`--input`: Input file to use (default: CondoData)
+ - `-o`/`--output`: Output file to use (default: CondoData_output)
+ - `-s`/`--select`: Selection mode to use (default: `items`)
+ - `-v`/`--invert`: Flag to invert selection
+ - `-j`/`--json`: Flag to skip Suitebro parser steps
+ - `-g`/`--per-group`: Flag to apply the tool separately per group
+ - `-@`/`--parameters`: Beginning of *tool parameters*
+``
 ### Tool parameter format:
  - Parameters are separated by spaces and have the format `param=value`
  - For example, `pytower run MyTool -@ offset=0,0,300 foo=42` passes two parameters to MyTool: `offset` with the value `xyz(0,0,300)` and `foo` with the value `42`.
@@ -66,7 +72,7 @@ Example usage:
 - `none`: Nothing (can be useful for generation tools)
 
 ## Writing tools scripts
-To register a new tool to use with PyTower, simply create a new script in the tools folder with a main method.
+To register a new tool to use with PyTower, simply create a new script in the tools folder with a main method. As input, the main method takes the save (as a `pytower.suitebro.Suitebro` object), the selection (as a `pytower.selection.Selection` object), and the parameters parsed by the main program (as a `pytower.tower.ParameterDict` object).
 
 ### Tooling script directives
 - `TOOL_NAME`: Registers the name used by PyTower (by default it uses the script's file name)

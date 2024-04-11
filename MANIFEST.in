@@ -1,4 +1,5 @@
 recursive-include tools *.py
+recursive-include lib *
 include requirements.txt
 include install.bat
 include install.sh

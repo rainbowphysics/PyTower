@@ -7,6 +7,7 @@ import pkgutil
 import importlib.util
 import subprocess
 import sys
+import shutil
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile
 
@@ -47,8 +48,8 @@ def main():
     print(f'Installing PyTower {VERSION}...\n')
     zip_file = base64.b64decode(ARCHIVE, validate=True)
 
-    default_install_dir = os.path.join(os.path.join(os.path.expanduser('~'), 'PyTower'), f'pytower-{VERSION}')
-    install_dir = input(f'Install directory for PyTower (leave blank for default {default_install_dir}):')
+    default_install_dir = os.path.join(os.path.join(os.path.expanduser('~'), 'PyTower'), f'pytower-{VERSION[1:]}')
+    install_dir = input(f'Install directory for PyTower (leave blank for default {default_install_dir}): ')
     install_dir = install_dir.strip()
     if install_dir is None or install_dir == '':
         install_dir = default_install_dir
@@ -59,6 +60,7 @@ def main():
         cancel()
 
     # Commence install!
+    install_dir = os.path.expanduser(install_dir)
     os.makedirs(install_dir, exist_ok=True)
     os.chdir(install_dir)
 
@@ -68,12 +70,18 @@ def main():
         fd.write(zip_file)
 
     with ZipFile(zip_name, 'r') as zipd:
-        zipd.extractall('../')
+        zipd.extractall('.')
+
+    # Take folder contents and move into root
+    archive_folder = f'pytower-{VERSION[1:]}'
+    shutil.copytree(archive_folder, os.getcwd(), dirs_exist_ok=True)
+    shutil.rmtree(archive_folder)
 
     # Run its install.sh or install.bat depending on platform
     if sys.platform == 'win32' or sys.platform == 'cygwin':
         run_command('install.bat', can_fail=True)
     elif sys.platform == 'linux':
+        run_command('chmod +x ./install.sh', can_fail=True)
         run_command('./install.sh', can_fail=True)
     else:
         print(f'OS {sys.platform} not supported :(', file=sys.stderr)
