@@ -2,7 +2,7 @@ import tools.set
 from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
-from pytower.tower import ToolParameterInfo, ParameterDict
+from pytower.tool_lib import ToolParameterInfo, ParameterDict
 
 TOOL_NAME = 'Replace'
 VERSION = '1.0'

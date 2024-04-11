@@ -1,3 +1,9 @@
+import json
+import logging
+import os
+from subprocess import Popen, PIPE
+
+from . import root_directory
 from .selection import Selection
 from .object import TowerObject
 
@@ -151,3 +157,67 @@ class Suitebro:
     def __iter__(self):
         for obj in self.objects:
             yield obj
+
+
+# _active_saves is a stack
+_active_save: Suitebro | None = None
+
+
+def get_active_save() -> Suitebro | None:
+    return _active_save
+
+
+def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None,
+                        overwrite: bool = False) -> bool:
+    curr_cwd = os.getcwd()
+    suitebro_path = os.path.join(root_directory, 'tower-unite-suitebro')
+    os.chdir(suitebro_path)
+
+    process = Popen(f'cargo run --release {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
+                    f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE, shell=True)
+    (output, err) = process.communicate()
+    # print(output, file=sys.stderr)
+    for line in output.splitlines(False):
+        print(line.decode('ascii'))
+
+    exit_code = process.wait()
+
+    if exit_code != 0:
+        logging.error('Suitebro parser did not complete successfully!')
+        return False
+
+    os.chdir(curr_cwd)
+
+
+def load_suitebro(filename: str, only_json=False) -> Suitebro:
+    abs_filepath = os.path.realpath(filename)
+    in_dir = os.path.dirname(abs_filepath)
+    json_output_path = os.path.join(in_dir, os.path.basename(abs_filepath) + ".json")
+
+    if not only_json:
+        run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
+
+    logging.info('Loading JSON file...')
+    with open(json_output_path, 'r') as fd:
+        save_json = json.load(fd)
+
+    save = Suitebro(os.path.basename(abs_filepath), in_dir, save_json)
+
+    global _active_save
+    _active_save = save
+
+    return save
+
+
+def save_suitebro(save: Suitebro, filename: str, only_json=False):
+    abs_filepath = os.path.realpath(filename)
+    out_dir = os.path.dirname(abs_filepath)
+    json_final_path = os.path.join(save.directory, f'{save.filename}.json')
+    final_output_path = os.path.join(out_dir, f'{filename}')
+
+    with open(json_final_path, 'w') as fd:
+        json.dump(save.to_dict(), fd, indent=2)
+
+    # Finally run!
+    if not only_json:
+        run_suitebro_parser(json_final_path, True, final_output_path, overwrite=True)

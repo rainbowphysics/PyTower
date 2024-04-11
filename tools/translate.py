@@ -3,7 +3,7 @@ from scipy.spatial.transform import Rotation as R
 from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
-from pytower.tower import ToolParameterInfo, ParameterDict
+from pytower.tool_lib import ToolParameterInfo, ParameterDict
 from pytower.util import xyz
 
 TOOL_NAME = 'Translate'

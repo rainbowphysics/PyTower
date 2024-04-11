@@ -2,7 +2,7 @@ from pytower import tower
 from pytower.copy import copy_selection
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
-from pytower.tower import ToolParameterInfo, ParameterDict
+from pytower.tool_lib import ToolParameterInfo, ParameterDict
 from pytower.util import xyz, xyzint, xyz_max
 
 TOOL_NAME = 'Tile'

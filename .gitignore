@@ -185,3 +185,6 @@ install*.py
 
 # Install log
 install-log.txt
+
+# Scratch workspace
+scratch/

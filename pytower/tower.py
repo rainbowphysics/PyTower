@@ -15,333 +15,14 @@ import numpy as np
 
 from colorama import Fore, Back, Style
 
-from . import __version__, root_directory
+from pytower.tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
+    make_tools_index
+from . import __version__, root_directory, backup
 from .backup import make_backup
 from .config import TowerConfig
 from .selection import *
-from .suitebro import Suitebro
+from .suitebro import Suitebro, load_suitebro, save_suitebro, run_suitebro_parser
 from .util import xyz, xyzint, xyz_to_string
-
-# _active_saves is a stack
-_active_saves: list[Suitebro] = []
-
-
-def get_active_save() -> Suitebro:
-    return _active_saves[-1] if len(_active_saves) > 0 else None
-
-
-def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None,
-                        overwrite: bool = False) -> bool:
-    curr_cwd = os.getcwd()
-    suitebro_path = os.path.join(root_directory, 'tower-unite-suitebro')
-    os.chdir(suitebro_path)
-
-    process = Popen(f'cargo run --release {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
-                    f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE, shell=True)
-    (output, err) = process.communicate()
-    # print(output, file=sys.stderr)
-    for line in output.splitlines(False):
-        print(line.decode('ascii'))
-
-    exit_code = process.wait()
-
-    if exit_code != 0:
-        logging.error('Suitebro parser did not complete successfully!')
-        return False
-
-    os.chdir(curr_cwd)
-
-
-class ToolParameterInfo:
-    def __init__(self, dtype: Callable = str, description='', default=None):
-        self.dtype = dtype
-        self.description = description
-        self.default = default
-
-    def to_dict(self) -> dict:
-        data = {}
-        data['dtype'] = self.dtype.__name__
-        data['description'] = self.description
-
-        if self.default is not None and (self.dtype == xyz or self.dtype == xyzint):
-            data['default'] = xyz_to_string(self.default)
-        else:
-            data['default'] = self.default
-        return data
-
-    @staticmethod
-    def from_dict(data: dict) -> 'ToolParameterInfo':
-        # Define conversion to/from registered parameter types
-        type_table = {'str': str, 'bool': bool, 'int': int, 'float': float, 'xyz': xyz, 'xyzint': xyzint}
-
-        # Load values
-        dtype = type_table[data['dtype']]
-        description = data['description']
-        default = dtype(data['default']) if 'default' in data and data['default'] is not None else None
-
-        return ToolParameterInfo(dtype, description, default)
-
-
-class ToolMetadata:
-    def __init__(self, tool_name: str, params: dict[str, ToolParameterInfo], version: str, author: str, url: str,
-                 info: str, hidden: bool):
-        self.tool_name = tool_name
-        self.params = params
-        self.version = version
-        self.author = author
-        self.url = url
-        self.info = info
-        self.hidden = hidden
-
-    def get_info(self) -> str:
-        info_str = f'{self.tool_name} Information:'
-
-        for var, value in vars(self).items():
-            if var in ['version', 'author'] and value is not None:
-                info_str += f'\n  {var.capitalize()}: {value}'
-
-        if self.url is not None:
-            info_str += f'\n  URL: {self.url}'
-
-        if self.info is not None:
-            info_str += f'\n\n{self.info}'
-
-        if self.params:
-            param_str = '\n\nParameters:'
-            for name, info in self.params.items():
-                param_str += f'\n  {name}:{info.dtype.__name__} - {info.description}'
-                if info.default is not None:
-                    param_str += f' (default: {info.default})'
-
-            info_str += param_str
-
-        return info_str
-
-    @staticmethod
-    def attr_or_default(module, attr, default):
-        if hasattr(module, attr):
-            return getattr(module, attr)
-
-        return default
-
-    @staticmethod
-    def strattr_or_default(module, attr, default):
-        if hasattr(module, attr):
-            return str(getattr(module, attr)).strip()
-
-        return default
-
-    def to_dict(self) -> dict:
-        data = {varname: value for (varname, value) in vars(self).items() if varname != 'params' and value is not None}
-
-        # Special handling for parameters
-        data['params'] = {}  # Need fresh dictionary, make sure pointers dont get shared
-        for p_name, p_info in self.params.items():
-            data['params'][p_name] = p_info.to_dict()
-
-        return data
-
-    @staticmethod
-    def from_dict(data: dict) -> 'ToolMetadata':
-        # Convert the input dict into a defaultdict so that missing entries become None
-        data_or_none = collections.defaultdict(lambda: None, data)
-        tool_name = data_or_none['tool_name']
-        version = data_or_none['version']
-        author = data_or_none['author']
-        url = data_or_none['url']
-        info = data_or_none['info']
-        hidden = data_or_none['hidden']
-
-        # Handle parameter list
-        params = data_or_none['params']
-        for p_name, p_info_dict in params.items():
-            params[p_name] = ToolParameterInfo.from_dict(p_info_dict)
-
-        return ToolMetadata(tool_name, params, version, author, url, info, hidden)
-
-
-class ParameterDict(dict):
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            raise AttributeError(f"'ParameterDict' object has no attribute '{key}'")
-
-
-ToolMainType = Callable[[Suitebro, Selection, ParameterDict], None]
-ToolListType = list[tuple[ModuleType, ToolMetadata]]
-PartialToolListType = list[tuple[ModuleType | str, ToolMetadata]]
-
-
-def load_tool(script_path, verbose=True) -> tuple[ModuleType, ToolMetadata] | None:
-    script = os.path.basename(script_path)
-    module_name = os.path.splitext(script)[0]
-    if verbose:
-        print(f"Loading tool script: {module_name}")
-    try:
-        # TODO convert from importlib.util to pkgutil
-        spec = importlib.util.spec_from_file_location(module_name, script_path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
-        # Get script directives/metadata variables
-        tool_name = ToolMetadata.strattr_or_default(module, 'TOOL_NAME', module_name)
-        params = ToolMetadata.attr_or_default(module, 'PARAMETERS', {})
-        version = ToolMetadata.strattr_or_default(module, 'VERSION', None)
-        author = ToolMetadata.strattr_or_default(module, 'AUTHOR', None)
-        url = ToolMetadata.strattr_or_default(module, 'URL', None)
-        info = ToolMetadata.strattr_or_default(module, 'INFO', None)
-        hidden = ToolMetadata.strattr_or_default(module, 'HIDDEN', False)
-
-        # Check if the module has a main function before registering it
-        if not hasattr(module, 'main') and not hidden:
-            if verbose:
-                logging.warning(f"No 'main' function found in tool '{tool_name}'. Skipping.")
-            return None
-
-        if verbose:
-            success_message = f'Successfully loaded {tool_name}'
-            if version is not None:
-                success_message += f' {version}'
-            if author is not None:
-                success_message += f' by {author}'
-
-            if not hidden and verbose:
-                logging.info(success_message)
-
-        return module, ToolMetadata(tool_name, params, version, author, url, info, hidden)
-
-    except Exception as e:
-        logging.error(f"Error loading tool '{script}': {e}")
-
-
-TOOLS_PATH = os.path.join(root_directory, 'tools')
-TOOLS_INDEX_NAME = 'tools-index.json'
-TOOLS_INDEX_PATH = os.path.join(root_directory, TOOLS_INDEX_NAME)
-
-
-def make_tools_index(tools: PartialToolListType):
-    tools_dict = {}
-    for module_or_path, meta in tools:
-        # Convert tool metadata to dictionary
-        tool_data = meta.to_dict()
-
-        # Get path name
-        if isinstance(module_or_path, ModuleType):
-            tool_path = module_or_path.__file__
-        else:
-            tool_path = module_or_path
-
-        # Extra important detail, need time last modified
-        tool_data['last_modified'] = os.path.getmtime(tool_path)
-
-        # Add to output
-        tools_dict[tool_path] = tool_data
-
-    # Simply dump dictionary to .json file now
-    with open(TOOLS_INDEX_PATH, 'w') as fd:
-        json.dump(tools_dict, fd, indent=2)
-
-
-# Get tool scripts as absolute, case-normalized paths
-def get_tool_scripts() -> list[str]:
-    files = os.listdir(TOOLS_PATH)
-
-    python_files = [f for f in files if f.endswith('.py') and f != '__init__.py']
-    if not python_files:
-        logging.warning("No Python scripts found in 'tools' folder.")
-        return []
-
-    python_files = sorted(python_files)
-
-    # Convert to absolute paths and return
-    return [os.path.normcase(os.path.join(TOOLS_PATH, filename)) for filename in python_files]
-
-
-def get_indexed_tools() -> PartialToolListType | None:
-    try:
-        with open(TOOLS_INDEX_PATH, 'r') as fd:
-            tools_index = json.load(fd)
-    except (OSError, json.JSONDecodeError):
-        logging.debug('Failed to load tools index... Will regenerate')
-        return None
-
-    output_tools = []
-    for tool_path, meta_dict in tools_index.items():
-        # Normalize tool_path for Windows
-        tool_path = os.path.normcase(tool_path)
-
-        # First check if tool_path exists and is file...
-        if not os.path.isfile(tool_path):
-            continue
-
-        # Check modify time
-        index_mtime = meta_dict['last_modified']
-        actual_mtime = os.path.getmtime(tool_path)
-
-        # If the file has been changed, reload the tool script...
-        if index_mtime != actual_mtime:
-            tool_tuple = load_tool(tool_path)
-            if tool_tuple is None:
-                print(f'Failed to load tool from index: {tool_path}')
-                continue
-
-            output_tools.append(tool_tuple)
-        else:
-            output_tools.append((tool_path, ToolMetadata.from_dict(meta_dict)))
-
-    # Process any added tools
-    for script_path in get_tool_scripts():
-        # If tool not found in index, load and add it
-        if script_path not in tools_index:
-            print(f'NEW TOOL SCRIPT DETECTED: {os.path.basename(script_path)} (located in '
-                  f'{os.path.dirname(script_path)})')
-            response = input('Are you sure you want to trust this script? (Y/n)\n').strip().casefold()
-            if response == 'y' or response == 'ye' or response == 'yes':
-                tool_tuple = load_tool(script_path)
-                if tool_tuple is None:
-                    print(f'Failed to load tool: {script_path}')
-                    continue
-            else:
-                print('Aborting program.')
-                sys.exit(0)
-
-            output_tools.append(tool_tuple)
-
-    # Sort tools alphabetically by tool name
-    output_tools.sort(key=lambda tool_tuple: tool_tuple[-1].tool_name)
-    return output_tools
-
-
-def load_tools(verbose=True) -> PartialToolListType:
-    # First load the index
-    logging.debug('Loading index file...')
-    tools_index = get_indexed_tools()
-
-    # If we were successful in loading the tools index, perfect we're done!
-    if tools_index:
-        make_tools_index(tools_index)
-        return tools_index
-
-    # First time execution!
-    # Get all tooling scripts
-    if not os.path.exists(TOOLS_PATH):
-        os.mkdir(TOOLS_PATH)
-
-    tool_paths = get_tool_scripts()
-
-    # Append each successfully loaded tool to the output
-    tools = []
-    for path in tool_paths:
-        load_result = load_tool(path, verbose=verbose)
-        if load_result is None:
-            continue
-        tools.append(load_result)
-
-    # Create index for future execution
-    make_tools_index(tools)
-
-    return tools
 
 
 class PyTowerParser(argparse.ArgumentParser):
@@ -418,6 +99,12 @@ def get_parser(tool_names: str):
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default={},
                             help='Parameters to pass onto tooling script (must come at end)')
 
+    # Fix subcommand
+    fix_parser = subparsers.add_parser('fix', help='Fix broken canvases and corruption in given file')
+    fix_parser.add_argument('filename', type=str, help='File to use as input')
+    fix_parser.add_argument('-f', '--force', dest='force', type=bool, action=argparse.BooleanOptionalAction,
+                            help='Whether to force reupload of all canvases or not')
+
     # Config subcommand
     config_parser = subparsers.add_parser('config', help='PyTower Configuration')
     config_subparsers = config_parser.add_subparsers(dest='config_mode', required=True)
@@ -488,41 +175,6 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDic
     # Add support for accessing parameters using dot notation by constructing ParameterDict
     params = ParameterDict(params)
     return params
-
-
-def load_suitebro(filename: str, only_json=False) -> Suitebro:
-    abs_filepath = os.path.realpath(filename)
-    in_dir = os.path.dirname(abs_filepath)
-    json_output_path = os.path.join(in_dir, os.path.basename(abs_filepath) + ".json")
-
-    if not only_json:
-        run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
-
-    logging.info('Loading JSON file...')
-    with open(json_output_path, 'r') as fd:
-        save_json = json.load(fd)
-
-    save = Suitebro(filename, in_dir, save_json)
-    _active_saves.append(save)
-
-    return save
-
-
-def save_suitebro(save: Suitebro, filename: str, only_json=False):
-    abs_filepath = os.path.realpath(filename)
-    out_dir = os.path.dirname(abs_filepath)
-    json_final_path = os.path.join(out_dir, f'{filename}.json')
-    final_output_path = os.path.join(out_dir, f'{filename}')
-
-    with open(json_final_path, 'w') as fd:
-        json.dump(save.to_dict(), fd, indent=2)
-
-    # Finally run!
-    if not only_json:
-        run_suitebro_parser(json_final_path, True, final_output_path, overwrite=True)
-
-    # Remove from active saves
-    _active_saves.remove(save)
 
 
 def run(input_filename: str, tool: ToolMainType, selector: Selector = None, params: list = []):
@@ -783,6 +435,10 @@ def main():
                 for name, objs in itertools.groupby(final_inv_items, TowerObject.get_name):
                     quantity = len(list(objs))
                     print(f'{quantity:>9,}x {name}')
+        case 'fix':
+            filename = args['filename'].strip()
+            path = os.path.abspath(os.path.expanduser(filename))
+            backup.fix_canvases(path, force_reupload=args['force'])
         case 'config':
             match args['config_mode']:
                 case 'get':
@@ -798,9 +454,6 @@ def main():
                 case 'view':
                     for k, v in dict(config).items():
                         print(f'{k}: {v}')
-
-    if len(_active_saves) > 0:
-        logging.debug('WARNING: Saves are still loaded in PyTower! Is this a bug?')
 
 
 if __name__ == '__main__':
