@@ -16,11 +16,13 @@ import platform
 
 from colorama import Fore, Back, Style
 
-from . import __version__, root_directory
+from . import __version__, root_directory, backup
 from .backup import make_backup
 from .config import TowerConfig
 from .selection import *
-from .suitebro import Suitebro
+from .suitebro import Suitebro, load_suitebro, save_suitebro, run_suitebro_parser
+from .tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
+    make_tools_index
 from .util import xyz, xyzint, xyz_to_string
 
 # _active_saves is a stack
@@ -458,6 +460,12 @@ def get_parser(tool_names: str):
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default={},
                             help='Parameters to pass onto tooling script (must come at end)')
 
+    # Fix subcommand
+    fix_parser = subparsers.add_parser('fix', help='Fix broken canvases and corruption in given file')
+    fix_parser.add_argument('filename', type=str, help='File to use as input')
+    fix_parser.add_argument('-f', '--force', dest='force', type=bool, action=argparse.BooleanOptionalAction,
+                            help='Whether to force reupload of all canvases or not')
+
     # Config subcommand
     config_parser = subparsers.add_parser('config', help='PyTower Configuration')
     config_subparsers = config_parser.add_subparsers(dest='config_mode', required=True)
@@ -830,6 +838,10 @@ def main():
                 for name, objs in itertools.groupby(final_inv_items, TowerObject.get_name):
                     quantity = len(list(objs))
                     print(f'{quantity:>9,}x {name}')
+        case 'fix':
+            filename = args['filename'].strip()
+            path = os.path.abspath(os.path.expanduser(filename))
+            backup.fix_canvases(path, force_reupload=args['force'])
         case 'config':
             match args['config_mode']:
                 case 'get':
@@ -845,9 +857,6 @@ def main():
                 case 'view':
                     for k, v in dict(config).items():
                         print(f'{k}: {v}')
-
-    if len(_active_saves) > 0:
-        logging.debug('WARNING: Saves are still loaded in PyTower! Is this a bug?')
 
 
 if __name__ == '__main__':

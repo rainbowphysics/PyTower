@@ -1,7 +1,7 @@
 from pytower import tower
 from pytower.selection import Selection, ObjectNameSelector
 from pytower.suitebro import Suitebro
-from pytower.tower import ParameterDict
+from pytower.tool_lib import ParameterDict
 
 TOOL_NAME = 'Filter'
 VERSION = '1.0'

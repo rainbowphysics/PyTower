@@ -1,6 +1,6 @@
 import json
 
-from . import tower
+from . import suitebro
 from .object import TowerObject
 from .selection import Selection
 
@@ -27,7 +27,7 @@ def copy_selection(selection: Selection) -> Selection:
         old_group_id = obj.group_id()
         if old_group_id >= 0:
             if old_group_id not in new_groups:
-                save = tower.get_active_save()
+                save = suitebro.get_active_save()
                 save.update_groups_meta()
                 new_groupid = save.get_max_groupid() + 1
                 new_groups[old_group_id] = new_groupid
