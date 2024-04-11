@@ -63,8 +63,9 @@ class Suitebro:
             x += 1
 
         # Now cull Nones at the end of array
-        size = self.objects.index(None)
-        self.objects = self.objects[:size]
+        if None in self.objects:
+            size = self.objects.index(None)
+            self.objects = self.objects[:size]
 
     def add_object(self, obj):
         self.objects += [obj]
