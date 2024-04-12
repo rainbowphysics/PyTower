@@ -454,7 +454,10 @@ def main():
                 case 'set':
                     k, v = args['key'], args['value']
                     try:
-                        config.set(k, v)
+                        if v.strip().casefold() in ['true', 'false']:
+                            config.set(k, bool(v))
+                        else:
+                            config.set(k, v)
                     except ValueError:
                         print(f'{k} is not in config!')
                         print(f'List of config keys: {"".join(config.keys())}')
