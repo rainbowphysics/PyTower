@@ -39,7 +39,7 @@ class TowerConfig:
         # Get the default config
         default = json.loads(fr'''{{
             "{KEY_INSTALL_PATH}": "{default_install}",
-            "{KEY_IMGUR_CLIENT_ID}": null
+            "{KEY_IMGUR_CLIENT_ID}": null,
             "{KEY_FROM_SOURCE}": false
         }}''')
 

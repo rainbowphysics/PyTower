@@ -174,8 +174,7 @@ def get_active_save() -> Suitebro | None:
 
 def get_suitebro_path():
     # For cases when want to build suitebro parser from source, for whatever reason
-    from config import CONFIG, KEY_FROM_SOURCE
-
+    from .config import CONFIG, KEY_FROM_SOURCE
     if CONFIG.get(KEY_FROM_SOURCE):
         source_dir = os.path.join(root_directory, 'tower-unite-suitebro')
         if os.path.isdir(source_dir):
@@ -264,7 +263,7 @@ def load_suitebro(filename: str, only_json=False) -> Suitebro:
 def save_suitebro(save: Suitebro, filename: str, only_json=False):
     abs_filepath = os.path.realpath(filename)
     out_dir = os.path.dirname(abs_filepath)
-    json_final_path = os.path.join(save.directory, f'{save.filename}.json')
+    json_final_path = os.path.join(save.directory, f'{filename}.json')
     final_output_path = os.path.join(out_dir, f'{filename}')
 
     with open(json_final_path, 'w') as fd:
