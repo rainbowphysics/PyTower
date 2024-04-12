@@ -11,6 +11,7 @@ from threading import Lock
 
 from . import root_directory, __version__
 from .config import KEY_INSTALL_PATH
+from .image_backends.catbox import CatboxBackend
 from .image_backends.imgur import ImgurBackend
 from .suitebro import Suitebro, load_suitebro, save_suitebro
 from .tool_lib import ParameterDict
@@ -238,17 +239,13 @@ async def _check_links(urls: list[str]):
     return {zres[0]: zres[1] for zres in zip(urls, results)}
 
 
-def restore_backup(path, force_reupload=False):
+def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
     cwd = os.getcwd()
     os.chdir(path)
     with open('index.json', 'r') as fd:
         index = BackupIndex(json.load(fd))
 
     # First, handle reuploading files
-    from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID
-    imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID)
-    backend = ImgurBackend(imgur_client_id)
-
     broken_files = []
     available_urls = asyncio.run(_check_links(list(index.resources.keys())))
     for url, filename in index.resources.items():
@@ -276,7 +273,7 @@ def restore_backup(path, force_reupload=False):
     os.chdir(cwd)
 
 
-def fix_canvases(path: str, force_reupload=False):
+def fix_canvases(path: str, force_reupload=False, backend=CatboxBackend):
     save = load_suitebro(path)
     backup_path = make_backup(save)
-    restore_backup(backup_path, force_reupload=force_reupload)
+    restore_backup(backup_path, force_reupload=force_reupload, backend=backend)

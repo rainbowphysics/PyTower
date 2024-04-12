@@ -16,6 +16,8 @@ import platform
 
 from colorama import Fore, Back, Style
 
+from pytower.image_backends.catbox import CatboxBackend
+from pytower.image_backends.imgur import ImgurBackend
 from . import __version__, root_directory, backup
 from .backup import make_backup
 from .config import TowerConfig
@@ -105,6 +107,8 @@ def get_parser(tool_names: str):
     fix_parser.add_argument('filename', type=str, help='File to use as input')
     fix_parser.add_argument('-f', '--force', dest='force', type=bool, action=argparse.BooleanOptionalAction,
                             help='Whether to force reupload of all canvases or not')
+    fix_parser.add_argument('-b', '--backend', dest='backend', type=str,
+                            help='Backend to use (Imgur or Catbox)')
 
     # Config subcommand
     config_parser = subparsers.add_parser('config', help='PyTower Configuration')
@@ -446,7 +450,22 @@ def main():
         case 'fix':
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
-            backup.fix_canvases(path, force_reupload=args['force'])
+            if 'backend' in args:
+                backend_input = args['backend'].strip().casefold()
+                if 'imgur'.startswith(backend_input):
+                    from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID
+                    imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID)
+                    backend = ImgurBackend(imgur_client_id)
+                elif 'catbox'.startswith(backend_input):
+                    from pytower.config import CONFIG, KEY_CATBOX_USERHASH
+                    user_hash = CONFIG.get(KEY_CATBOX_USERHASH)
+                    backend = CatboxBackend(user_hash)
+                else:
+                    print(f'Invalid backend {args["backend"]}! Must be Imgur or Catbox', file=sys.stderr)
+                    sys.exit(1)
+            else:
+                backend = CatboxBackend()  # default
+            backup.fix_canvases(path, force_reupload=args['force'], backend=backend)
         case 'config':
             match args['config_mode']:
                 case 'get':
