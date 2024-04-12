@@ -174,9 +174,16 @@ def get_active_save() -> Suitebro | None:
 
 def get_suitebro_path():
     # For cases when want to build suitebro parser from source, for whatever reason
-    source_dir = os.path.join(root_directory, 'tower-unite-suitebro')
-    if os.path.isdir(source_dir):
-        return source_dir
+    from config import CONFIG, KEY_FROM_SOURCE
+
+    if CONFIG.get(KEY_FROM_SOURCE):
+        source_dir = os.path.join(root_directory, 'tower-unite-suitebro')
+        if os.path.isdir(source_dir):
+            return source_dir
+        else:
+            print('Error: could not find tower-unite-suitebro. Is suitebro installed in a folder named tower-unite-'
+                  'suitebro?', file=sys.stderr)
+            sys.exit(1)
 
     if sys.platform == 'win32':
         subdir = os.path.join(os.path.join('lib', 'win64'), 'tower-unite-save-x86_64-pc-windows-msvc.exe')

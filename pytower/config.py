@@ -7,6 +7,7 @@ from . import root_directory
 
 KEY_INSTALL_PATH = 'tower_install_path'
 KEY_IMGUR_CLIENT_ID = 'imgur_client_id'
+KEY_FROM_SOURCE = 'from_source'
 
 
 class TowerConfig:
@@ -39,6 +40,7 @@ class TowerConfig:
         default = json.loads(fr'''{{
             "{KEY_INSTALL_PATH}": "{default_install}",
             "{KEY_IMGUR_CLIENT_ID}": null
+            "{KEY_FROM_SOURCE}": false
         }}''')
 
         # Assign any defaults not in config
