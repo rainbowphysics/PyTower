@@ -29,7 +29,7 @@ def copy_selection(selection: Selection) -> Selection:
             if old_group_id not in new_groups:
                 save = suitebro.get_active_save()
                 save.update_groups_meta()
-                max_new_groupid = max(new_groups.keys()) if new_groups.keys() else -1
+                max_new_groupid = max(new_groups.values()) if new_groups.values() else -1
                 new_groupid = max(save.get_max_groupid(), max_new_groupid) + 1
                 new_groups[old_group_id] = new_groupid
 
