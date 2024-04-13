@@ -12,9 +12,6 @@ from . import root_directory
 from .selection import Selection
 from .object import TowerObject
 
-ITEM_ONLY_OBJECTS = ['SDNL_ArmorPickup', 'AmmoPickup', 'HealthPickup', 'GW_SDNLFlag', 'GW_SDNLOddball',
-                     'WeaponPickupIO']
-
 IO_GW_ITEMS = ['AmmoPickup', 'CustomSpawnPoint', 'HealthPickup', 'SDNL_ArmorPickup', 'GW_SDNLOddball', 'GW_SDNLFlag',
                'GW_BallRaceFinish', 'GW_BallRaceSpawn', 'LaserBeam', 'LeverBasic', 'ButtonShapes', 'PhysicsSlot',
                'WeaponPickupIO', 'ButtonCanvas', 'LocationVolumeIO', 'DamageHealVolume', 'BlockingVolume',
@@ -39,6 +36,17 @@ class Suitebro:
         num_items = len(item_section)
         self.objects: list[TowerObject | None] = [None] * (num_items + num_props)
 
+        # First get all names present in properties to determine item-only objects. Except for property-only metadata
+        #  objects, every property name is <SOME ITEM NAME>_C_###, where ### is the index within the item-type grouping
+        prop_names = set()
+        for prop_data in prop_section:
+            name: str = prop_data['name']
+            try:
+                name_end = name.rindex('_C_')
+                prop_names.add(name[:name_end])
+            except ValueError:
+                continue
+
         # This algorithm handles inserting TowerObjects from the (indexed) json by handling three cases:
         #  Case 1: There is an item but no corresponding property
         #  Case 2 (Most likely): There is an item and a corresponding property
@@ -51,7 +59,7 @@ class Suitebro:
             i = item_section[item_idx] if item_idx < num_items else None
             # print(p['name'] if p is not None else None)
             # print(i['name'] if i is not None else None)
-            if i is not None and i['name'] in ITEM_ONLY_OBJECTS:
+            if i is not None and i['name'] not in prop_names:
                 self.objects[x] = TowerObject(item=i, properties=None, nocopy=True)
                 item_idx += 1
             elif i is not None and p is not None and p['name'].startswith(i['name']):
