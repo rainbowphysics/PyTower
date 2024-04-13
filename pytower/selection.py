@@ -18,6 +18,10 @@ class Selection(set[TowerObject]):
     def ungrouped(self) -> 'Selection':
         return Selection({obj for obj in self if obj.group_id() < 0})
 
+    def destroy_groups(self):
+        for obj in self:
+            obj.ungroup()
+
     def get(self) -> TowerObject:
         return next(iter(self))
 

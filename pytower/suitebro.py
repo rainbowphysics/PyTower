@@ -1,3 +1,4 @@
+import itertools
 import json
 import logging
 import os
@@ -100,8 +101,19 @@ class Suitebro:
         return [obj for obj in self.objects if obj.item is not None]
 
     def inventory_items(self) -> list[TowerObject]:
-        return [obj for obj in self.objects if obj.item is not None and obj.properties is not None
-                and obj.get_name() not in IO_GW_ITEMS]
+        return [obj for obj in self.objects if obj.item is not None and obj.get_name() not in IO_GW_ITEMS]
+
+    def _item_count(self, objs) -> list[tuple[str, int]]:
+        ordered = sorted(objs, key=TowerObject.get_name)
+        return [(name, len(list(objs))) for name, objs in itertools.groupby(ordered, TowerObject.get_name)]
+
+    def item_count(self) -> list[tuple[str, int]]:
+        return self._item_count(self.objects)
+
+    def inventory_count(self):
+        objs = self.inventory_items()
+        counts = self._item_count(objs)
+        return [(name, count) for name, count in counts]
 
     # Convert item list back into a dict
     def to_dict(self):

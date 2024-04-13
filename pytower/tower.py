@@ -387,8 +387,7 @@ def main():
             # Load save
             save = load_suitebro(input_filename, only_json=only_json)
 
-            inv_items = save.inventory_items()
-            num_inv_items = len(inv_items)
+            inv_items_count = save.inventory_count()
 
             # Default selector is ItemSelector
             selector = ItemSelector()
@@ -468,15 +467,17 @@ def main():
             print(Style.RESET_ALL)
 
             # Display items in save
-            final_inv_items = save.inventory_items()
-            # TODO really this should check whether the quantity of a single item type has increased, but this is
-            #  probably fine
-            if len(final_inv_items) > num_inv_items:
+            final_inv_items_count = save.inventory_count()
+            print_items = False
+            for name, count in final_inv_items_count:
+                if (name, count) not in inv_items_count:
+                    print_items = True
+                    break
+
+            if print_items:
                 print('Make sure you have the following items in your inventory before loading the map:')
-                final_inv_items = sorted(final_inv_items, key=TowerObject.get_name)
-                for name, objs in itertools.groupby(final_inv_items, TowerObject.get_name):
-                    quantity = len(list(objs))
-                    print(f'{quantity:>9,}x {name}')
+                for name, count in final_inv_items_count:
+                    print(f'{count:>9,}x {name}')
         case 'fix':
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
