@@ -99,7 +99,7 @@ def get_parser(tool_names: str):
                             help='Whether to load/save as .json, instead of converting to CondoData')
     run_parser.add_argument('-g', '--groups', '--per-group', dest='per_group', action='store_true',
                             help='Whether or not to apply the tool per group')
-    run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default={},
+    run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default=[],
                             help='Parameters to pass onto tooling script (must come at end)')
 
     # Fix subcommand
@@ -117,7 +117,7 @@ def get_parser(tool_names: str):
     config_get_parser.add_argument('key', type=str, help='Key to get in config')
     config_set_parser = config_subparsers.add_parser('set', help='Set value in config')
     config_set_parser.add_argument('key', type=str, help='Key to set in config')
-    config_set_parser.add_argument('value', type=str, help='Value to set within config')
+    config_set_parser.add_argument('value', type=str, help='Value to set within config', nargs='*')
     config_view_parser = config_subparsers.add_parser('view', help='View config')
 
     return parser
@@ -232,6 +232,15 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
         return None
 
     return best_match
+
+
+def config_confirm_show() -> bool:
+    print('Warning, this config command may display personal information. Are you sure you want to continue?')
+    response = input('Y/n? >')
+    if 'yes'.startswith(response.strip().casefold()):
+        return True
+
+    return False
 
 
 def main():
@@ -469,9 +478,10 @@ def main():
         case 'config':
             match args['config_mode']:
                 case 'get':
-                    print(config.get(args['key']))
+                    if config_confirm_show():
+                        print(config.get(args['key']))
                 case 'set':
-                    k, v = args['key'], args['value']
+                    k, v = args['key'], ' '.join(args['value'])
                     try:
                         if v.strip().casefold() in ['true', 'false']:
                             config.set(k, bool(v))
@@ -482,8 +492,9 @@ def main():
                         print(f'List of config keys: {"".join(config.keys())}')
                     print(f'{k} is now set to {v}')
                 case 'view':
-                    for k, v in dict(config).items():
-                        print(f'{k}: {v}')
+                    if config_confirm_show():
+                        for k, v in dict(config).items():
+                            print(f'{k}: {v}')
 
 
 if __name__ == '__main__':
