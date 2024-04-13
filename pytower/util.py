@@ -78,3 +78,11 @@ def xyz_min(x1: np.ndarray, x2: np.ndarray):
 
 def xyz_clamp(x: np.ndarray, min_clamp: np.ndarray, max_clamp: np.ndarray):
     return xyz_max(xyz_min(x, max_clamp), min_clamp)
+
+
+def xyz_equal(x: np.ndarray, y: np.ndarray):
+    return np.isclose(x, y)
+
+
+def xyz_distance(x: np.ndarray, y: np.ndarray):
+    return np.linalg.norm(x - y)

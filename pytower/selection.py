@@ -1,9 +1,15 @@
 import itertools
+import math
+import random
+
+import numpy as np
 
 from .object import TowerObject
 
 from abc import ABC, abstractmethod
 import re
+
+from .util import xyz_min, xyz_max, xyz_clamp, xyz_equal, xyz_distance
 
 
 class Selection(set[TowerObject]):
@@ -134,3 +140,61 @@ class NothingSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         return Selection()
+
+
+class PercentSelector(Selector):
+    def __init__(self, percentage):
+        super().__init__('PercentSelector')
+        self.percentage = percentage
+
+    def select(self, everything: Selection) -> Selection:
+        sequence = list(everything)
+        random.shuffle(sequence)
+        cutoff = int(len(sequence) * self.percentage / 100 + 0.5)
+        return Selection(sequence[0:cutoff])
+
+
+class TakeSelector(Selector):
+    def __init__(self, number):
+        super().__init__('TakeSelector')
+        self.number = number
+
+    def select(self, everything: Selection) -> Selection:
+        sequence = list(everything)
+        random.shuffle(sequence)
+        return Selection(sequence[0:self.number])
+
+
+class RandomSelector(Selector):
+    def __init__(self, probability):
+        super().__init__('RandomSelector')
+        self.probability = probability
+
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if random.uniform(0, 1) <= self.probability})
+
+
+class BoxSelector(Selector):
+    def __init__(self, pos1: np.ndarray, pos2: np.ndarray):
+        super().__init__('BoxSelector')
+        self.min_pos = xyz_min(pos1, pos2)
+        self.max_pos = xyz_max(pos1, pos2)
+
+    def _contains(self, pos):
+        return xyz_equal(xyz_clamp(pos, self.min_pos, self.max_pos), pos)
+
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if self._contains(obj.position)})
+
+
+class SphereSelector(Selector):
+    def __init__(self, center: np.ndarray, radius: float):
+        super().__init__('SphereSelector')
+        self.center = center
+        self.radius = radius
+
+    def _contains(self, pos):
+        return xyz_distance(pos, self.center) < self.radius
+
+    def select(self, everything: Selection) -> Selection:
+        return Selection({obj for obj in everything if self._contains(obj.position)})

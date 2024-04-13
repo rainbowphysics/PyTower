@@ -17,6 +17,7 @@ from .selection import *
 from .suitebro import load_suitebro, save_suitebro, run_suitebro_parser
 from .tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
     make_tools_index
+from .util import xyz
 
 
 class PyTowerParser(argparse.ArgumentParser):
@@ -419,7 +420,29 @@ def main():
                 elif sel_input.startswith('customname:'):
                     selector = CustomNameSelector(sel_split[1])
                 elif sel_input.startswith('objname:'):
-                    selector = CustomNameSelector(sel_split[1])
+                    selector = ObjectNameSelector(sel_split[1])
+                elif sel_input.startswith('random:'):
+                    probability = float(sel_split[1])
+                    selector = RandomSelector(probability)
+                elif sel_input.startswith('take:') or re.match('\\d+', sel_input):
+                    try:
+                        num = int(sel_split[1])
+                    except IndexError:
+                        num = int(sel_input)
+                    selector = TakeSelector(num)
+                elif re.match('\\d+\\.*\\d*%', sel_input):
+                    percentage = float(sel_split[1][:-1])
+                    selector = PercentSelector(percentage)
+                elif sel_input.startswith('box:'):
+                    positions = sel_split[1].split('/')
+                    pos1 = xyz(positions[0])
+                    pos2 = xyz(positions[1])
+                    selector = BoxSelector(pos1, pos2)
+                elif sel_input.startswith('sphere:'):
+                    params = sel_split[1].split('/')
+                    center = xyz(params[0])
+                    radius = float(params[1])
+                    selector = SphereSelector(center, radius)
                 else:
                     bad_sel = True
 
