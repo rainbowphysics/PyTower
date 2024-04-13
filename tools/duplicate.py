@@ -11,7 +11,9 @@ VERSION = '1.0'
 AUTHOR = 'Physics System'
 URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/duplicate.py'
 INFO = '''Duplicates selection (with optional offset)'''
-PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Translation offset', default=xyz(0.0, 0.0, 0.0))}
+PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Translation offset', default=xyz(0.0, 0.0, 0.0)),
+              'local': ToolParameterInfo(dtype=bool, description='Whether to offset using local coordinates',
+                                         default=False)}
 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
