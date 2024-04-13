@@ -294,9 +294,11 @@ def main():
                     make_backup(save)
                 case 'restore':
                     filename = args['filename']
-                    if not os.path.isdir(filename):
-                        print(f'Could not find backup directory {filename}!'
-                              f' Input must be the path to the backup in the backups folder')
+                    from .backup import BACKUP_DIR
+                    path = os.path.join(BACKUP_DIR, filename)
+                    if not os.path.isdir(path):
+                        print(f'Could not find backup {path}!'
+                              f' Input must be the name of a folder in backups dictory')
                         sys.exit(1)
 
                     if 'backend' in args:
@@ -304,7 +306,7 @@ def main():
                     else:
                         backend = CatboxBackend()  # default
 
-                    backup.restore_backup(filename, force_reupload=args['force'], backend=backend)
+                    backup.restore_backup(path, force_reupload=args['force'], backend=backend)
         case 'list':
             print('Available tools:')
             for _, meta in tools:

@@ -8,6 +8,7 @@ import datetime
 import requests
 import asyncio
 from threading import Lock
+from colorama import Fore, Back, Style
 
 from . import root_directory, __version__
 from .config import KEY_INSTALL_PATH
@@ -17,6 +18,7 @@ from .suitebro import Suitebro, load_suitebro, save_suitebro
 from .tool_lib import ParameterDict
 from .util import dict_walk
 from .tools import replace_url
+
 
 PRINT_LOCK = Lock()
 BACKUP_DIR = os.path.join(root_directory, 'backup')
@@ -59,7 +61,6 @@ def _write_image(url, data) -> str | None:
     filename = f'{file_hash}.{file_type}'
     with open(filename, 'wb') as f:
         f.write(data)
-        print_safe(os.path.join(os.getcwd(), filename))
 
     return filename
 
@@ -144,13 +145,10 @@ async def _download_images(urls, install_dir, use_cache=True):
 def make_backup(save: Suitebro) -> str:
     # First make the folder for the backup
     save_name = save.filename
-    print_safe(save.filename)
 
     # If save is just default "CondoData", use parent folder for name
     if save_name == 'CondoData':
-        print_safe(f'directory: {save.directory}')
         save_name = os.path.basename(save.directory)
-        print_safe(f'save_name: {save_name}')
 
     # Sanitize save_name a little more
     save_name = save_name.replace(' ', '-').strip()
@@ -197,6 +195,9 @@ def make_backup(save: Suitebro) -> str:
 
     with open('index.json', 'w') as fd:
         json.dump(index.to_dict(), fd, indent=2)
+
+    print(f'{Fore.GREEN}Successfully created backup at {os.path.relpath(backup_path, root_directory)}{Style.RESET_ALL}')
+    print(f'To restore this backup, run the command: pytower backup restore {os.path.basename(backup_path)}')
 
     # Return to previous cwd
     os.chdir(old_cwd)
@@ -252,12 +253,27 @@ def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
         if url not in available_urls or force_reupload:
             broken_files.append(filename)
 
+    print(f'Marked {len(broken_files)}/{len(index.resources.items())} resources for reupload')
+
     url_dict = backend.upload_files(broken_files)
     url_replacements = {}
     for url, filename in index.resources.items():
         if filename in url_dict:
             new_url = url_dict[filename]
             url_replacements[url] = new_url
+
+    num_success = len(url_replacements)
+    num_total = len(broken_files)
+    if num_success > 0:
+        color = Fore.YELLOW
+        if num_success == num_total:
+            color = Fore.GREEN
+
+        print(f'{color}Successfully reuploaded {len(url_replacements)}/{len(broken_files)} to {backend.name}!', end='')
+        print(Style.RESET_ALL)
+    else:
+        print(f'{Fore.RED}Failed to reupload any files :(', end='')
+        print(Style.RESET_ALL)
 
     # Now get the backed-up save
     save = load_suitebro(index.filename)
@@ -273,7 +289,7 @@ def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
     os.chdir(cwd)
 
 
-def fix_canvases(path: str, force_reupload=False, backend=CatboxBackend):
+def fix_canvases(path: str, force_reupload=False, backend=CatboxBackend()):
     save = load_suitebro(path)
     backup_path = make_backup(save)
     restore_backup(backup_path, force_reupload=force_reupload, backend=backend)
