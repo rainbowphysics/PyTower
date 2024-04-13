@@ -301,7 +301,7 @@ def main():
                               f' Input must be the name of a folder in backups dictory')
                         sys.exit(1)
 
-                    if 'backend' in args:
+                    if args['backend']:
                         backend = parse_resource_backend(args['backend'])
                     else:
                         backend = CatboxBackend()  # default
@@ -480,7 +480,7 @@ def main():
         case 'fix':
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
-            if 'backend' in args:
+            if args['backend']:
                 backend = parse_resource_backend(args['backend'])
             else:
                 backend = CatboxBackend()  # default

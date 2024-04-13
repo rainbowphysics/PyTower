@@ -276,7 +276,7 @@ def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
 
         print(f'{color}Successfully reuploaded {len(url_replacements)}/{len(broken_files)} to {backend.name}!', end='')
         print(Style.RESET_ALL)
-    else:
+    elif num_total > 0:
         print(f'{Fore.RED}Failed to reupload any files :(', end='')
         print(Style.RESET_ALL)
 
