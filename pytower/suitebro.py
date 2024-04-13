@@ -103,17 +103,16 @@ class Suitebro:
     def inventory_items(self) -> list[TowerObject]:
         return [obj for obj in self.objects if obj.item is not None and obj.get_name() not in IO_GW_ITEMS]
 
-    def _item_count(self, objs) -> list[tuple[str, int]]:
+    def _item_count(self, objs) -> dict:
         ordered = sorted(objs, key=TowerObject.get_name)
-        return [(name, len(list(objs))) for name, objs in itertools.groupby(ordered, TowerObject.get_name)]
+        return {name: len(list(objs)) for name, objs in itertools.groupby(ordered, TowerObject.get_name)}
 
-    def item_count(self) -> list[tuple[str, int]]:
+    def item_count(self) -> dict:
         return self._item_count(self.objects)
 
-    def inventory_count(self):
+    def inventory_count(self) -> dict:
         objs = self.inventory_items()
-        counts = self._item_count(objs)
-        return [(name, count) for name, count in counts]
+        return self._item_count(objs)
 
     # Convert item list back into a dict
     def to_dict(self):

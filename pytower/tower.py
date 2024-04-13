@@ -469,14 +469,14 @@ def main():
             # Display items in save
             final_inv_items_count = save.inventory_count()
             print_items = False
-            for name, count in final_inv_items_count:
-                if (name, count) not in inv_items_count:
+            for name, count in final_inv_items_count.items():
+                if name not in inv_items_count or final_inv_items_count[name] > inv_items_count[name]:
                     print_items = True
                     break
 
             if print_items:
                 print('Make sure you have the following items in your inventory before loading the map:')
-                for name, count in final_inv_items_count:
+                for name, count in final_inv_items_count.items():
                     print(f'{count:>9,}x {name}')
         case 'fix':
             filename = args['filename'].strip()
