@@ -3,8 +3,8 @@ from pytower.copy import copy_selection
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
 from pytower.tool_lib import ToolParameterInfo, ParameterDict
+from pytower.tools import translate
 from pytower.util import xyz
-from . import translate
 
 TOOL_NAME = 'Duplicate'
 VERSION = '1.0'

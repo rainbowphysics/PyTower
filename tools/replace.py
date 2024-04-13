@@ -1,7 +1,7 @@
-import tools.set
 from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
+from pytower.tools import set
 from pytower.tool_lib import ToolParameterInfo, ParameterDict
 
 TOOL_NAME = 'Replace'
@@ -22,7 +22,7 @@ def should_replace(obj: TowerObject, material: str) -> bool:
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
     selection = Selection({obj for obj in selection if should_replace(obj, params.replace)})
-    tools.set.main(save, selection, params)
+    set.main(save, selection, params)
 
 
 if __name__ == '__main__':
