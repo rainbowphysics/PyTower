@@ -52,14 +52,14 @@ class Suitebro:
             # print(p['name'] if p is not None else None)
             # print(i['name'] if i is not None else None)
             if i is not None and i['name'] in ITEM_ONLY_OBJECTS:
-                self.objects[x] = TowerObject(item=i, properties=None)
+                self.objects[x] = TowerObject(item=i, properties=None, nocopy=True)
                 item_idx += 1
             elif i is not None and p is not None and p['name'].startswith(i['name']):
-                self.objects[x] = TowerObject(item=i, properties=p)
+                self.objects[x] = TowerObject(item=i, properties=p, nocopy=True)
                 item_idx += 1
                 prop_idx += 1
             elif p is not None:
-                self.objects[x] = TowerObject(item=None, properties=p)
+                self.objects[x] = TowerObject(item=None, properties=p, nocopy=True)
                 prop_idx += 1
             x += 1
 

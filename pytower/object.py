@@ -28,9 +28,13 @@ ITEMCONNECTIONS_DEFAULT = json.loads('''{
 
 
 class TowerObject:
-    def __init__(self, item: dict | None = None, properties: dict | None = None):
-        self.item = copy.deepcopy(item)
-        self.properties = copy.deepcopy(properties)
+    def __init__(self, item: dict | None = None, properties: dict | None = None, nocopy: bool = False):
+        if nocopy:
+            self.item = item
+            self.properties = properties
+        else:
+            self.item = copy.deepcopy(item)
+            self.properties = copy.deepcopy(properties)
 
     def is_canvas(self) -> bool:
         if self.item is None:

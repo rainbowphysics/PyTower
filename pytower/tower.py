@@ -134,13 +134,13 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDic
     params = {}
     for param in param_input:
         if not isinstance(param, str):
-            logging.error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.')
+            print(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.', file=sys.stderr)
             sys.exit(1)
 
         param_split = param.split('=')
         if len(param_split) != 2:
-            logging.error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces and only'
-                          f'one equal sign.')
+            print(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces and only'
+                          f'one equal sign.', file=sys.stderr)
             sys.exit(1)
 
         param_name, value = param_split
@@ -182,7 +182,7 @@ def run(input_filename: str, tool: ToolMainType, selector: Selector = None, para
 
     save = load_suitebro(input_filename)
 
-    logging.info(f'Running {mock_metadata.tool_name} with parameters {mock_params}')
+    print(f'Running tool {mock_metadata.tool_name}...')
 
     if selector is None:
         selector = ItemSelector()
@@ -365,7 +365,7 @@ def main():
 
             # Error if could not find specified tool
             if not tool:
-                logging.error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
+                print(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}', file=sys.stderr)
                 sys.exit(1)
 
             module_or_path, meta = tool
@@ -389,11 +389,8 @@ def main():
 
             inv_items_count = save.inventory_count()
 
-            # Default selector is ItemSelector
-            selector = ItemSelector()
-
             # If --select argument provided, choose different selector
-            if 'selection' in args:
+            if args['selection']:
                 sel_input: str = args['selection'].casefold().strip()
                 sel_split = sel_input.split(':')
                 sel_split_case_sensitive = args['selection'].strip().split(':')
@@ -446,7 +443,7 @@ def main():
 
             # Run tool
             params = parse_parameters(args['parameters'], meta)
-            logging.info(f'Running {meta.tool_name} with parameters {params}')
+            print(f'Running tool {meta.tool_name}...')
 
             if not args['per_group']:
                 # Normal execution
