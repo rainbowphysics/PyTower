@@ -1,31 +1,22 @@
 import argparse
-import collections
-import importlib
-import pkgutil  # properly imports importlib.util for some reason
-import json
 import logging
 import os
 import sys
-from subprocess import Popen, PIPE
 from types import ModuleType
-from typing import Callable
 
 import colorama
-import numpy as np
-import platform
+from colorama import Fore, Style
 
-from colorama import Fore, Back, Style
-
-from pytower.image_backends.catbox import CatboxBackend
-from pytower.image_backends.imgur import ImgurBackend
-from . import __version__, root_directory, backup
-from .backup import make_backup
+from . import __version__, backup
+from .backup import make_backup, restore_backup
 from .config import TowerConfig
+from .image_backends.backend import ResourceBackend
+from .image_backends.catbox import CatboxBackend
+from .image_backends.imgur import ImgurBackend
 from .selection import *
-from .suitebro import Suitebro, load_suitebro, save_suitebro, run_suitebro_parser
+from .suitebro import load_suitebro, save_suitebro, run_suitebro_parser
 from .tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
     make_tools_index
-from .util import xyz, xyzint, xyz_to_string
 
 
 class PyTowerParser(argparse.ArgumentParser):
@@ -64,6 +55,8 @@ def get_parser(tool_names: str):
     backup_parser = subparsers.add_parser('backup', help='Backup or restore canvases for save files')
     backup_parser.add_argument('mode', type=str, help='Mode to use (save or restore)')
     backup_parser.add_argument('filename', type=str, help='Name of file to use')
+    backup_parser.add_argument('-f', '--force', dest='force', type=bool, action=argparse.BooleanOptionalAction,
+                               help='Whether to force reupload on restore or not')
 
     # List subcommand
     subparsers.add_parser('list', help='List tools')
@@ -243,6 +236,21 @@ def config_confirm_show() -> bool:
     return False
 
 
+def parse_resource_backend(backend_input) -> ResourceBackend:
+    sanitized = backend_input.strip().casefold()
+    if 'imgur'.startswith(sanitized):
+        from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID
+        imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID)
+        return ImgurBackend(imgur_client_id)
+    elif 'catbox'.startswith(sanitized):
+        from pytower.config import CONFIG, KEY_CATBOX_USERHASH
+        user_hash = CONFIG.get(KEY_CATBOX_USERHASH)
+        return CatboxBackend(user_hash)
+    else:
+        print(f'Invalid backend {backend_input}! Must be Imgur or Catbox', file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     # Initialize colorama for pretty printing
     colorama.init(convert=sys.platform == 'win32')
@@ -285,7 +293,18 @@ def main():
                     save = load_suitebro(filename)
                     make_backup(save)
                 case 'restore':
-                    pass
+                    filename = args['filename']
+                    if not os.path.isdir(filename):
+                        print(f'Could not find backup directory {filename}!'
+                              f' Input must be the path to the backup in the backups folder')
+                        sys.exit(1)
+
+                    if 'backend' in args:
+                        backend = parse_resource_backend(args['backend'])
+                    else:
+                        backend = CatboxBackend()  # default
+
+                    backup.restore_backup(filename, force_reupload=args['force'], backend=backend)
         case 'list':
             print('Available tools:')
             for _, meta in tools:
@@ -460,18 +479,7 @@ def main():
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
             if 'backend' in args:
-                backend_input = args['backend'].strip().casefold()
-                if 'imgur'.startswith(backend_input):
-                    from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID
-                    imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID)
-                    backend = ImgurBackend(imgur_client_id)
-                elif 'catbox'.startswith(backend_input):
-                    from pytower.config import CONFIG, KEY_CATBOX_USERHASH
-                    user_hash = CONFIG.get(KEY_CATBOX_USERHASH)
-                    backend = CatboxBackend(user_hash)
-                else:
-                    print(f'Invalid backend {args["backend"]}! Must be Imgur or Catbox', file=sys.stderr)
-                    sys.exit(1)
+                backend = parse_resource_backend(args['backend'])
             else:
                 backend = CatboxBackend()  # default
             backup.fix_canvases(path, force_reupload=args['force'], backend=backend)
