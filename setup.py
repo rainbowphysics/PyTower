@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 
+import setuptools
 from setuptools import setup
 from setuptools.command.develop import develop
 from setuptools.command.build_py import build_py
@@ -129,6 +130,8 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 version = getattr(module, '__version__')
 
+print()
+
 setup(
     name='pytower',
     version=version,
@@ -137,7 +140,7 @@ setup(
     author='Physics System',
     author_email='rainbowphysicsystem@gmail.com',
     license='MIT License',
-    packages=['pytower', 'pytower.connections'],
+    packages=setuptools.find_packages(),
     install_requires=requirements,
     zip_safe=False,
     entry_points={

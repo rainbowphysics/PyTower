@@ -89,7 +89,7 @@ def main():
 
     if COLOR:
         print(Fore.GREEN, end='')
-    print(f'\nInstallation complete for PyTower v{VERSION} ~\n')
+    print(f'\nInstallation complete for PyTower {VERSION} ~\n')
     if COLOR:
         print(Style.RESET_ALL, end='')
 

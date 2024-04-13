@@ -3,3 +3,4 @@ recursive-include lib *
 include requirements.txt
 include install.bat
 include install.sh
+recursive-exclude pytower/tools *
