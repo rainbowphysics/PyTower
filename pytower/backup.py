@@ -130,6 +130,11 @@ async def _download_images(urls, install_dir, use_cache=True):
                 for cacheline in cachelines:
                     md5_hash = os.path.basename(cacheline)[:-6]
                     canvas_cache[md5_hash] = cacheline
+            print(f'{Fore.GREEN}Successfully located {len(canvas_cache)} cached resources!{Style.RESET_ALL}')
+        else:
+            from config import KEY_INSTALL_PATH
+            print(f'{Fore.RED} Failed to locate canvas cache! Make sure Tower Unite install path is set in the config'
+                  f' ({KEY_INSTALL_PATH}){Style.RESET_ALL}')
 
     results = await asyncio.gather(*[asyncio.to_thread(_download_image, url, canvas_cache) for url in urls])
 
