@@ -37,6 +37,7 @@ Discord community link: https://discord.gg/NUufVuu4Ve
  - `pytower info <TOOLNAME>`: Get detailed information about `<TOOLNAME>` 
  - `pytower run <TOONAME> ...`: Run tool
  - `pytower config`: (WIP) Access config
+ - `pytower fix <FILENAME>`: Fix broken canvas URLs in given file  
 
 Example usages:
  - `pytower help`
