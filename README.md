@@ -1,14 +1,23 @@
 # PyTower 
-A high-level Python API for editing/generating Tower Unite maps
+A high-level Python API for editing CondoData/.map files, similar to WorldEdit for Minecraft
+
+## Acknowledgements
+Special thanks to **Bree** for creating the first CondoData parser, please check it out here: https://github.com/brecert/tower-unite-suitebro
+
+Additional thanks to **rileyzzz** for their inspiring work on TUEdit and the other amazing members of the tooling community, including: **Aman-Anony**, **TerrorBite**, and **Sinaboo**
+
+PyTower wouldn't have been possible without their support, feedback, and early testing 💖
 
 <p align="center">
   <img src="https://github.com/rainbowphysics/PyTower/blob/main/logo.png?raw=true" width="512px" alt="PyTower logo"/>
 </p>
 
-Discord community link: https://discord.gg/NUufVuu4Ve
+**_Discord server link: https://discord.gg/NUufVuu4Ve_**
 
 ## Dependencies
- - Python 3.10+
+ - ⭐Python 3.10+
+ - (Included in /lib): [tower-unite-suitebro](https://github.com/brecert/tower-unite-suitebro) by brecert
+ - (Automatically installed by pip): numpy, scipy, requests, colorama, and any other Python packages in requirements.txt  
 
 ## Quick Installation
 1. Download the `install-pytower.py` script from latest release
@@ -21,6 +30,11 @@ Discord community link: https://discord.gg/NUufVuu4Ve
     - If typing `git` into the command line does nothing, you may have to add git manually to your PATH environment variable.
 3. Run `install.bat` (on Windows) or `install.sh` (on Linux). 
     - Alternatively, directly run `pip install -e .`. (`-e` flag must be included, install will break without it!) 
+
+### Troubleshooting
+PyTower is a new piece of software and may be prone to bugs. For help installing and using PyTower, [join the Discord server](https://discord.gg/NUufVuu4Ve).
+
+Also see [Installation Guide](https://github.com/rainbowphysics/PyTower/wiki/Installation-Guide-&-Troubleshooting) and [Getting Started With PyTower](https://github.com/rainbowphysics/PyTower/wiki/Getting-Started-With-PyTower).
 
 ## Running PyTower
  - Once installed, PyTower can be run from command line as `pytower`
