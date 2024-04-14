@@ -4,7 +4,7 @@ A high-level Python API for editing CondoData/.map files, similar to WorldEdit f
 ## Acknowledgements
 Special thanks to **Bree** for creating the first CondoData parser, please check it out here: https://github.com/brecert/tower-unite-suitebro
 
-Additional thanks to **rileyzzz** for their inspiring work on TUEdit and the other amazing members of the tooling community, including: **Aman-Anony**, **TerrorBite**, and **Sinaboo**
+Additional thanks to **rileyzzz** for their inspiring work on TUEdit and the other amazing members of the tooling community, including: **Aman-Anony**, **Fennecs**, **TerrorBite**, and **Sinaboo**
 
 PyTower wouldn't have been possible without their support, feedback, and early testing 💖
 
