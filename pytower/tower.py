@@ -11,6 +11,7 @@ from . import __version__, backup
 from .backup import make_backup, restore_backup
 from .config import TowerConfig
 from .image_backends.backend import ResourceBackend
+from .image_backends.custom import CustomBackend
 from .image_backends.catbox import CatboxBackend
 from .image_backends.imgur import ImgurBackend
 from .selection import *
@@ -247,6 +248,8 @@ def parse_resource_backend(backend_input) -> ResourceBackend:
         from pytower.config import CONFIG, KEY_CATBOX_USERHASH
         user_hash = CONFIG.get(KEY_CATBOX_USERHASH)
         return CatboxBackend(user_hash)
+    elif 'custom'.startswith(sanitized):
+        return CustomBackend()
     else:
         print(f'Invalid backend {backend_input}! Must be Imgur or Catbox', file=sys.stderr)
         sys.exit(1)
