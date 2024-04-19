@@ -125,24 +125,19 @@ def parse_args(parser=None):
     return vars(parser.parse_args())
 
 
-def parse_selection(select_input: str) -> Selector:
-    select_input = select_input.strip().casefold()
-    if select_input == 'all' or select_input == 'everything':
-        return ItemSelector()
-
-
 def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDict:
     # Ensure that all inputs were parsed correctly as strings
     params = {}
     for param in param_input:
         if not isinstance(param, str):
-            print(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.', file=sys.stderr)
+            print(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.',
+                  file=sys.stderr)
             sys.exit(1)
 
         param_split = param.split('=')
         if len(param_split) != 2:
             print(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces and only'
-                          f'one equal sign.', file=sys.stderr)
+                  f'one equal sign.', file=sys.stderr)
             sys.exit(1)
 
         param_name, value = param_split
@@ -236,6 +231,77 @@ def config_confirm_show() -> bool:
         return True
 
     return False
+
+
+def parse_selector(selection_input: str):
+    sel_input = selection_input.casefold().strip()
+    sel_split = sel_input.split(':')
+    sel_split_case_sensitive = selection_input.strip().split(':')
+
+    if len(sel_split) > 2:
+        return None
+    elif sel_input == 'item' or sel_input == 'items':
+        selector = ItemSelector()
+    elif sel_input == 'all' or sel_input == 'everything':
+        selector = EverythingSelector()
+    elif sel_input == 'none' or sel_input == 'nothing':
+        selector = NothingSelector()
+    elif sel_input.startswith('group:'):
+        gid_input = sel_split[1]
+        try:
+            group_id = int(gid_input)
+            selector = GroupSelector(group_id)
+        except ValueError:
+            print(f'{gid_input} is not valid group_id!')
+            return None
+    elif sel_input.startswith('regex:'):
+        selector = RegexSelector(sel_split_case_sensitive[1])
+    elif sel_input.startswith('name:'):
+        selector = NameSelector(sel_split[1])
+    elif sel_input.startswith('customname:'):
+        selector = CustomNameSelector(sel_split[1])
+    elif sel_input.startswith('objname:'):
+        selector = ObjectNameSelector(sel_split[1])
+    elif sel_input.startswith('random:'):
+        probability = float(sel_split[1])
+        selector = RandomSelector(probability)
+    elif sel_input.startswith('take:') or re.match('\\d+', sel_input):
+        try:
+            num = int(sel_split[1])
+        except IndexError:
+            num = int(sel_input)
+        selector = TakeSelector(num)
+    elif re.match('\\d+\\.*\\d*%', sel_input):
+        percentage = float(sel_split[1][:-1])
+        selector = PercentSelector(percentage)
+    elif sel_input.startswith('box:'):
+        positions = sel_split[1].split('/')
+        pos1 = xyz(positions[0])
+        pos2 = xyz(positions[1])
+        selector = BoxSelector(pos1, pos2)
+    elif sel_input.startswith('sphere:'):
+        params = sel_split[1].split('/')
+        center = xyz(params[0])
+        radius = float(params[1])
+        selector = SphereSelector(center, radius)
+    else:
+        return None
+
+    return selector
+
+
+def parse_selectors(selection_input: str) -> list[Selector]:
+    inputs = selection_input.split(';')
+    selectors = [parse_selector(input_sel) for input_sel in inputs]
+
+    # Validate
+    for selector, sel_input in zip(selectors, inputs):
+        if not selector:
+            print(f'Invalid selection: {sel_input}')
+            print('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
+            sys.exit(1)
+
+    return selectors
 
 
 def parse_resource_backend(backend_input) -> ResourceBackend:
@@ -395,68 +461,13 @@ def main():
 
             # If --select argument provided, choose different selector
             if args['selection']:
-                sel_input: str = args['selection'].casefold().strip()
-                sel_split = sel_input.split(':')
-                sel_split_case_sensitive = args['selection'].strip().split(':')
+                selectors = parse_selectors(args['selection'])
+            else:
+                selectors = [ItemSelector()]
 
-                bad_sel = False
-                if len(sel_split) > 2:
-                    bad_sel = True
-                elif sel_input == 'item' or sel_input == 'items':
-                    selector = ItemSelector()
-                elif sel_input == 'all' or sel_input == 'everything':
-                    selector = EverythingSelector()
-                elif sel_input == 'none' or sel_input == 'nothing':
-                    selector = NothingSelector()
-                elif sel_input.startswith('group:'):
-                    gid_input = sel_split[1]
-                    try:
-                        group_id = int(gid_input)
-                        selector = GroupSelector(group_id)
-                    except ValueError:
-                        print(f'{gid_input} is not valid group_id!')
-                        bad_sel = True
-                elif sel_input.startswith('regex:'):
-                    selector = RegexSelector(sel_split_case_sensitive[1])
-                elif sel_input.startswith('name:'):
-                    selector = NameSelector(sel_split[1])
-                elif sel_input.startswith('customname:'):
-                    selector = CustomNameSelector(sel_split[1])
-                elif sel_input.startswith('objname:'):
-                    selector = ObjectNameSelector(sel_split[1])
-                elif sel_input.startswith('random:'):
-                    probability = float(sel_split[1])
-                    selector = RandomSelector(probability)
-                elif sel_input.startswith('take:') or re.match('\\d+', sel_input):
-                    try:
-                        num = int(sel_split[1])
-                    except IndexError:
-                        num = int(sel_input)
-                    selector = TakeSelector(num)
-                elif re.match('\\d+\\.*\\d*%', sel_input):
-                    percentage = float(sel_split[1][:-1])
-                    selector = PercentSelector(percentage)
-                elif sel_input.startswith('box:'):
-                    positions = sel_split[1].split('/')
-                    pos1 = xyz(positions[0])
-                    pos2 = xyz(positions[1])
-                    selector = BoxSelector(pos1, pos2)
-                elif sel_input.startswith('sphere:'):
-                    params = sel_split[1].split('/')
-                    center = xyz(params[0])
-                    radius = float(params[1])
-                    selector = SphereSelector(center, radius)
-                else:
-                    bad_sel = True
-
-                if bad_sel:
-                    print(f'Invalid selection: {sel_input}')
-                    print('\nAvailable selection options: name:<NAME>, customname:<NAME>, objname:<NAME>, group:<ID>,'
-                          ' items, all, none, regex:<PATTERN>')
-                    print('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
-                    sys.exit(1)
-
-            selection = selector.select(Selection(save.objects))
+            selection = Selection(save.objects)
+            for selector in selectors:
+                selection = selector.select(selection)
 
             if args['invert-full'] and args['invert']:
                 print('--invert-all and --invert cannot be used at the same time!')
