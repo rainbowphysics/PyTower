@@ -240,9 +240,9 @@ def _reachable_thread(url: str) -> bool:
     return resource_available(url, debug=True)
 
 
-async def _check_links(urls: list[str]):
+async def _check_links(urls: list[str]) -> set[str]:
     results = await asyncio.gather(*[asyncio.to_thread(_reachable_thread, url) for url in urls])
-    return {zres[0]: zres[1] for zres in zip(urls, results)}
+    return {url for (url, result) in zip(urls, results) if result}  # return set of urls online and 200 status
 
 
 def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
