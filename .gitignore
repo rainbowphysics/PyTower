@@ -190,3 +190,6 @@ scratch/
 
 # tools symlink
 pytower/tools
+
+# test 3d models
+*.stl
