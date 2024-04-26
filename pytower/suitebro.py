@@ -194,7 +194,7 @@ def get_active_save() -> Suitebro | None:
 def get_suitebro_path():
     # For cases when want to build suitebro parser from source, for whatever reason
     from .config import CONFIG, KEY_FROM_SOURCE
-    if CONFIG.get(KEY_FROM_SOURCE):
+    if CONFIG and CONFIG.get(KEY_FROM_SOURCE):
         source_dir = os.path.join(root_directory, 'tower-unite-suitebro')
         if os.path.isdir(source_dir):
             return source_dir

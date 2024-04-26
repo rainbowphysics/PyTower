@@ -9,6 +9,8 @@ from scipy.spatial.transform import Rotation as R
 from scipy.optimize import minimize, OptimizeResult
 
 from .object import TowerObject
+from .suitebro import Suitebro
+from .util import xyz_distance, xyz_normalize
 
 WEDGE_ITEM_DATA = json.loads('''
     {
@@ -16,6 +18,7 @@ WEDGE_ITEM_DATA = json.loads('''
       "guid": "",
       "format_version": 1,
       "unreal_version": 517,
+      "steam_item_id": 0,
       "properties": {
         "OwningSteamID": {
           "Struct": {
@@ -430,65 +433,90 @@ def load_mesh(path):
 
     faces = []
     for tri in tris:
+        print(vertices)
+        print(tri)
+        print(vertices[tri])
         faces.append(vertices[tri])
 
     return faces
 
 
+# Given a triangular face as input, it will divide it into two right triangles using the altitude
+def divide_triangle(face: np.ndarray):
+    return [face]
+    for idx in range(3):
+        v0 = face[idx]
+        v1 = face[(idx + 1) % 3]
+        v2 = face[(idx + 2) % 3]
+
+        # Project v0 onto the line segment formed by v1 and v2
+        segment = v2 - v1
+        test = v0 - v1
+
+        # solving for t in linear combination v1 + (v2-v1)*t closest to v0
+        t = np.dot(segment, test) / np.linalg.norm(segment) ** 2
+
+        # Check other possible combinations if this one does not lie in segment
+        if t < 0.05 or t > 0.95:
+            continue
+
+        v3 = v1 + segment * t
+        return np.array([[v3, v1, v0], [v3, v2, v0]])
+
+    return [face]
+
+
 def convert_triangle(face: np.ndarray):
-    wedge1 = TowerObject(item=WEDGE_ITEM_DATA, properties=WEDGE_PROPERTY_DATA)
-    wedge1.item['guid'] = str(uuid.uuid4()).lower()
-    wedge2 = wedge1.copy()
+    tris = divide_triangle(face)
+    wedges = []
+    for tri in tris:
+        print('Face')
+        print(tri)
+        wedge = TowerObject(item=WEDGE_ITEM_DATA, properties=WEDGE_PROPERTY_DATA)
+        wedge.item['guid'] = str(uuid.uuid4()).lower()
 
-    # Create our standard triangle
-    wedge1.position[0] = 25
-    wedge1.position[1] = -50 / 3
-    wedge1.scale[1] = 0.01
-    wedge2.position[0] = -25
-    wedge2.position[1] = -50 / 3
-    wedge2.scale[1] = 0.01
-    wedge2.rotation = R.from_euler('xyz', np.array([0, 0, 180]), degrees=True).as_quat()
+        # Scale from side lengths
+        scale = wedge.scale
+        scale[0] = xyz_distance(tri[1], tri[0]) / 50
+        scale[1] = 0.01
+        scale[2] = xyz_distance(tri[0], tri[2]) / 50
+        wedge.scale = scale
 
-    # Translate given triangle face back to origin
-    centroid = np.sum(face, axis=0)
-    face -= centroid
+        if scale[0] < 0.01 or scale[1] < 0.01 or scale[2] < 0.01:
+            print(f'FUUCK: {scale}')
 
-    # Rotate so that it faces the y-axis and is upright w.r.t. z-axis
-    def optimize_func(input_vec):
-        quat = input_vec[0:3]
-        translate = input_vec[3:]
-        rot = R.from_quat(quat)
-        rotated = rot.apply(face)
-        rotated += translate
-        xy = rotated[1] - rotated[0]
-        xz = rotated[2] - rotated[0]
-        cross = np.cross(xy, xz)
-        return (np.abs(cross[0]) + np.abs(cross[2]) + np.abs(rotated[1][0]) + np.abs(rotated[1][2])
-                + max(-rotated[1][1], 0) + np.abs(rotated[0][1]) + np.abs(rotated[0][2]) + np.abs(rotated[2][1])
-                + np.abs(rotated[2][2]))
+        # Apply rotation
+        ab_dir = xyz_normalize(tri[1] - tri[0])
+        ac_dir = xyz_normalize(tri[2] - tri[0])
+        perp = xyz_normalize(np.cross(ab_dir, ac_dir))
+        rot_matrix = np.matrix.transpose(np.array([ab_dir, perp, ac_dir]))
+        print('Rotation matrix:')
+        print(rot_matrix)
+        rot = R.from_matrix(rot_matrix)
+        wedge.rotation = rot.as_quat()
 
-    res: OptimizeResult = minimize(optimize_func, np.array([0, 0, 0, 0, 0, 0]))
+        # Translate to centroid
+        wedge_pos = np.array([[0, 0, 0], [25*scale[0], 0, 0], [0, 0, -25*scale[2]]], dtype=np.float64)
+        wedge_pos = rot.apply(wedge_pos)
+        wedge_centroid = np.sum(wedge_pos, axis=0) / 3
+        wedge.position -= wedge_centroid
+        wedge_pos -= wedge_centroid
 
-    if not res.success:
-        print(f'Panic: {res.message}')
-        sys.exit(1)
+        tri_centroid = np.sum(tri, axis=0) / 3
+        wedge.position += tri_centroid
 
-    ans_quat = res.x[0:3]
-    ans_translate = res.x[3:]
-    rot = R.from_quat(ans_quat)
-    face = rot.apply(face)
-    face += ans_translate
-
-    # Now simply scale the triangle
-    scale_y = 50 / face[1][1]
-    wedge1_scale_x_inv = 50 / face[0][0]
-    wedge2_scale_x_inv = -50 / face[2][0]
-    wedge1_translate_x_inv = 25 / wedge1_scale_x_inv - 25
-    wedge2_translate_x_inv = 25 / wedge2_scale_x_inv - 25
-
-    # TODO now apply TRTS model matrix to wedges
+        print('Position:')
+        print(wedge.position)
 
 
-def convert(mesh):
+        wedges.append(wedge)
+
+    return wedges
+
+
+def convert_mesh(save: Suitebro, mesh: list[np.ndarray]):
+    wedges = []
     for face in mesh:
-        convert_triangle(face)
+        wedges += convert_triangle(face * 100)
+
+    save.add_objects(wedges)

@@ -86,3 +86,11 @@ def xyz_equal(x: np.ndarray, y: np.ndarray):
 
 def xyz_distance(x: np.ndarray, y: np.ndarray):
     return np.linalg.norm(x - y)
+
+
+def xyz_norm(x: np.ndarray):
+    return np.linalg.norm(x)
+
+
+def xyz_normalize(x: np.ndarray):
+    return x / xyz_norm(x)
