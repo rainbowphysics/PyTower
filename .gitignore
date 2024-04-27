@@ -193,3 +193,5 @@ pytower/tools
 
 # test 3d models
 *.stl
+*.obj
+*.dae

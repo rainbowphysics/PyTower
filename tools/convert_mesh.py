@@ -12,12 +12,14 @@ VERSION = '1.0'
 AUTHOR = 'Physics System'
 URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/convert_mesh.py'
 INFO = '''Converts given mesh into wedges'''
-PARAMETERS = {'filename': ToolParameterInfo(dtype=str, description='Filename of 3D model')}
+PARAMETERS = {'filename': ToolParameterInfo(dtype=str, description='Filename of 3D model'),
+              'offset': ToolParameterInfo(dtype=xyz, description='Translation offset', default=xyz(0.0, 0.0, 0.0))}
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
     mesh = load_mesh(params.filename)
-    convert_mesh(save, mesh)
+    convert_mesh(save, mesh, offset=params.offset)
+
 
 
 if __name__ == '__main__':
-    tower.run('../saves/blank', main, params=['filename=../cube.obj'])
+    tower.run('../saves/blank', main, params=['filename=../bobomb_battlefield.obj', 'offset=0,0,200'])

@@ -10,7 +10,7 @@ from scipy.optimize import minimize, OptimizeResult
 
 from .object import TowerObject
 from .suitebro import Suitebro
-from .util import xyz_distance, xyz_normalize
+from .util import xyz_distance, xyz_normalize, xyz
 
 WEDGE_ITEM_DATA = json.loads('''
     {
@@ -433,9 +433,6 @@ def load_mesh(path):
 
     faces = []
     for tri in tris:
-        print(vertices)
-        print(tri)
-        print(vertices[tri])
         faces.append(vertices[tri])
 
     return faces
@@ -443,26 +440,26 @@ def load_mesh(path):
 
 # Given a triangular face as input, it will divide it into two right triangles using the altitude
 def divide_triangle(face: np.ndarray):
-    return [face]
     for idx in range(3):
         v0 = face[idx]
         v1 = face[(idx + 1) % 3]
         v2 = face[(idx + 2) % 3]
 
-        # Project v0 onto the line segment formed by v1 and v2
-        segment = v2 - v1
-        test = v0 - v1
+        opp_line = v2 - v1
+        perp = xyz_normalize(np.cross(opp_line, np.cross(v1 - v0, v2 - v0)))
 
-        # solving for t in linear combination v1 + (v2-v1)*t closest to v0
-        t = np.dot(segment, test) / np.linalg.norm(segment) ** 2
+        lin_op = np.transpose(np.array([opp_line, perp]))
+        b = v0 - v1
+        soln = np.dot(np.linalg.pinv(lin_op), np.array([[b[0]], [b[1]], [b[2]]]))
 
-        # Check other possible combinations if this one does not lie in segment
-        if t < 0.05 or t > 0.95:
+        foot_coeff = soln[0][0]
+        if foot_coeff < 0 or foot_coeff > 1:
             continue
 
-        v3 = v1 + segment * t
+        v3 = foot_coeff * opp_line + v1
         return np.array([[v3, v1, v0], [v3, v2, v0]])
 
+    print('OOF')
     return [face]
 
 
@@ -470,8 +467,8 @@ def convert_triangle(face: np.ndarray):
     tris = divide_triangle(face)
     wedges = []
     for tri in tris:
-        print('Face')
-        print(tri)
+        #print('Face')
+        #print(tri)
         wedge = TowerObject(item=WEDGE_ITEM_DATA, properties=WEDGE_PROPERTY_DATA)
         wedge.item['guid'] = str(uuid.uuid4()).lower()
 
@@ -482,41 +479,47 @@ def convert_triangle(face: np.ndarray):
         scale[2] = xyz_distance(tri[0], tri[2]) / 50
         wedge.scale = scale
 
-        if scale[0] < 0.01 or scale[1] < 0.01 or scale[2] < 0.01:
-            print(f'FUUCK: {scale}')
+        #if scale[0] < 0.01 or scale[1] < 0.01 or scale[2] < 0.01:
+        #    print(f'FUUCK: {scale}')
 
         # Apply rotation
         ab_dir = xyz_normalize(tri[1] - tri[0])
         ac_dir = xyz_normalize(tri[2] - tri[0])
         perp = xyz_normalize(np.cross(ab_dir, ac_dir))
-        rot_matrix = np.matrix.transpose(np.array([ab_dir, perp, ac_dir]))
-        print('Rotation matrix:')
-        print(rot_matrix)
+        rot_matrix = np.matrix.transpose(np.array([ab_dir, -perp, ac_dir]))
+        #print('Rotation matrix:')
+        #print(rot_matrix)
+        #print(np.linalg.det(rot_matrix))
+        #eggs = np.linalg.eigvals(rot_matrix)
+        #print(eggs)
         rot = R.from_matrix(rot_matrix)
+        #print(rot.as_matrix())
         wedge.rotation = rot.as_quat()
 
         # Translate to centroid
-        wedge_pos = np.array([[0, 0, 0], [25*scale[0], 0, 0], [0, 0, -25*scale[2]]], dtype=np.float64)
+        wedge_pos = np.array([[-25 * scale[0], 0, 0], [25 * scale[0], 0, 0], [-25 * scale[0], 0, 50 * scale[2]]],
+                             dtype=np.float64)
         wedge_pos = rot.apply(wedge_pos)
         wedge_centroid = np.sum(wedge_pos, axis=0) / 3
         wedge.position -= wedge_centroid
-        wedge_pos -= wedge_centroid
 
         tri_centroid = np.sum(tri, axis=0) / 3
         wedge.position += tri_centroid
 
-        print('Position:')
-        print(wedge.position)
-
+        #print('Position:')
+        #print(wedge.position)
 
         wedges.append(wedge)
 
     return wedges
 
 
-def convert_mesh(save: Suitebro, mesh: list[np.ndarray]):
+def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)):
     wedges = []
     for face in mesh:
         wedges += convert_triangle(face * 100)
+
+    for wedge in wedges:
+        wedge.position += offset
 
     save.add_objects(wedges)
