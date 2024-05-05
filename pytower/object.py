@@ -125,6 +125,19 @@ class TowerObject:
     def position(self, value: np.ndarray):
         self._set_xyz_attr('position', value)
 
+        if self.item and self.properties:
+            item_props = self.item['properties']
+            prop_props = self.properties['properties']
+
+            if 'RespawnLocation' in prop_props:
+                translation = prop_props['RespawnLocation']['Struct']['value']['Struct']['Translation']['Struct']
+                translation['value']['Vector']['x'] = value[0]
+                translation['value']['Vector']['y'] = value[1]
+                translation['value']['Vector']['z'] = value[2]
+
+                item_props['RespawnLocation'] = prop_props['RespawnLocation']
+
+
     @property
     def rotation(self) -> np.ndarray | None:
         return self._get_xyzw_attr('rotation')
@@ -132,6 +145,19 @@ class TowerObject:
     @rotation.setter
     def rotation(self, value: np.ndarray):
         self._set_xyzw_attr('rotation', value)
+
+        if self.item and self.properties:
+            item_props = self.item['properties']
+            prop_props = self.properties['properties']
+
+            if 'RespawnLocation' in prop_props:
+                rot = prop_props['RespawnLocation']['Struct']['value']['Struct']['Rotation']['Struct']['value']
+                rot['Quat']['x'] = value[0]
+                rot['Quat']['y'] = value[1]
+                rot['Quat']['z'] = value[2]
+                rot['Quat']['w'] = value[3]
+
+                item_props['RespawnLocation'] = prop_props['RespawnLocation']
 
     @property
     def scale(self) -> np.ndarray | None:
