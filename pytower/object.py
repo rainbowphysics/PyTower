@@ -141,6 +141,26 @@ class TowerObject:
     def scale(self, value: np.ndarray):
         self._set_xyz_attr('scale', value)
 
+        if self.properties:
+            props = self.properties['properties']
+
+            if 'WorldScale' in props:
+                props['WorldScale']['Struct']['value']['Vector']['x'] = value[0]
+                props['WorldScale']['Struct']['value']['Vector']['y'] = value[1]
+                props['WorldScale']['Struct']['value']['Vector']['z'] = value[2]
+
+                self.item['properties']['WorldScale'] = props['WorldScale']
+
+            if ('RespawnLocation' in props and 'properties' in self.item
+                    and 'RespawnLocation' in self.item['properties']):
+                scale3d_data = props['RespawnLocation']['Struct']['value']['Struct']['Scale3D']
+                scale3d = scale3d_data['Struct']['value']['Vector']
+                scale3d['x'] = value[0]
+                scale3d['y'] = value[1]
+                scale3d['z'] = value[2]
+
+                self.item['properties']['RespawnLocation'] = props['RespawnLocation']
+
     def _check_connetions(self):
         if self.item is not None and 'ItemConnections' not in self.item.keys():
             self.item['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
