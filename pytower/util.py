@@ -34,6 +34,42 @@ def run_if_not_none(func, data):
         func(data)
 
 
+class XYZ(np.ndarray):
+    @property
+    def x(self):
+        return self[0]
+
+    @x.setter
+    def x(self, new):
+        self[0] = new
+
+    @property
+    def y(self):
+        return self[1]
+
+    @y.setter
+    def y(self, new):
+        self[1] = new
+
+    @property
+    def z(self):
+        return self[2]
+
+    @z.setter
+    def z(self, new):
+        self[2] = new
+
+
+class XYZW(XYZ):
+    @property
+    def w(self):
+        return self[3]
+
+    @w.setter
+    def w(self, new):
+        self[3] = new
+
+
 def xyz(*args):
     # Return argument if already is xyz
     if len(args) == 1 and isinstance(args[0], np.ndarray):
