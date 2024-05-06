@@ -1,6 +1,7 @@
 import io
 import os
 from collections import deque
+from functools import reduce
 from typing import Any, Callable
 
 import numpy as np
@@ -35,6 +36,29 @@ def run_if_not_none(func, data):
 
 
 class XYZ(np.ndarray):
+    def __new__(cls, *args) -> 'XYZ':
+        new_instance = xyz(*args).view(cls)
+
+        if isinstance(new_instance[0], np.int32):
+            new_instance = xyzint(new_instance)
+
+        return new_instance
+
+    @staticmethod
+    def fold(func: Callable[['XYZ', 'XYZ'], 'XYZ'], *args: 'XYZ', acc=None):
+        if acc is None:
+            acc = args[0]
+            args = args[1:]
+        return reduce(lambda a, b: func(a, b), args, acc)
+
+    @staticmethod
+    def min(*args: 'XYZ'):
+        return XYZ.fold(np.minimum, *args)
+
+    @staticmethod
+    def max(*args: 'XYZ'):
+        return XYZ.fold(np.maximum, *args)
+
     @property
     def x(self):
         return self[0]
@@ -59,8 +83,30 @@ class XYZ(np.ndarray):
     def z(self, new):
         self[2] = new
 
+    def clamp(self, min_clamp: 'XYZ', max_clamp: 'XYZ'):
+        return XYZ.max(XYZ.min(self, max_clamp), min_clamp)
+
+    def distance(self, other: 'XYZ'):
+        return np.linalg.norm(self - other)
+
+    def norm(self):
+        return np.linalg.norm(self)
+
+    def normalize(self):
+        return self / self.norm()
+
+    def __eq__(self, other: 'XYZ'):
+        return np.isclose(self, other)
+
+
+class XYZInt(XYZ):
+    pass
+
 
 class XYZW(XYZ):
+    def __new__(cls, *args) -> 'XYZW':
+        return xyz(*args, length=4).view(cls)
+
     @property
     def w(self):
         return self[3]
@@ -70,15 +116,15 @@ class XYZW(XYZ):
         self[3] = new
 
 
-def xyz(*args):
+def xyz(*args, length=3) -> XYZ:
     # Return argument if already is xyz
     if len(args) == 1 and isinstance(args[0], np.ndarray):
         return args[0]
 
     # Constructor 1: x,y,z triplet
-    if len(args) == 3:
-        x, y, z = args
-        for var in [x, y, z]:
+    if len(args) == length:
+        nums = args
+        for var in nums:
             if (not isinstance(var, float) and not isinstance(var, int) and not isinstance(var, np.int32)
                     and not isinstance(var, np.float32)):
                 raise ValueError(f'xyz expected float or int but got {type(var)}: {args}')
@@ -89,44 +135,27 @@ def xyz(*args):
         if not isinstance(str_input, str):
             raise ValueError(f'xyz expected str but got {type(str_input)}: {str_input}')
 
-        x, y, z = [float(e) for e in args[0].strip().split(',')]
+        nums = [float(e) for e in args[0].strip().split(',')]
     else:
-        raise ValueError(f'xyz unexpected input: {args}')
+        raise ValueError(f'xyz unexpected input: {args}. Did you pass the correct number of values?')
 
-    return np.array([x, y, z])
+    if len(nums) != length:
+        raise ValueError(f'xyz expected {length} values, not {len(nums)}: {args} is invalid')
+
+    return np.array(nums).view(XYZ)
 
 
 def xyzint(*args):
-    return np.int_(xyz(*args) + .5)
+    return np.int_(xyz(*args) + .5).view(XYZInt)
 
 
 def xyz_to_string(data: np.ndarray):
     return f'{data[0]},{data[1]},{data[2]}'
 
 
-def xyz_max(x1: np.ndarray, x2: np.ndarray):
-    return np.maximum(x1, x2)
-
-
-def xyz_min(x1: np.ndarray, x2: np.ndarray):
-    return np.minimum(x1, x2)
-
-
-def xyz_clamp(x: np.ndarray, min_clamp: np.ndarray, max_clamp: np.ndarray):
-    return xyz_max(xyz_min(x, max_clamp), min_clamp)
-
-
-def xyz_equal(x: np.ndarray, y: np.ndarray):
-    return np.isclose(x, y)
-
-
-def xyz_distance(x: np.ndarray, y: np.ndarray):
-    return np.linalg.norm(x - y)
-
-
-def xyz_norm(x: np.ndarray):
-    return np.linalg.norm(x)
-
-
-def xyz_normalize(x: np.ndarray):
-    return x / xyz_norm(x)
+if __name__ == '__main__':
+    foo = XYZW(1.0, 2, 3, 4)
+    foo.w = 10
+    print(repr(foo))
+    bar = XYZInt(1, 2, 3)
+    print(repr(bar))

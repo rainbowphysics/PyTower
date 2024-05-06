@@ -9,7 +9,7 @@ from .object import TowerObject
 from abc import ABC, abstractmethod
 import re
 
-from .util import xyz_min, xyz_max, xyz_clamp, xyz_equal, xyz_distance
+from .util import XYZ
 
 
 class Selection(set[TowerObject]):
@@ -175,26 +175,26 @@ class RandomSelector(Selector):
 
 
 class BoxSelector(Selector):
-    def __init__(self, pos1: np.ndarray, pos2: np.ndarray):
+    def __init__(self, pos1: XYZ, pos2: XYZ):
         super().__init__('BoxSelector')
-        self.min_pos = xyz_min(pos1, pos2)
-        self.max_pos = xyz_max(pos1, pos2)
+        self.min_pos = XYZ.min(pos1, pos2)
+        self.max_pos = XYZ.max(pos1, pos2)
 
-    def _contains(self, pos):
-        return xyz_equal(xyz_clamp(pos, self.min_pos, self.max_pos), pos)
+    def _contains(self, pos: XYZ):
+        return pos == pos.clamp(self.min_pos, self.max_pos)
 
     def select(self, everything: Selection) -> Selection:
         return Selection({obj for obj in everything if self._contains(obj.position)})
 
 
 class SphereSelector(Selector):
-    def __init__(self, center: np.ndarray, radius: float):
+    def __init__(self, center: XYZ, radius: float):
         super().__init__('SphereSelector')
         self.center = center
         self.radius = radius
 
-    def _contains(self, pos):
-        return xyz_distance(pos, self.center) < self.radius
+    def _contains(self, pos: XYZ):
+        return self.center.distance(pos) < self.radius
 
     def select(self, everything: Selection) -> Selection:
         return Selection({obj for obj in everything if self._contains(obj.position)})

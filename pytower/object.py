@@ -8,6 +8,7 @@ import numpy as np
 
 from . import tower
 from .connections import ItemConnectionObject
+from .util import XYZ, XYZW
 
 ITEMCONNECTIONS_DEFAULT = json.loads('''{
               "Array": {
@@ -84,13 +85,13 @@ class TowerObject:
     def guid(self) -> str:
         return self.item['guid']
 
-    def _get_xyz_attr(self, name: str) -> np.ndarray | None:
+    def _get_xyz_attr(self, name: str) -> XYZ | None:
         if self.item is None:
             return None
         xyz = self.item[name]
-        return np.array([xyz['x'], xyz['y'], xyz['z']])
+        return np.array([xyz['x'], xyz['y'], xyz['z']]).view(XYZ)
 
-    def _set_xyz_attr(self, name: str, value: np.ndarray):
+    def _set_xyz_attr(self, name: str, value: XYZ):
         if self.item is None:
             logging.warning(f'Attempted to xyz set {name} on a property-only object!')
             return
@@ -100,13 +101,13 @@ class TowerObject:
         pos['y'] = value[1]
         pos['z'] = value[2]
 
-    def _get_xyzw_attr(self, name: str) -> np.ndarray | None:
+    def _get_xyzw_attr(self, name: str) -> XYZW | None:
         if self.item is None:
             return None
-        xyz = self.item[name]
-        return np.array([xyz['x'], xyz['y'], xyz['z'], xyz['w']])
+        xyzw = self.item[name]
+        return np.array([xyzw['x'], xyzw['y'], xyzw['z'], xyzw['w']]).view(XYZW)
 
-    def _set_xyzw_attr(self, name: str, value: np.ndarray):
+    def _set_xyzw_attr(self, name: str, value: XYZW):
         if self.item is None:
             logging.warning(f'Attempted to xyzw set {name} on a property-only object!')
             return
@@ -118,11 +119,11 @@ class TowerObject:
         pos['w'] = value[3]
 
     @property
-    def position(self) -> np.ndarray | None:
+    def position(self) -> XYZ | None:
         return self._get_xyz_attr('position')
 
     @position.setter
-    def position(self, value: np.ndarray):
+    def position(self, value: XYZ):
         self._set_xyz_attr('position', value)
 
         if self.item and self.properties:
@@ -139,11 +140,11 @@ class TowerObject:
 
 
     @property
-    def rotation(self) -> np.ndarray | None:
+    def rotation(self) -> XYZW | None:
         return self._get_xyzw_attr('rotation')
 
     @rotation.setter
-    def rotation(self, value: np.ndarray):
+    def rotation(self, value: XYZW):
         self._set_xyzw_attr('rotation', value)
 
         if self.item and self.properties:
@@ -160,11 +161,11 @@ class TowerObject:
                 item_props['RespawnLocation'] = prop_props['RespawnLocation']
 
     @property
-    def scale(self) -> np.ndarray | None:
+    def scale(self) -> XYZ | None:
         return self._get_xyz_attr('scale')
 
     @scale.setter
-    def scale(self, value: np.ndarray):
+    def scale(self, value: XYZ):
         self._set_xyz_attr('scale', value)
 
         if self.properties:

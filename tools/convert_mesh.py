@@ -15,10 +15,10 @@ INFO = '''Converts given mesh into wedges'''
 PARAMETERS = {'filename': ToolParameterInfo(dtype=str, description='Filename of 3D model'),
               'offset': ToolParameterInfo(dtype=xyz, description='Translation offset', default=xyz(0.0, 0.0, 0.0))}
 
+
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
     mesh = load_mesh(params.filename)
     convert_mesh(save, mesh, offset=params.offset)
-
 
 
 if __name__ == '__main__':

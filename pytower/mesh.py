@@ -10,7 +10,7 @@ from scipy.optimize import minimize, OptimizeResult
 
 from .object import TowerObject
 from .suitebro import Suitebro
-from .util import xyz_distance, xyz_normalize, xyz
+from .util import xyz
 
 WEDGE_ITEM_DATA = json.loads('''
     {
