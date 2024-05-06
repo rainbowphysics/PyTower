@@ -117,9 +117,20 @@ class XYZW(XYZ):
 
 
 def xyz(*args, length=3) -> XYZ:
-    # Return argument if already is xyz
-    if len(args) == 1 and isinstance(args[0], np.ndarray):
-        return args[0]
+    if len(args) == 1:
+        data = args[0]
+        # Return argument if already is xyz
+        if isinstance(data, XYZ):
+            return data
+
+        if isinstance(data, np.ndarray):
+            if len(data) == 3:
+                if isinstance(data[0], np.int32):
+                    return data.view(XYZInt)
+                else:
+                    return data.view(XYZ)
+            elif len(data) == 4:
+                return data.view(XYZW)
 
     # Constructor 1: x,y,z triplet
     if len(args) == length:
@@ -159,3 +170,5 @@ if __name__ == '__main__':
     print(repr(foo))
     bar = XYZInt(1, 2, 3)
     print(repr(bar))
+
+    print(repr(XYZ(np.array([1,2,3.0]))))

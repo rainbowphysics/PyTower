@@ -6,11 +6,10 @@ import open3d as o3d
 import numpy as np
 
 from scipy.spatial.transform import Rotation as R
-from scipy.optimize import minimize, OptimizeResult
 
 from .object import TowerObject
 from .suitebro import Suitebro
-from .util import xyz
+from .util import xyz, XYZ
 
 WEDGE_ITEM_DATA = json.loads('''
     {
@@ -446,7 +445,7 @@ def divide_triangle(face: np.ndarray):
         v2 = face[(idx + 2) % 3]
 
         opp_line = v2 - v1
-        perp = xyz_normalize(np.cross(opp_line, np.cross(v1 - v0, v2 - v0)))
+        perp = xyz(np.cross(opp_line, np.cross(v1 - v0, v2 - v0))).normalize()
 
         lin_op = np.transpose(np.array([opp_line, perp]))
         b = v0 - v1
@@ -474,18 +473,18 @@ def convert_triangle(face: np.ndarray):
 
         # Scale from side lengths
         scale = wedge.scale
-        scale[0] = xyz_distance(tri[1], tri[0]) / 50
+        scale[0] = xyz(tri[1]).distance(tri[0]) / 50
         scale[1] = 0.01
-        scale[2] = xyz_distance(tri[0], tri[2]) / 50
+        scale[2] = xyz(tri[0]).distance(tri[2]) / 50
         wedge.scale = scale
 
         #if scale[0] < 0.01 or scale[1] < 0.01 or scale[2] < 0.01:
         #    print(f'FUUCK: {scale}')
 
         # Apply rotation
-        ab_dir = xyz_normalize(tri[1] - tri[0])
-        ac_dir = xyz_normalize(tri[2] - tri[0])
-        perp = xyz_normalize(np.cross(ab_dir, ac_dir))
+        ab_dir = xyz(tri[1] - tri[0]).normalize()
+        ac_dir = xyz(tri[2] - tri[0]).normalize()
+        perp = xyz(np.cross(ab_dir, ac_dir)).normalize()
         rot_matrix = np.matrix.transpose(np.array([ab_dir, -perp, ac_dir]))
         #print('Rotation matrix:')
         #print(rot_matrix)
