@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from typing import Any
+from typing import Any, Callable
 
 from . import root_directory
 
@@ -56,8 +56,11 @@ class TowerConfig:
         with open(self.path, 'w') as fd:
             json.dump(self.config, fd, indent=2)
 
-    def get(self, key) -> Any:
-        return self.config[key]
+    def get(self, key: str, dtype: Callable[[Any], Any] | None = None) -> Any:
+        entry = self.config[key]
+        if dtype is not None and entry is not None:
+            entry = dtype(entry)
+        return entry
 
     def set(self, key, value) -> None:
         if key not in self.config:

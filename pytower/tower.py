@@ -59,6 +59,8 @@ def get_parser(tool_names: str):
     backup_parser.add_argument('filename', type=str, help='Name of file to use')
     backup_parser.add_argument('-f', '--force', dest='force', type=bool, action=argparse.BooleanOptionalAction,
                                help='Whether to force reupload on restore or not')
+    backup_parser.add_argument('-b', '--backend', dest='backend', type=str, default='catbox',
+                            help='Backend to use (Imgur or Catbox)')
 
     # List subcommand
     subparsers.add_parser('list', help='List tools')
@@ -102,7 +104,7 @@ def get_parser(tool_names: str):
     fix_parser.add_argument('filename', type=str, help='File to use as input')
     fix_parser.add_argument('-f', '--force', dest='force', type=bool, action=argparse.BooleanOptionalAction,
                             help='Whether to force reupload of all canvases or not')
-    fix_parser.add_argument('-b', '--backend', dest='backend', type=str,
+    fix_parser.add_argument('-b', '--backend', dest='backend', type=str, default='catbox',
                             help='Backend to use (Imgur or Catbox)')
 
     # Config subcommand
@@ -308,11 +310,11 @@ def parse_resource_backend(backend_input) -> ResourceBackend:
     sanitized = backend_input.strip().casefold()
     if 'imgur'.startswith(sanitized):
         from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID
-        imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID)
+        imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID, str)
         return ImgurBackend(imgur_client_id)
     elif 'catbox'.startswith(sanitized):
         from pytower.config import CONFIG, KEY_CATBOX_USERHASH
-        user_hash = CONFIG.get(KEY_CATBOX_USERHASH)
+        user_hash = CONFIG.get(KEY_CATBOX_USERHASH, str)
         return CatboxBackend(user_hash)
     elif 'custom'.startswith(sanitized):
         return CustomBackend()
@@ -371,10 +373,7 @@ def main():
                               f' Input must be the name of a folder in backups dictory')
                         sys.exit(1)
 
-                    if args['backend']:
-                        backend = parse_resource_backend(args['backend'])
-                    else:
-                        backend = CatboxBackend()  # default
+                    backend = parse_resource_backend(args['backend'])
 
                     backup.restore_backup(path, force_reupload=args['force'], backend=backend)
         case 'list':
@@ -515,10 +514,7 @@ def main():
         case 'fix':
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
-            if args['backend']:
-                backend = parse_resource_backend(args['backend'])
-            else:
-                backend = CatboxBackend()  # default
+            backend = parse_resource_backend(args['backend'])
             backup.fix_canvases(path, force_reupload=args['force'], backend=backend)
         case 'config':
             match args['config_mode']:

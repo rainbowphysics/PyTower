@@ -9,7 +9,7 @@ from pytower.image_backends.backend import ResourceBackend
 
 
 class CatboxBackend(ResourceBackend):
-    def __init__(self, user_hash=None):
+    def __init__(self, user_hash: str | None = None):
         super().__init__('Catbox')
         self.user_hash = user_hash
 
