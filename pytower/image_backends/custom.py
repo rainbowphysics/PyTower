@@ -6,7 +6,7 @@ from .backend import ResourceBackend
 
 class CustomBackend(ResourceBackend):
     def __init__(self):
-        super().__init__('My CDN')
+        super().__init__('CustomCDN')
 
     # Must implement this!
     # upload_file: takes in file path and outputs url once uploaded

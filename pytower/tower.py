@@ -60,7 +60,7 @@ def get_parser(tool_names: str):
     backup_parser.add_argument('-f', '--force', dest='force', type=bool, action=argparse.BooleanOptionalAction,
                                help='Whether to force reupload on restore or not')
     backup_parser.add_argument('-b', '--backend', dest='backend', type=str, default='catbox',
-                            help='Backend to use (Imgur or Catbox)')
+                               help='Backend to use (Imgur or Catbox)')
 
     # List subcommand
     subparsers.add_parser('list', help='List tools')
@@ -306,21 +306,22 @@ def parse_selectors(selection_input: str) -> list[Selector]:
     return selectors
 
 
-def parse_resource_backend(backend_input) -> ResourceBackend:
+def get_resource_backends() -> list[ResourceBackend]:
+    from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID, KEY_CATBOX_USERHASH
+    imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID, str)
+    user_hash = CONFIG.get(KEY_CATBOX_USERHASH, str)
+    return [ImgurBackend(imgur_client_id), CatboxBackend(user_hash), CustomBackend()]
+
+
+def parse_resource_backend(backends: list[ResourceBackend], backend_input: str) -> ResourceBackend:
     sanitized = backend_input.strip().casefold()
-    if 'imgur'.startswith(sanitized):
-        from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID
-        imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID, str)
-        return ImgurBackend(imgur_client_id)
-    elif 'catbox'.startswith(sanitized):
-        from pytower.config import CONFIG, KEY_CATBOX_USERHASH
-        user_hash = CONFIG.get(KEY_CATBOX_USERHASH, str)
-        return CatboxBackend(user_hash)
-    elif 'custom'.startswith(sanitized):
-        return CustomBackend()
-    else:
-        print(f'Invalid backend {backend_input}! Must be Imgur or Catbox', file=sys.stderr)
-        sys.exit(1)
+    for backend in backends:
+        if backend.name.strip().casefold().startswith(sanitized):
+            return backend
+
+    print(f'Invalid backend {backend_input}! Available backends: {", ".join([backend.name for backend in backends])}',
+          file=sys.stderr)
+    sys.exit(1)
 
 
 def main():
@@ -333,6 +334,8 @@ def main():
     tool_names = ', '.join([meta.tool_name for _, meta in tools if not meta.hidden])
     parser = get_parser(tool_names)
     args = parse_args(parser)
+
+    backends = get_resource_backends()
 
     if not args['subcmd']:
         parser.print_help(sys.stdout)
@@ -373,7 +376,7 @@ def main():
                               f' Input must be the name of a folder in backups dictory')
                         sys.exit(1)
 
-                    backend = parse_resource_backend(args['backend'])
+                    backend = parse_resource_backend(backends, args['backend'])
 
                     backup.restore_backup(path, force_reupload=args['force'], backend=backend)
         case 'list':
@@ -514,7 +517,7 @@ def main():
         case 'fix':
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
-            backend = parse_resource_backend(args['backend'])
+            backend = parse_resource_backend(backends, args['backend'])
             backup.fix_canvases(path, force_reupload=args['force'], backend=backend)
         case 'config':
             match args['config_mode']:
