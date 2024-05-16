@@ -29,7 +29,24 @@ ITEMCONNECTIONS_DEFAULT = json.loads('''{
 
 
 class TowerObject:
+    """Tower object
+
+    Represents an object appearing in the Suitebro file . This includes all the sections of the object.
+
+    Attributes:
+        position: XYZ world position
+        rotation: XYZW rotation quaternion
+        scale: XYZ local scale
+    """
+
     def __init__(self, item: dict | None = None, properties: dict | None = None, nocopy: bool = False):
+        """Initializes TowerObject instance taking in uesave json data
+
+        Args:
+            item: The item section parsed, as parsed from tower-unite-suitebro
+            properties: The properties section, as parsed from tower-unite-suitebro
+            nocopy: If True, then do not deep-copy the item and properties dictionaries
+        """
         if nocopy:
             self.item = item
             self.properties = properties

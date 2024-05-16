@@ -9,7 +9,6 @@ Within Python, PyTower has a few dependencies that are automatically installed (
 
 Dependencies
 ------------
-Dependencies
  - Python 3.10+
  - (Included in /lib): tower-unite-suitebro_ by brecert
  - (Automatically installed by pip): numpy, scipy, requests, colorama, and any other Python packages in requirements.txt
@@ -23,21 +22,27 @@ Quick Installation
 1. Download the ``install-pytower.py`` script from latest release
 2. Run the installer script from command line using Python. For example, ``python install-pytower-v0.2.0.py``.
 
-  Alternatively, (on Windows) you can drag the install script onto python.exe or otherwise open the install script with python.exe
+.. note::
+
+   Alternatively, (on Windows) you can drag the install script onto python.exe or otherwise open the install script with python.exe
 
 .. _recommended_install:
 
 Recommended Installation Instructions
 -------------------------------------
-Recommended Installation Instructions
- 1. (On Windows) Install Git Bash: https://git-scm.com/download/win.
- 2. Clone the repository using ``git clone https://github.com/rainbowphysics/PyTower.git``.
+1. (On Windows) Install Git Bash: https://git-scm.com/download/win.
 
-  If typing ``git`` into the command line does nothing, you may have to add git manually to your PATH environment variable.
+2. Clone the repository using ``git clone https://github.com/rainbowphysics/PyTower.git``.
 
- 3. Run ``install.bat`` (on Windows) or ``install.sh`` (on Linux).
+.. note::
 
-  Alternatively, directly run ``pip install -e .``. (``-e`` flag must be included, install will break without it!)
+   If typing ``git`` into the command line does nothing, you may have to add git manually to your PATH environment variable.
+
+3. Run ``install.bat`` (on Windows) or ``install.sh`` (on Linux).
+
+.. note::
+
+   Alternatively, directly run ``pip install -e .``. (``-e`` flag must be included, install will break without it!)
 
 
 Installing From Source

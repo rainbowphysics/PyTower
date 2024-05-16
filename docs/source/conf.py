@@ -1,5 +1,10 @@
 import pytower
 from datetime import datetime
+import os
+import sys
+
+# Ensure Sphinx can include package/module
+sys.path.insert(0, os.path.abspath('../../'))
 
 # Configuration file for the Sphinx documentation builder.
 
@@ -9,7 +14,7 @@ project = 'PyTower'
 copyright = f'{datetime.now().year}, Rainbow Physics'
 author = 'Rainbow Physics'
 
-release = f'{pytower.__version__}'[:-2]
+release = f'{pytower.__version__}'
 version = f'{pytower.__version__}'
 
 # -- General configuration
@@ -20,11 +25,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon',
+    'sphinx_autodoc_typehints'
 ]
 
 autosummary_generate = True
-autosummary_generate_overwrite = False
-autosummary_imported_members = True
+autosummary_generate_overwrite = True
+autosummary_imported_members = False
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),

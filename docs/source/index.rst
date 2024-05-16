@@ -18,4 +18,3 @@ Contents
 
    installation
    api
-   pytower

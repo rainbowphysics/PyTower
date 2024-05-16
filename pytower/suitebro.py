@@ -24,7 +24,21 @@ IO_GW_ITEMS = ['AmmoPickup', 'CustomSpawnPoint', 'HealthPickup', 'SDNL_ArmorPick
 
 
 class Suitebro:
+    """Suitebro file
+
+    Abstraction over the input CondoData/.map file, representing parsed tower-unite-suitebro data
+
+    Attributes:
+        objects: The list of TowerObject instances contained in the Suitebro file
+    """
     def __init__(self, filename: str, directory: str, data: dict):
+        """Instantiates a new Suitebro instance based on the input filename and directory
+
+        Args:
+            filename: Name of file
+            directory: Path to directory (can be relative or absolute)
+            data: The raw json data from tower-unite-suitebro
+        """
         self.filename = filename
         self.directory = directory
         self.data: dict = data
@@ -76,13 +90,32 @@ class Suitebro:
             size = self.objects.index(None)
             self.objects = self.objects[:size]
 
-    def add_object(self, obj):
+    def add_object(self, obj: TowerObject):
+        """Adds a new object to the Suitebro file
+
+        Args:
+            obj: The object to add
+        """
         self.objects += [obj]
 
-    def add_objects(self, objs):
+    def add_objects(self, objs: list[TowerObject]):
+        """Adds a list of objects to the Suitebro file
+
+        Args:
+            objs: The list of objects to add
+        """
         self.objects += objs
 
     def find_item(self, name: str) -> TowerObject | None:
+        """Find a TowerObject by its name
+
+        Args:
+            name: The proper name or the nickname of the TowerObject
+
+        Returns:
+            The first TowerObject matching the name, if found, or else None
+
+        """
         for obj in self.objects:
             if obj.matches_name(name):
                 return obj
@@ -104,11 +137,22 @@ class Suitebro:
             group_data.append({'group_id': group_id, 'item_count': len(group)})
         self.data['groups'] = group_data
 
-    # Returns all non-property TowerObjects
     def items(self) -> list[TowerObject]:
+        """Lists all non-property TowerObjects
+
+        Returns:
+            List containing all of the non-property TowerObject instances in this Suitebro
+        """
         return [obj for obj in self.objects if obj.item is not None]
 
     def inventory_items(self) -> list[TowerObject]:
+        """Lists all TowerObject instances that are non-property and are not I/O nor Game-World.
+
+        This is equivalent to getting all items that exist in a player's inventory
+
+        Returns:
+            List of TowerObject instances in the Suitebro that exist in a player's Steam inventory
+        """
         return [obj for obj in self.objects if obj.item is not None and obj.get_name() not in IO_GW_ITEMS]
 
     def _item_count(self, objs) -> dict:
@@ -116,14 +160,29 @@ class Suitebro:
         return {name: len(list(objs)) for name, objs in itertools.groupby(ordered, TowerObject.get_name)}
 
     def item_count(self) -> dict:
+        """Counts the number of items in the Suitebro file
+
+        Returns:
+            Dictionary where each key is the proper name of the object and the value is the number of instances
+        """
         return self._item_count(self.objects)
 
     def inventory_count(self) -> dict:
+        """Counts the number of inventory items in the Suitebro file
+
+        Returns:
+            Dictionary where each key is the proper name of the object and the value is the number of instances
+        """
         objs = self.inventory_items()
         return self._item_count(objs)
 
     # Convert item list back into a dict
     def to_dict(self):
+        """Converts the Suitebro object back into a dictionary, formatted in the tower-unite-suitebro style
+
+        Returns:
+            Serialized Suitebro representation that can be written to a file using json.dump
+        """
         new_dict = {}
 
         # Update groups based on group ids and info
