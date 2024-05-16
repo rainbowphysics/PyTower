@@ -54,7 +54,7 @@ def _write_image(url, data) -> str | None:
     file_hash = _hash_image(data)
 
     # Write the content to a file, using the hash to ensure uniqueness
-    file_type = url.split('.')[-1]
+    file_type = url.split('.')[-1].split('?')[0]
     if len(file_type) > 4:
         return None
 
