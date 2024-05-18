@@ -5,15 +5,12 @@
 #
 # License: Public Domain, CC0 1.0 Universal (CC0 1.0)
 
-# Forked by Physics System (May, 2024)
-# -- Should work in all cases except when module names deviate from folder names
+# Forked by Physics System (May, 2024): https://gist.github.com/rainbowphysics/505e35a7a1e9545d5a6cde22f6ca9558
 
 import sys
 import os
 import subprocess
 import inspect
-
-import importlib
 
 # Link to your GitHub repo here:
 REPO_LINK = 'https://github.com/rainbowphysics/PyTower'
@@ -107,4 +104,3 @@ def linkcode_resolve(domain, info):
         result += f'#L{linestart}-L{linestop}'
 
     return result
-
