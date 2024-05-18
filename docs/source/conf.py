@@ -1,3 +1,5 @@
+import inspect
+
 import pytower
 from datetime import datetime
 import os
@@ -29,7 +31,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
-    'sphinx_autodoc_typehints'
+    'sphinx_autodoc_typehints',
+    'sphinx.ext.linkcode'
 ]
 
 autosummary_generate = True
@@ -46,3 +49,7 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 html_theme = 'sphinx_rtd_theme'
+html_favicon = 'favicon.ico'
+
+from docs.source.linkcode import linkcode_resolve
+
