@@ -6,6 +6,7 @@ build:
     python: "3.10"
   jobs:
     post_install:
+      - rm pytower/tools
       - cp -r tools pytower/tools
 
 python:
