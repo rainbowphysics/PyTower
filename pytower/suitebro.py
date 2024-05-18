@@ -8,7 +8,7 @@ from subprocess import Popen, PIPE
 
 from colorama import Fore, Back, Style
 
-from . import root_directory
+from .__config__ import root_directory
 from .selection import Selection
 from .object import TowerObject
 

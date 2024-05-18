@@ -6,7 +6,6 @@ import uuid
 
 import numpy as np
 
-from . import tower
 from .connections import ItemConnectionObject
 from .util import XYZ, XYZW
 

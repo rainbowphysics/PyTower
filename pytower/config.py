@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Any, Callable
 
-from . import root_directory
+from .__config__ import root_directory
 
 KEY_INSTALL_PATH = 'tower_install_path'
 KEY_IMGUR_CLIENT_ID = 'imgur_client_id'

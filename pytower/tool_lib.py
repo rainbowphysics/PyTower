@@ -8,7 +8,7 @@ import sys
 from types import ModuleType
 from typing import Callable
 
-from . import root_directory
+from .__config__ import root_directory
 from .selection import Selection
 from .suitebro import Suitebro
 from .util import xyz, xyz_to_string, xyzint

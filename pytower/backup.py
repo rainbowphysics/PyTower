@@ -10,7 +10,7 @@ import asyncio
 from threading import Lock
 from colorama import Fore, Back, Style
 
-from . import root_directory, __version__
+from .__config__ import root_directory, __version__
 from .config import KEY_INSTALL_PATH
 from .image_backends.catbox import CatboxBackend
 from .image_backends.imgur import ImgurBackend

@@ -2,9 +2,12 @@ import pytower
 from datetime import datetime
 import os
 import sys
+from pathlib import Path
 
 # Ensure Sphinx can include package/module
-sys.path.insert(0, os.path.abspath('../../'))
+root_dir = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(root_dir))
+sys.path.insert(0, str(root_dir / 'pytower'))
 
 # Configuration file for the Sphinx documentation builder.
 

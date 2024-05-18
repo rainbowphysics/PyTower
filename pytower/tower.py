@@ -7,8 +7,8 @@ from types import ModuleType
 import colorama
 from colorama import Fore, Style
 
-from . import __version__, backup
-from .backup import make_backup, restore_backup
+from .__config__ import __version__
+from .backup import make_backup, restore_backup, fix_canvases
 from .config import TowerConfig
 from .image_backends.backend import ResourceBackend
 from .image_backends.custom import CustomBackend
@@ -378,7 +378,7 @@ def main():
 
                     backend = parse_resource_backend(backends, args['backend'])
 
-                    backup.restore_backup(path, force_reupload=args['force'], backend=backend)
+                    restore_backup(path, force_reupload=args['force'], backend=backend)
         case 'list':
             print('Available tools:')
             for _, meta in tools:
@@ -518,7 +518,7 @@ def main():
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
             backend = parse_resource_backend(backends, args['backend'])
-            backup.fix_canvases(path, force_reupload=args['force'], backend=backend)
+            fix_canvases(path, force_reupload=args['force'], backend=backend)
         case 'config':
             match args['config_mode']:
                 case 'get':
