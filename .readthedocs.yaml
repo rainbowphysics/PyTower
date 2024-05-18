@@ -5,8 +5,8 @@ build:
   tools:
     python: "3.10"
   jobs:
-    post_install:
-      - rm pytower/tools
+    pre_install:
+      - touch .rtd_build
       - cp -r tools pytower/tools
 
 python:

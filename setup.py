@@ -59,6 +59,10 @@ def is_junction(path: str) -> bool:
 
 
 def make_tools_symlink():
+    # Don't make symlink for Read The Docs install
+    if os.path.exists('.rtd_build'):
+        return
+
     cwd = os.getcwd()
     os.chdir('pytower')
 
