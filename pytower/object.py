@@ -30,12 +30,7 @@ ITEMCONNECTIONS_DEFAULT = json.loads('''{
 class TowerObject:
     """Tower object
 
-    Represents an object appearing in the Suitebro file . This includes all the sections of the object.
-
-    Attributes:
-        position: XYZ world position
-        rotation: XYZW rotation quaternion
-        scale: XYZ local scale
+    Represents an object appearing in the Suitebro file. This includes all the sections of the object.
     """
 
     def __init__(self, item: dict | None = None, properties: dict | None = None, nocopy: bool = False):
@@ -136,6 +131,7 @@ class TowerObject:
 
     @property
     def position(self) -> XYZ | None:
+        """World position"""
         return self._get_xyz_attr('position')
 
     @position.setter
@@ -157,6 +153,7 @@ class TowerObject:
 
     @property
     def rotation(self) -> XYZW | None:
+        """Rotation quaternion"""
         return self._get_xyzw_attr('rotation')
 
     @rotation.setter
@@ -178,6 +175,7 @@ class TowerObject:
 
     @property
     def scale(self) -> XYZ | None:
+        """Local scale"""
         return self._get_xyz_attr('scale')
 
     @scale.setter

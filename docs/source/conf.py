@@ -10,6 +10,7 @@ from pathlib import Path
 root_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(root_dir))
 sys.path.insert(0, str(root_dir / 'pytower'))
+sys.path.insert(0, os.path.abspath('.'))
 
 # Configuration file for the Sphinx documentation builder.
 
@@ -32,7 +33,8 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
-    'sphinx.ext.linkcode'
+    'sphinx.ext.linkcode',
+    'autounqualified'
 ]
 
 autodoc_typehints = 'description'
@@ -58,6 +60,8 @@ templates_path = ['_templates']
 # -- Options for HTML output
 html_theme = 'sphinx_rtd_theme'
 html_favicon = 'favicon.ico'
+
+#exclude_patterns = ['generated']
 
 from docs.source.linkcode import linkcode_resolve
 
