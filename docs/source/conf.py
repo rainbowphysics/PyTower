@@ -35,7 +35,15 @@ extensions = [
     'sphinx.ext.linkcode'
 ]
 
-autosummary_generate = True
+autodoc_typehints = 'description'
+autodoc_warningiserror = True
+autodoc_default_options = {
+    'exclude-members': '__weakref__, __dict__, __annotations__, __module__, __abstractmethods__'
+}
+
+python_use_unqualified_type_names = True
+
+autosummary_generate = False
 autosummary_generate_overwrite = True
 autosummary_imported_members = False
 

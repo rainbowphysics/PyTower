@@ -71,25 +71,44 @@ def get_link_info(modname: str, fullname: str) -> tuple[str, tuple[int, int]] | 
     if repo_main_folder is None:
         return fallback, None
 
+    parent_obj = None
     obj = module
     for part in fullname.split('.'):
         try:
-            obj = getattr(obj, part)
+            next_obj = getattr(obj, part)
+            parent_obj = obj
+            obj = next_obj
         except AttributeError:
             return fallback, None
 
     if isinstance(obj, property):
         obj = obj.fget
 
-    src_file = inspect.getsourcefile(obj)
+    try:
+        src_file = inspect.getsourcefile(obj)
+    except TypeError:
+        src_file = inspect.getsourcefile(parent_obj)
+
     filepath = os.path.relpath(src_file, repo_main_folder)
 
     try:
         source, lineno = inspect.getsourcelines(obj)
+        linestart, linestop = lineno, lineno + len(source) - 1
     except OSError:
         return filepath, None
+    except TypeError:
+        source, lineno = inspect.getsourcelines(parent_obj)
+        found_in_source = False
+        for idx, line in enumerate(source):
+            if line.startswith(fullname.split('.')[-1]):
+                linestart = lineno + idx
+                linestop = linestart
+                found_in_source = True
+                break
 
-    linestart, linestop = lineno, lineno + len(source) - 1
+        if not found_in_source:
+            return filepath, None
+
     return filepath, (linestart, linestop)
 
 

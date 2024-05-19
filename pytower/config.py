@@ -77,3 +77,4 @@ class TowerConfig:
 
 
 CONFIG: TowerConfig | None = None
+'''Global config used by PyTower install'''

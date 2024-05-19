@@ -1,6 +1,7 @@
 {{ objname | escape | underline }}
 
-.. autoclass:: {{ fullname }}
+.. autoclass:: {{ objname }}
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
