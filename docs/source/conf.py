@@ -45,7 +45,7 @@ autodoc_default_options = {
 
 python_use_unqualified_type_names = True
 
-autosummary_generate = False
+autosummary_generate = True
 autosummary_generate_overwrite = True
 autosummary_imported_members = False
 
