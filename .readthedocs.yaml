@@ -8,6 +8,8 @@ build:
     pre_install:
       - touch .rtd_build
       - cp -r tools pytower/tools
+    post_install:
+      - pip -v install -e .
 
 python:
   install:
