@@ -34,8 +34,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
-    'sphinx.ext.linkcode',
-    'autounqualified'
+    'sphinx.ext.linkcode'
 ]
 
 autodoc_typehints = 'description'
