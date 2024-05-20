@@ -22,6 +22,7 @@ author = 'Rainbow Physics'
 
 release = f'{pytower.__version__}'
 version = f'{pytower.__version__}'
+project_language = 'en'
 
 # -- General configuration
 
@@ -40,7 +41,7 @@ extensions = [
 autodoc_typehints = 'description'
 autodoc_warningiserror = True
 autodoc_default_options = {
-    'exclude-members': '__weakref__, __dict__, __annotations__, __module__, __abstractmethods__'
+    'exclude-members': '__weakref__, __dict__, __annotations__, __module__, __abstractmethods__, __orig_bases__'
 }
 
 python_use_unqualified_type_names = True
@@ -60,8 +61,6 @@ templates_path = ['_templates']
 # -- Options for HTML output
 html_theme = 'sphinx_rtd_theme'
 html_favicon = 'favicon.ico'
-
-#exclude_patterns = ['generated']
+html_static_path = ['_static']
 
 from docs.source.linkcode import linkcode_resolve
-

@@ -1,0 +1,12 @@
+{% extends "!layout.html" %}
+
+{% block extrahead %}
+    {{ super() }}
+    <!-- Custom Open Graph meta tags -->
+    <meta property="og:title" content="{{ title }} — PyTower Documentation" />
+    <meta property="og:type" content="website" />
+    <!-- <meta property="og:url" content="https://pytower.readthedocs.io/en/{{ release }}/{{ pagename }}.html" /> -->
+    <meta property="og:url" content="{{ html_baseurl }}" />
+    <meta property="og:image" content="{{ pathto('_static/logo_512.png', 1) }}" />
+    <meta property="og:description" content="Read The Docs: PyTower Wiki and API Reference" />
+{% endblock %}
