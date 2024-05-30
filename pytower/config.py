@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from . import root_directory
 
@@ -12,7 +12,7 @@ KEY_FROM_SOURCE = 'from_source'
 
 
 class TowerConfig:
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         self.filename = filename
         self.path = os.path.join(root_directory, filename)
         self.config = self._load_config()
@@ -21,7 +21,7 @@ class TowerConfig:
         global CONFIG
         CONFIG = self
 
-    def _load_config(self) -> dict:
+    def _load_config(self) -> dict[str, Any]:
         # Create empty .json if need to
         if not os.path.isfile(self.path):
             with open(self.path, 'w') as fd:
@@ -30,7 +30,7 @@ class TowerConfig:
         # Try to load config
         with open(self.path, 'r') as fd:
             try:
-                config = json.load(fd)
+                config: dict[str, Any] = json.load(fd)
             except json.decoder.JSONDecodeError:
                 config = {}
 
@@ -62,7 +62,7 @@ class TowerConfig:
             entry = dtype(entry)
         return entry
 
-    def set(self, key, value) -> None:
+    def set(self, key: str, value: Any) -> None:
         if key not in self.config:
             raise ValueError
 
@@ -72,8 +72,11 @@ class TowerConfig:
     def keys(self):
         return self.config.keys()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         return self.config[key]
 
 
-CONFIG: TowerConfig | None = None
+if TYPE_CHECKING:
+    CONFIG: TowerConfig
+else:
+    CONFIG: TowerConfig | None = None

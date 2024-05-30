@@ -1,51 +1,53 @@
 import copy
-import json
-from pytower.util import run_if_not_none
+from typing import Any, Callable
+from ..util import run_if_not_none
 
-CONNECTION_DEFAULT = json.loads('''{
-                  "Struct": {
-                    "Item": {
-                      "Struct": {
-                        "value": {
-                          "Guid": null
-                        },
-                        "struct_type": "Guid",
-                        "struct_id": "00000000-0000-0000-0000-000000000000"
-                      }
-                    },
-                    "EventName": {
-                      "Name": {
-                        "value": null
-                      }
-                    },
-                    "Delay": {
-                      "Float": {
-                        "value": 0.0
-                      }
-                    },
-                    "ListenerEventName": {
-                      "Name": {
-                        "value": null
-                      }
-                    },
-                    "DataType": {
-                      "Enum": {
-                        "enum_type": "FItemDataType",
-                        "value": "FItemDataType::NONE"
-                      }
-                    },
-                    "Data": {
-                      "Str": {
-                        "value": ""
-                      }
-                    }
-                  }
-                }''')
+CONNECTION_DEFAULT: dict[str, Any] = {
+    "Struct": {
+        "Item": {
+            "Struct": {
+                "value": {
+                    "Guid": None
+                },
+                "struct_type": "Guid",
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
+        },
+        "EventName": {
+            "Name": {
+                "value": None
+            }
+        },
+        "Delay": {
+            "Float": {
+                "value": 0.0
+            }
+        },
+        "ListenerEventName": {
+            "Name": {
+                "value": None
+            }
+        },
+        "DataType": {
+            "Enum": {
+                "enum_type": "FItemDataType",
+                "value": "FItemDataType::NONE"
+            }
+        },
+        "Data": {
+            "Str": {
+                "value": ""
+            }
+        }
+    }
+}
 
 
 class ItemConnectionObject:
-    def __init__(self, datadict=None, guid=None, event_name=None, delay=None, listener_event=None, datatype=None,
-                 data=None):
+    data: dict[str, Any]
+
+    def __init__(self, datadict: dict[str, Any] | None=None, guid: str | None=None, event_name: str | None=None, delay: float | None=None, listener_event: str | None=None, datatype: dict[str, Any] | None=None,
+                 data: dict[str, Any] | None=None):
         if datadict is not None:
             self.data = datadict
             return
@@ -53,13 +55,14 @@ class ItemConnectionObject:
         # Load in dictionary template with default values
         self.data = copy.deepcopy(CONNECTION_DEFAULT)
 
-        setter_pairs = [(self.set_item_guid, guid),
-                        (self.set_event_name, event_name),
-                        (self.set_delay, delay),
-                        (self.set_listener_event_name, listener_event),
-                        (self.set_datatype, datatype),
-                        (self.set_data, data)
-                        ]
+        setter_pairs: list[tuple[Callable[[Any], None], Any]] = [
+            (self.set_item_guid, guid),
+            (self.set_event_name, event_name),
+            (self.set_delay, delay),
+            (self.set_listener_event_name, listener_event),
+            (self.set_datatype, datatype),
+            (self.set_data, data)
+        ]
         for setter, entry in setter_pairs:
             run_if_not_none(setter, entry)
 
@@ -92,26 +95,26 @@ class ItemConnectionObject:
         self.data['Struct']['ListenerEventName']['Name']['value'] = name
 
     # Returns datatype of attached data
-    def get_datatype(self) -> dict:
+    def get_datatype(self) -> dict[str, Any]:
         return self.data['Struct']['DataType']['Enum']['value']
 
-    def set_datatype(self, datatype: dict):
+    def set_datatype(self, datatype: dict[str, Any]):
         self.data['Struct']['DataType']['Enum']['value'] = datatype
 
     # Returns datatype of attached data
-    def get_data(self) -> dict:
+    def get_data(self) -> dict[str, Any]:
         return self.data['Struct']['Data']
 
-    def set_data(self, data: dict):
+    def set_data(self, data: dict[str, Any]):
         self.data['Struct']['Data'] = data
 
-    def get_dict(self) -> dict:
+    def get_dict(self) -> dict[str, Any]:
         return self.data
 
-    def set_dict(self, data):
+    def set_dict(self, data: dict[str, Any]):
         self.data = data
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return copy.deepcopy(self.data)
 
     # Needed to call dict(...) on objects of this class type

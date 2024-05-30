@@ -55,7 +55,7 @@ class Selection(set[TowerObject]):
 
         self.intersection_update(other)
 
-    def __hash__(self):
+    def __hash__(self): # type: ignore # set overrides __hash__=None, we override it again
         return hash(tuple(self))
 
 
@@ -73,7 +73,7 @@ class Selector(ABC):
 
 
 class NameSelector(Selector):
-    def __init__(self, select_name):
+    def __init__(self, select_name: str):
         super().__init__('NameSelector')
         self.select_name = select_name.casefold()
 
@@ -82,7 +82,7 @@ class NameSelector(Selector):
 
 
 class CustomNameSelector(Selector):
-    def __init__(self, select_name):
+    def __init__(self, select_name: str):
         super().__init__('CustomNameSelector')
         self.select_name = select_name.casefold()
 
@@ -91,7 +91,7 @@ class CustomNameSelector(Selector):
 
 
 class ObjectNameSelector(Selector):
-    def __init__(self, select_name):
+    def __init__(self, select_name: str):
         super().__init__('ObjectNameSelector')
         self.select_name = select_name.casefold()
 
@@ -110,7 +110,7 @@ class RegexSelector(Selector):
 
 
 class GroupSelector(Selector):
-    def __init__(self, group_id):
+    def __init__(self, group_id: int):
         super().__init__('GroupSelector')
         self.group_id = group_id
 
@@ -143,7 +143,7 @@ class NothingSelector(Selector):
 
 
 class PercentSelector(Selector):
-    def __init__(self, percentage):
+    def __init__(self, percentage: float):
         super().__init__('PercentSelector')
         self.percentage = percentage
 
@@ -155,7 +155,7 @@ class PercentSelector(Selector):
 
 
 class TakeSelector(Selector):
-    def __init__(self, number):
+    def __init__(self, number: int):
         super().__init__('TakeSelector')
         self.number = number
 
@@ -166,7 +166,7 @@ class TakeSelector(Selector):
 
 
 class RandomSelector(Selector):
-    def __init__(self, probability):
+    def __init__(self, probability: float):
         super().__init__('RandomSelector')
         self.probability = probability
 

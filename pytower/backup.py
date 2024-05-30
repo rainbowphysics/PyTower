@@ -4,6 +4,8 @@ import os
 import struct
 import sys
 import datetime
+from typing import Any, Collection
+from typing_extensions import Buffer
 
 import requests
 import asyncio
@@ -12,19 +14,20 @@ from colorama import Fore, Back, Style
 
 from . import root_directory, __version__
 from .config import KEY_INSTALL_PATH
+from .image_backends.backend import ResourceBackend
 from .image_backends.catbox import CatboxBackend
 from .image_backends.imgur import ImgurBackend
 from .suitebro import Suitebro, load_suitebro, save_suitebro
 from .tool_lib import ParameterDict
 from .util import dict_walk
+from .selection import Selection
 from .tools import replace_url
-
 
 PRINT_LOCK = Lock()
 BACKUP_DIR = os.path.join(root_directory, 'backup')
 
 
-def _hash_image(data: bytes):
+def _hash_image(data: Buffer):
     return hashlib.sha1(data, usedforsecurity=False).hexdigest()[:10]
 
 
@@ -37,7 +40,7 @@ def _url_hash(url: str):
     return hashlib.md5(url.encode('ascii'), usedforsecurity=False).hexdigest()
 
 
-def _read_cacheline(cache_path):
+def _read_cacheline(cache_path: str) -> bytearray:
     buf = bytearray(os.path.getsize(cache_path))
     with open(cache_path, 'rb') as fd:
         fd.readinto(buf)
@@ -50,7 +53,7 @@ def _read_cacheline(cache_path):
     return data
 
 
-def _write_image(url, data) -> str | None:
+def _write_image(url: str, data: Buffer) -> str | None:
     file_hash = _hash_image(data)
 
     # Write the content to a file, using the hash to ensure uniqueness
@@ -65,7 +68,7 @@ def _write_image(url, data) -> str | None:
     return filename
 
 
-def _download_image(url, cache) -> tuple[str, str | None]:
+def _download_image(url: str, cache: dict[str, str]) -> tuple[str, str | None]:
     # First check to see if url is in cache
     urlhash = _url_hash(url)
     if urlhash in cache:
@@ -101,7 +104,12 @@ def _download_image(url, cache) -> tuple[str, str | None]:
 
 
 class BackupIndex:
-    def __init__(self, data: dict | None = None):
+    original_path: str
+    filename: str
+    pytower_version: str
+    resources: dict[str, str]
+
+    def __init__(self, data: dict[str, Any] | None = None):
         if data is not None:
             try:
                 self.original_path = data['original_path']
@@ -116,8 +124,8 @@ class BackupIndex:
         return vars(self)
 
 
-async def _download_images(urls, install_dir, use_cache=True):
-    canvas_cache = {}
+async def _download_images(urls: Collection[str], install_dir: str, use_cache: bool=True):
+    canvas_cache: dict[str, str] = {}
     if use_cache:
         # Try to locate canvas cache
         cache_path = os.path.join(os.path.join(os.path.join(install_dir, 'Tower'), 'Cache'), 'Canvas')
@@ -139,7 +147,7 @@ async def _download_images(urls, install_dir, use_cache=True):
     results = await asyncio.gather(*[asyncio.to_thread(_download_image, url, canvas_cache) for url in urls])
 
     # Backed-up resources
-    resources = {}
+    resources: dict[str, str] = {}
     for url, filename in results:
         if filename is not None:
             resources[url] = filename
@@ -169,9 +177,9 @@ def make_backup(save: Suitebro) -> str:
     os.chdir(backup_path)
 
     # Gather all URLs
-    urls = set()
+    urls = set[str]()
 
-    def url_processor(dict_entry):
+    def url_processor(dict_entry: list[Any] | dict[str, Any] | tuple[str, Any] | Any):
         if isinstance(dict_entry, tuple) and len(dict_entry) == 2:
             k, v = dict_entry
             if k == 'URL' or k == 'CanvasURL':
@@ -210,7 +218,7 @@ def make_backup(save: Suitebro) -> str:
     return backup_path
 
 
-def resource_available(url, debug=False) -> bool:
+def resource_available(url: str, debug: bool=False) -> bool:
     try:
         # Use HEAD request for faster response
         response = requests.head(url, timeout=2, headers={'User-agent': 'PyTower'})
@@ -245,14 +253,14 @@ async def _check_links(urls: list[str]) -> set[str]:
     return {url for (url, result) in zip(urls, results) if result}  # return set of urls online and 200 status
 
 
-def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
+def restore_backup(path: str, force_reupload: bool=False, backend: ResourceBackend=CatboxBackend()):
     cwd = os.getcwd()
     os.chdir(path)
     with open('index.json', 'r') as fd:
         index = BackupIndex(json.load(fd))
 
     # First, handle reuploading files
-    broken_files = []
+    broken_files: list[str] = []
     available_urls = asyncio.run(_check_links(list(index.resources.keys())))
     for url, filename in index.resources.items():
         if url not in available_urls or force_reupload:
@@ -261,7 +269,7 @@ def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
     print(f'Marked {len(broken_files)}/{len(index.resources.items())} resources for reupload')
 
     url_dict = backend.upload_files(broken_files)
-    url_replacements = {}
+    url_replacements: dict[str, str] = {}
     for url, filename in index.resources.items():
         if filename in url_dict:
             new_url = url_dict[filename]
@@ -286,7 +294,7 @@ def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
     # Big URL replacement
     for old_url, new_url in url_replacements.items():
         params = ParameterDict({'replace': old_url, 'url': new_url})
-        replace_url.main(save, save.objects, params)
+        replace_url.main(save, Selection(save.objects), params)
 
     # Now save to original file location
     save_suitebro(save, index.original_path)
@@ -294,7 +302,7 @@ def restore_backup(path, force_reupload=False, backend=CatboxBackend()):
     os.chdir(cwd)
 
 
-def fix_canvases(path: str, force_reupload=False, backend=CatboxBackend()):
+def fix_canvases(path: str, force_reupload: bool=False, backend: ResourceBackend=CatboxBackend()):
     save = load_suitebro(path)
     backup_path = make_backup(save)
     restore_backup(backup_path, force_reupload=force_reupload, backend=backend)
