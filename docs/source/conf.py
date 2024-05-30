@@ -1,10 +1,16 @@
+import inspect
+
 import pytower
 from datetime import datetime
 import os
 import sys
+from pathlib import Path
 
 # Ensure Sphinx can include package/module
-sys.path.insert(0, os.path.abspath('../../'))
+root_dir = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(root_dir))
+sys.path.insert(0, str(root_dir / 'pytower'))
+sys.path.insert(0, os.path.abspath('.'))
 
 # Configuration file for the Sphinx documentation builder.
 
@@ -16,6 +22,7 @@ author = 'Rainbow Physics'
 
 release = f'{pytower.__version__}'
 version = f'{pytower.__version__}'
+project_language = 'en'
 
 # -- General configuration
 
@@ -26,8 +33,17 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
-    'sphinx_autodoc_typehints'
+    'sphinx_autodoc_typehints',
+    'sphinx.ext.linkcode'
 ]
+
+autodoc_typehints = 'description'
+autodoc_warningiserror = True
+autodoc_default_options = {
+    'exclude-members': '__weakref__, __dict__, __annotations__, __module__, __abstractmethods__, __orig_bases__'
+}
+
+python_use_unqualified_type_names = True
 
 autosummary_generate = True
 autosummary_generate_overwrite = True
@@ -43,3 +59,7 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 html_theme = 'sphinx_rtd_theme'
+html_favicon = 'favicon.ico'
+html_static_path = ['_static']
+
+from docs.source.linkcode import linkcode_resolve

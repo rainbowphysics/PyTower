@@ -3,7 +3,7 @@ import os
 import sys
 from typing import TYPE_CHECKING, Any, Callable
 
-from . import root_directory
+from .__config__ import root_directory
 
 KEY_INSTALL_PATH = 'tower_install_path'
 KEY_IMGUR_CLIENT_ID = 'imgur_client_id'
@@ -77,6 +77,8 @@ class TowerConfig:
 
 
 if TYPE_CHECKING:
+	'''Global config used by PyTower install'''
     CONFIG: TowerConfig
 else:
+	'''Global config used by PyTower install'''
     CONFIG: TowerConfig | None = None

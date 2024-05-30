@@ -1,4 +1,3 @@
-from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
 from pytower.tool_lib import ToolParameterInfo, ParameterDict
@@ -33,7 +32,3 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
         # Ensure other object properties agree
         obj.properties['properties']['SurfaceMaterial'] = {'Object': {'value': ''}}
         obj.properties['properties']['URL'] = {'Str': {'value': url}}
-
-
-if __name__ == '__main__':
-    tower.run('CondoData', main, params=['url=https://i.imgur.com/V0pIX9G.png'])

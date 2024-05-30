@@ -4,6 +4,12 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.10"
+  jobs:
+    pre_install:
+      - touch .rtd_build
+      - cp -r tools pytower/tools
+    post_install:
+      - pip -v install -e .
 
 python:
   install:

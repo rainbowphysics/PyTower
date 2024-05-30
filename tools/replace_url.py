@@ -1,4 +1,3 @@
-from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro, TowerObject
 from pytower.tools import set_url
@@ -23,7 +22,3 @@ def should_replace(obj: TowerObject, url: str) -> bool:
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
     selection = Selection({obj for obj in selection if should_replace(obj, params.replace)})
     set_url.main(save, selection, params)
-
-
-if __name__ == '__main__':
-    tower.run('CondoData', main, params=['url=https://i.imgur.com/V0pIX9G.png'])
