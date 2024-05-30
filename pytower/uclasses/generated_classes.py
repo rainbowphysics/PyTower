@@ -1,6 +1,7 @@
 from typing import Annotated
+from ..util import XYZ, XYZW
 from .properties import ArrayProperty, BoolProperty, ByteProperty, StrProperty, StructProperty, TextProperty, EnumProperty, FloatProperty, IntProperty, NameProperty, ObjectProperty, SerializedName, Name, Object, UEnum, suitebro_dataclass
-from .primitives import Colorable, Guid, LinearColor, Rotator, Transform, Vector
+from .primitives import Colorable, Guid, LinearColor, Rotator, Transform
 from .classes import \
     ActorComponent, \
     CondoSettings, \
@@ -134,8 +135,8 @@ class BaseCanvas_C(InventoryItem):
     scale_x: Annotated[float, FloatProperty(), SerializedName('ScaleX')]
     scale_y: Annotated[float, FloatProperty(), SerializedName('ScaleY')]
     scale_z: Annotated[float, FloatProperty(), SerializedName('ScaleZ')]
-    world_scale: Annotated[Vector, StructProperty(Vector), SerializedName('WorldScale')]
-    tiling: Annotated[Vector, StructProperty(Vector), SerializedName('Tiling')]
+    world_scale: Annotated[XYZ, StructProperty(XYZ), SerializedName('WorldScale')]
+    tiling: Annotated[XYZ, StructProperty(XYZ), SerializedName('Tiling')]
     cache_to_disk: Annotated[bool, BoolProperty(), SerializedName('CacheToDisk')]
     additional_urls: Annotated[list[str], ArrayProperty('AdditionalURLs', StrProperty()), SerializedName('AdditionalURLs')]
     surface_material: Annotated[Object, ObjectProperty('MaterialInterface'), SerializedName('SurfaceMaterial')]
@@ -335,8 +336,8 @@ class BaseLadderItem_C(BaseColorable_C):
     top_mesh_index: Annotated[int, IntProperty(), SerializedName('TopMeshIndex')]
     bot_mesh_index: Annotated[int, IntProperty(), SerializedName('BotMeshIndex')]
     num_sections: Annotated[int, IntProperty(), SerializedName('NumSections')]
-    climb_up_target: Annotated[Vector, StructProperty(Vector), SerializedName('ClimbUpTarget')]
-    climb_down_target: Annotated[Vector, StructProperty(Vector), SerializedName('ClimbDownTarget')]
+    climb_up_target: Annotated[XYZ, StructProperty(XYZ), SerializedName('ClimbUpTarget')]
+    climb_down_target: Annotated[XYZ, StructProperty(XYZ), SerializedName('ClimbDownTarget')]
     use_ladder_volume: Annotated[bool, BoolProperty(), SerializedName('UseLadderVolume')]
     custom_up_target: Annotated[bool, BoolProperty(), SerializedName('CustomUpTarget')]
     custom_down_target: Annotated[bool, BoolProperty(), SerializedName('CustomDownTarget')]
@@ -611,7 +612,7 @@ class BaseSoundEmitterItem_C(InventoryItem):
 
 @suitebro_dataclass
 class BaseTargetable_C(InventoryItem):
-    targets: Annotated[list[Vector], ArrayProperty('Targets', StructProperty(Vector)), SerializedName('Targets')]
+    targets: Annotated[list[XYZ], ArrayProperty('Targets', StructProperty(XYZ)), SerializedName('Targets')]
     target_rotation: Annotated[Rotator, StructProperty(Rotator), SerializedName('TargetRotation')]
 
 @suitebro_dataclass
@@ -626,7 +627,7 @@ class BaseRope_C(BaseTargetable_C):
 
 @suitebro_dataclass
 class BaseWorkshopItem_C(InventoryItem):
-    world_scale: Annotated[Vector, StructProperty(Vector), SerializedName('WorldScale')]
+    world_scale: Annotated[XYZ, StructProperty(XYZ), SerializedName('WorldScale')]
     item_metadata_scale: Annotated[float, FloatProperty(), SerializedName('ItemMetadataScale')]
     colors: Annotated[list[LinearColor], ArrayProperty('Colors', StructProperty(LinearColor)), SerializedName('Colors')]
 
@@ -696,7 +697,7 @@ class DamageHealVolume_C(BaseVolume_C):
 @suitebro_dataclass
 class DialogueVolume_C(BaseVolume_C):
     font: Annotated[int, ByteProperty(), SerializedName('Font')]
-    camera_offset: Annotated[Vector, StructProperty(Vector), SerializedName('CameraOffset')]
+    camera_offset: Annotated[XYZ, StructProperty(XYZ), SerializedName('CameraOffset')]
     name: Annotated[str, StrProperty(), SerializedName('Name')]
     avatar_url: Annotated[str, StrProperty(), SerializedName('AvatarURL')]
     on_enter: Annotated[list[str], ArrayProperty('OnEnter', TextProperty()), SerializedName('OnEnter')]
@@ -714,7 +715,7 @@ class HitTargetVolume_C(BaseVolume_C):
     default_health: Annotated[float, FloatProperty(), SerializedName('DefaultHealth')]
     blood_type: Annotated[int, ByteProperty(), SerializedName('BloodType')]
     show_value: Annotated[bool, BoolProperty(), SerializedName('ShowValue')]
-    text_offset: Annotated[Vector, StructProperty(Vector), SerializedName('TextOffset')]
+    text_offset: Annotated[XYZ, StructProperty(XYZ), SerializedName('TextOffset')]
     hit_fx: Annotated[bool, BoolProperty(), SerializedName('HitFX')]
 
 @suitebro_dataclass
@@ -851,16 +852,16 @@ class Mover_C(IOModuleBase_C):
     looping_type: Annotated[int, ByteProperty(), SerializedName('LoopingType')]
     duration: Annotated[float, FloatProperty(), SerializedName('Duration')]
     auto_start: Annotated[bool, BoolProperty(), SerializedName('AutoStart')]
-    move_to: Annotated[Vector, StructProperty(Vector), SerializedName('MoveTo')]
+    move_to: Annotated[XYZ, StructProperty(XYZ), SerializedName('MoveTo')]
     rotation_type: Annotated[int, ByteProperty(), SerializedName('RotationType')]
     rotate_to: Annotated[Rotator, StructProperty(Rotator), SerializedName('RotateTo')]
     rotation_rate: Annotated[float, FloatProperty(), SerializedName('RotationRate')]
     closed_loop: Annotated[bool, BoolProperty(), SerializedName('ClosedLoop')]
-    offset_location: Annotated[Vector, StructProperty(Vector), SerializedName('OffsetLocation')]
+    offset_location: Annotated[XYZ, StructProperty(XYZ), SerializedName('OffsetLocation')]
     offset_rotation: Annotated[Rotator, StructProperty(Rotator), SerializedName('OffsetRotation')]
     item_to_look_at: Annotated[str, StrProperty(), SerializedName('ItemToLookAt')]
     spin_reversed: Annotated[bool, BoolProperty(), SerializedName('SpinReversed')]
-    spin_axis: Annotated[Vector, StructProperty(Vector), SerializedName('SpinAxis')]
+    spin_axis: Annotated[XYZ, StructProperty(XYZ), SerializedName('SpinAxis')]
     actor_guid: Annotated[Guid, StructProperty(Guid), SerializedName('ActorGuid')]
     overlaps: Annotated[bool, BoolProperty(), SerializedName('Overlaps')]
     rotate_from: Annotated[Rotator, StructProperty(Rotator), SerializedName('RotateFrom')]
@@ -917,13 +918,13 @@ class NPC_C(InventoryItem):
     current_model: Annotated[int, ByteProperty(), SerializedName('CurrentModel')]
     current_idle: Annotated[int, ByteProperty(), SerializedName('CurrentIdle')]
     current_wearables: Annotated[NPCWearables, StructProperty(NPCWearables), SerializedName('CurrentWearables')]
-    camera_offset: Annotated[Vector, StructProperty(Vector), SerializedName('CameraOffset')]
+    camera_offset: Annotated[XYZ, StructProperty(XYZ), SerializedName('CameraOffset')]
     name: Annotated[str, StrProperty(), SerializedName('Name')]
     avatar_url: Annotated[str, StrProperty(), SerializedName('AvatarURL')]
     on_enter: Annotated[list[str], ArrayProperty('OnEnter', TextProperty()), SerializedName('OnEnter')]
     on_leave: Annotated[list[str], ArrayProperty('OnLeave', TextProperty()), SerializedName('OnLeave')]
     on_talk: Annotated[list[str], ArrayProperty('OnTalk', TextProperty()), SerializedName('OnTalk')]
-    name_offset: Annotated[Vector, StructProperty(Vector), SerializedName('NameOffset')]
+    name_offset: Annotated[XYZ, StructProperty(XYZ), SerializedName('NameOffset')]
     prompt: Annotated[str, StrProperty(), SerializedName('Prompt')]
     look_at: Annotated[bool, BoolProperty(), SerializedName('LookAt')]
     workshop_model: Annotated[WorkshopFile, StructProperty(WorkshopFile), SerializedName('WorkshopModel')]
@@ -1010,7 +1011,7 @@ class PlayerCannon_C(BaseTargetable_C):
 @suitebro_dataclass
 class PlayerInputVolume_C(BaseVolume_C):
     prompt: Annotated[str, StrProperty(), SerializedName('Prompt')]
-    camera_offset: Annotated[Vector, StructProperty(Vector), SerializedName('CameraOffset')]
+    camera_offset: Annotated[XYZ, StructProperty(XYZ), SerializedName('CameraOffset')]
     camera_rotation: Annotated[Rotator, StructProperty(Rotator), SerializedName('CameraRotation')]
     camera_enabled: Annotated[bool, BoolProperty(), SerializedName('CameraEnabled')]
 
@@ -1164,7 +1165,7 @@ class CondoEditableSurface_C(StaticMeshActor):
     surface_colorable: Annotated[Colorable, StructProperty(Colorable), SerializedName('SurfaceColorable')]
     surface_material: Annotated[Object, ObjectProperty('MaterialInterface'), SerializedName('SurfaceMaterial')]
     canvas_url: Annotated[str, StrProperty(), SerializedName('CanvasURL')]
-    tiling: Annotated[Vector, StructProperty(Vector), SerializedName('Tiling')]
+    tiling: Annotated[XYZ, StructProperty(XYZ), SerializedName('Tiling')]
     world_align_canvas: Annotated[bool, BoolProperty(), SerializedName('WorldAlignCanvas')]
 
 @suitebro_dataclass

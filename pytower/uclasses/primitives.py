@@ -3,52 +3,6 @@ from typing import Annotated, ClassVar
 from .properties import IntProperty, SerializedName, StructProperty, TUPrimitive, TUStruct
 from ..util import XYZ, XYZW
 
-# TODO: Find a better way to do this, because XYZ is a numpy array and we can't detect mutations to it...
-@dataclass(slots=True, frozen=True)
-class Vector(TUPrimitive):
-    x: float
-    y: float
-    z: float
-
-    zero: ClassVar['Vector']
-    one: ClassVar['Vector']
-
-    StructName = 'Vector'
-    IsBuiltIn = True
-
-    def to_xyz(self) -> XYZ:
-        return XYZ(self.x, self.y, self.z)
-
-    @staticmethod
-    def from_xyz(xyz: XYZ):
-        return Vector(xyz.x, xyz.y, xyz.z)
-
-Vector.zero = Vector(0,0,0)
-Vector.one = Vector(1,1,1)
-
-@dataclass(slots=True, frozen=True)
-class Quat(TUPrimitive):
-    x: float
-    y: float
-    z: float
-    w: float
-
-    zero: ClassVar['Quat']
-    one: ClassVar['Quat']
-
-    StructName = 'Quat'
-    IsBuiltIn = True
-
-    def to_xyzw(self) -> XYZW:
-        return XYZW(self.x, self.y, self.z, self.w)
-
-    @staticmethod
-    def from_xyzw(xyzw: XYZW):
-        return Quat(xyzw.x, xyzw.y, xyzw.z, xyzw.w)
-
-Quat.zero = Quat(0,0,0,0)
-Quat.one = Quat(1,1,1,1)
-
 @dataclass(slots=True, frozen=True)
 class Guid(TUPrimitive):
     a: int
@@ -118,6 +72,6 @@ class Colorable(TUStruct):
 class Transform(TUStruct):
     StructName = __name__
 
-    rotation: Annotated[Quat, StructProperty(Quat), SerializedName('Rotation')]
-    translation: Annotated[Vector, StructProperty(Vector), SerializedName('Translation')]
-    scale_3d: Annotated[Vector, StructProperty(Vector), SerializedName('Scale3D')]
+    rotation: Annotated[XYZW, StructProperty(XYZW), SerializedName('Rotation')]
+    translation: Annotated[XYZ, StructProperty(XYZ), SerializedName('Translation')]
+    scale_3d: Annotated[XYZ, StructProperty(XYZ), SerializedName('Scale3D')]

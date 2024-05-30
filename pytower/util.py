@@ -67,7 +67,7 @@ class XYZ(NDArray[np.float64 | np.int32], TUStruct):
     def __new__(cls, *args: XYZ | NDArray[Any] | str | XYZ_ARG) -> XYZ:
         new_instance = cast(XYZ, xyz(*args)).view(cls) # type: ignore
 
-        if isinstance(new_instance[0], np.signedinteger):
+        if isinstance(new_instance[0], np.signedinteger) and cls is not XYZW:
             new_instance = cast(XYZInt, xyzint(new_instance)) # type: ignore
 
         return new_instance
@@ -132,10 +132,32 @@ class XYZ(NDArray[np.float64 | np.int32], TUStruct):
             'z': self.z
         }
 
+    @staticmethod
+    def zero() -> XYZ:
+        return XYZ(0,0,0)
+
+    @staticmethod
+    def one() -> XYZ:
+        return XYZ(1,1,1)
 
 class XYZInt(XYZ):
-    pass
+    @overload
+    def __new__(cls, *xyz_int: *tuple[XYZInt]) -> XYZInt: ...
+    @overload
+    def __new__(cls, *xyz_int: *tuple[XYZ_INT_ARG, XYZ_INT_ARG, XYZ_INT_ARG]) -> XYZInt: ...
+    @overload
+    def __new__(cls, *xyz_int: *tuple[NDArray[np.signedinteger[Any]]]) -> XYZInt: ...
 
+    def __new__(cls, *args: XYZ | NDArray[Any] | str | XYZ_ARG) -> XYZInt:
+        return super().__new__(cls, *args) # type: ignore
+
+    @staticmethod
+    def zero() -> XYZInt:
+        return XYZInt(0,0,0)
+
+    @staticmethod
+    def one() -> XYZInt:
+        return XYZInt(1,1,1)
 
 class XYZW(XYZ):
     StructName = 'Quat'
@@ -168,6 +190,14 @@ class XYZW(XYZ):
             'z': self.z,
             'w': self.w
         }
+
+    @staticmethod
+    def zero() -> XYZW:
+        return XYZW(0,0,0,0)
+
+    @staticmethod
+    def one() -> XYZW:
+        return XYZW(1,1,1,1)
 
 @overload
 def xyz(*xyz_int: *tuple[XYZInt], length: Literal[3]=3) -> XYZInt: ...

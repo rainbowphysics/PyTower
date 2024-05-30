@@ -62,8 +62,9 @@ if __name__ == '__main__':
 
     code = '''
 from typing import Annotated
+from ..util import XYZ, XYZW
 from .properties import ArrayProperty, BoolProperty, ByteProperty, StrProperty, StructProperty, TextProperty, EnumProperty, FloatProperty, IntProperty, NameProperty, ObjectProperty, SerializedName, Name, Object, UEnum, suitebro_dataclass
-from .primitives import Colorable, Guid, LinearColor, Rotator, Transform, Vector
+from .primitives import Colorable, Guid, LinearColor, Rotator, Transform
 from .classes import \\
     ActorComponent, \\
     CondoSettings, \\
@@ -141,7 +142,10 @@ class {re.sub(r'[^a-zA-Z_0-9]', '', cls['Name'])}({cls['SuperName']}):
 
             match fld['Type']:
                 case 'Struct':
-                    code += f"    {py_name}: Annotated[{fld['StructType']}, StructProperty({fld['StructType']}), SerializedName(\'{fld['Name']}\')]\n"
+                    struct_type = fld['StructType']
+                    if struct_type == 'Vector': struct_type = 'XYZ'
+                    elif struct_type == 'Quat': struct_type = 'XYZW'
+                    code += f"    {py_name}: Annotated[{struct_type}, StructProperty({struct_type}), SerializedName(\'{fld['Name']}\')]\n"
                 case 'Bool':
                     code += f"    {py_name}: Annotated[bool, BoolProperty(), SerializedName(\'{fld['Name']}\')]\n"
                 case 'Int':
@@ -167,7 +171,10 @@ class {re.sub(r'[^a-zA-Z_0-9]', '', cls['Name'])}({cls['SuperName']}):
 
                     match aot['Type']:
                         case 'Struct':
-                            code += f"    {py_name}: Annotated[list[{aot['StructType']}], ArrayProperty(\'{aot['ArrayOfPropertyName']}\', StructProperty({aot['StructType']})), SerializedName(\'{fld['Name']}\')]\n"
+                            struct_type = aot['StructType']
+                            if struct_type == 'Vector': struct_type = 'XYZ'
+                            elif struct_type == 'Quat': struct_type = 'XYZW'
+                            code += f"    {py_name}: Annotated[list[{struct_type}], ArrayProperty(\'{aot['ArrayOfPropertyName']}\', StructProperty({struct_type})), SerializedName(\'{fld['Name']}\')]\n"
                         case 'Bool':
                             code += f"    {py_name}: Annotated[list[bool], ArrayProperty(\'{aot['ArrayOfPropertyName']}\', BoolProperty()), SerializedName(\'{fld['Name']}\')]\n"
                         case 'Int':
