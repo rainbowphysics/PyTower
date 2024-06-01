@@ -5,6 +5,7 @@ import os
 import platform
 import sys
 from subprocess import Popen, PIPE
+from typing import Any, Sequence, TypedDict
 
 from colorama import Fore, Back, Style
 
@@ -31,7 +32,7 @@ class Suitebro:
     Attributes:
         objects: The list of TowerObject instances contained in the Suitebro file
     """
-    def __init__(self, filename: str, directory: str, data: dict):
+    def __init__(self, filename: str, directory: str, data: dict[str, Any]):
         """Instantiates a new Suitebro instance based on the input filename and directory
 
         Args:
@@ -41,18 +42,18 @@ class Suitebro:
         """
         self.filename = filename
         self.directory = directory
-        self.data: dict = data
+        self.data: dict[str, Any] = data
 
         # Parse objects
         prop_section = self.data['properties']
         item_section = self.data['items']
         num_props = len(prop_section)
         num_items = len(item_section)
-        self.objects: list[TowerObject | None] = [None] * (num_items + num_props)
+        self.objects: list[TowerObject] = [None] * (num_items + num_props) # type: ignore[assignment]
 
         # First get all names present in properties to determine item-only objects. Except for property-only metadata
         #  objects, every property name is <SOME ITEM NAME>_C_###, where ### is the index within the item-type grouping
-        prop_names = set()
+        prop_names = set[str]()
         for prop_data in prop_section:
             name: str = prop_data['name']
             try:
@@ -92,8 +93,8 @@ class Suitebro:
             x += 1
 
         # Now cull Nones at the end of array
-        if None in self.objects:
-            size = self.objects.index(None)
+        if None in self.objects: # type: ignore[read]
+            size = self.objects.index(None) # type: ignore[read]
             self.objects = self.objects[:size]
 
     def add_object(self, obj: TowerObject):
@@ -104,7 +105,7 @@ class Suitebro:
         """
         self.objects += [obj]
 
-    def add_objects(self, objs: list[TowerObject]):
+    def add_objects(self, objs: Sequence[TowerObject]):
         """Adds a list of objects to the Suitebro file
 
         Args:
@@ -137,8 +138,12 @@ class Suitebro:
         return max(sel.groups(), key=lambda group_data: group_data[0])[0]
 
     def update_groups_meta(self):
+        class GroupData(TypedDict):
+            group_id: int
+            item_count: int
+
         sel = Selection(self.objects)
-        group_data = []
+        group_data: list[GroupData] = []
         for group_id, group in sel.groups():
             group_data.append({'group_id': group_id, 'item_count': len(group)})
         self.data['groups'] = group_data
@@ -161,11 +166,11 @@ class Suitebro:
         """
         return [obj for obj in self.objects if obj.item is not None and obj.get_name() not in IO_GW_ITEMS]
 
-    def _item_count(self, objs) -> dict:
+    def _item_count(self, objs: Sequence[TowerObject]) -> dict[str, int]:
         ordered = sorted(objs, key=TowerObject.get_name)
         return {name: len(list(objs)) for name, objs in itertools.groupby(ordered, TowerObject.get_name)}
 
-    def item_count(self) -> dict:
+    def item_count(self) -> dict[str, int]:
         """Counts the number of items in the Suitebro file
 
         Returns:
@@ -173,7 +178,7 @@ class Suitebro:
         """
         return self._item_count(self.objects)
 
-    def inventory_count(self) -> dict:
+    def inventory_count(self) -> dict[str, int]:
         """Counts the number of inventory items in the Suitebro file
 
         Returns:
@@ -189,7 +194,7 @@ class Suitebro:
         Returns:
             Serialized Suitebro representation that can be written to a file using json.dump
         """
-        new_dict = {}
+        new_dict: dict[str, Any] = {}
 
         # Update groups based on group ids and info
         self.update_groups_meta()
@@ -201,8 +206,8 @@ class Suitebro:
         self.objects.sort()
 
         num_obj = len(self.objects)
-        item_arr = [None] * num_obj
-        prop_arr = [None] * num_obj
+        item_arr: list[dict[str, Any] | None] = [None] * num_obj
+        prop_arr: list[dict[str, Any] | None] = [None] * num_obj
 
         item_idx = 0
         prop_idx = 0
@@ -229,7 +234,7 @@ class Suitebro:
                     last_name = root_name
 
                 # Now actually add to prop_arr
-                prop_arr[prop_idx] = obj.properties
+                prop_arr[prop_idx] = obj.properties.props if obj.properties else None
                 prop_idx += 1
 
         item_arr = item_arr[:item_idx]
@@ -304,7 +309,7 @@ def pretty_path(path: str) -> str:
         return abspath
 
 
-def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None = None,
+def run_suitebro_parser(input_path: str, to_save: bool, output_path: str,
                         overwrite: bool = False) -> bool:
     exe_path = get_suitebro_path()
     process = Popen(f'\"{exe_path}\" {"to-save" if to_save else "to-json"} {"-!" if overwrite else ""}'
@@ -324,7 +329,7 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str | None 
     return True
 
 
-def load_suitebro(filename: str, only_json=False) -> Suitebro:
+def load_suitebro(filename: str, only_json: bool=False) -> Suitebro:
     abs_filepath = os.path.realpath(filename)
     in_dir = os.path.dirname(abs_filepath)
     json_output_path = os.path.join(in_dir, os.path.basename(abs_filepath) + ".json")
@@ -344,7 +349,7 @@ def load_suitebro(filename: str, only_json=False) -> Suitebro:
     return save
 
 
-def save_suitebro(save: Suitebro, filename: str, only_json=False):
+def save_suitebro(save: Suitebro, filename: str, only_json: bool=False):
     abs_filepath = os.path.realpath(filename)
     out_dir = os.path.dirname(abs_filepath)
     json_final_path = os.path.join(save.directory, f'{filename}.json')

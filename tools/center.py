@@ -2,7 +2,7 @@ from pytower import tower
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
 from pytower.tool_lib import ToolParameterInfo, ParameterDict
-from pytower.util import xyz
+from pytower.util import not_none, xyz
 
 TOOL_NAME = 'Center'
 VERSION = '1.0'
@@ -14,7 +14,7 @@ PARAMETERS = {'offset': ToolParameterInfo(dtype=xyz, description='Optional offse
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
     offset = params.offset
-    centroid = sum([obj.position for obj in selection]) / len(selection)
+    centroid = sum([not_none(obj.position) for obj in selection]) / len(selection)
 
     for obj in selection:
         # Move so that the centroid becomes the origin

@@ -1,5 +1,6 @@
 import json
 import sys
+from typing import Any
 import uuid
 
 import open3d as o3d
@@ -11,421 +12,417 @@ from .object import TowerObject
 from .suitebro import Suitebro
 from .util import xyz, XYZ
 
-WEDGE_ITEM_DATA = json.loads('''
-    {
-      "name": "CanvasWedge",
-      "guid": "",
-      "format_version": 1,
-      "unreal_version": 517,
-      "steam_item_id": 0,
-      "properties": {
+WEDGE_ITEM_DATA: dict[str, Any] = {
+    "name": "CanvasWedge",
+    "guid": "",
+    "format_version": 1,
+    "unreal_version": 517,
+    "steam_item_id": 0,
+    "properties": {
         "OwningSteamID": {
-          "Struct": {
-            "value": {
-              "Struct": {}
-            },
-            "struct_type": {
-              "Struct": "SteamID"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+            "Struct": {
+                "value": {
+                    "Struct": {}
+                },
+                "struct_type": {
+                    "Struct": "SteamID"
+                },
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         }
-      },
-      "actors": [],
-      "rotation": {
+    },
+    "actors": [],
+    "rotation": {
         "x": 0.0,
         "y": 0.0,
         "z": 0.0,
         "w": 1.0
-      },
-      "position": {
+    },
+    "position": {
         "x": 0.0,
         "y": 0.0,
         "z": 0.0
-      },
-      "scale": {
+    },
+    "scale": {
         "x": 1.0,
         "y": 1.0,
         "z": 1.0
-      }
     }
-    ''')
+}
 
-WEDGE_PROPERTY_DATA = json.loads('''
-    {
-      "name": "CanvasWedge_C_2",
-      "properties": {
+WEDGE_PROPERTY_DATA: dict[str, Any] = {
+    "name": "CanvasWedge_C_2",
+    "properties": {
         "SlopeOverride": {
-          "Bool": {
-            "value": false
-          }
+            "Bool": {
+                "value": False
+            }
         },
         "URL": {
-          "Str": {
-            "value": ""
-          }
+            "Str": {
+                "value": ""
+            }
         },
         "Scale": {
-          "Float": {
-            "value": 0.0
-          }
+            "Float": {
+                "value": 0.0
+            }
         },
         "Type": {
-          "Byte": {
-            "value": {
-              "Label": "CanvasTypes::NewEnumerator0"
-            },
-            "enum_type": "CanvasTypes"
-          }
+            "Byte": {
+                "value": {
+                    "Label": "CanvasTypes::NewEnumerator0"
+                },
+                "enum_type": "CanvasTypes"
+            }
         },
         "CanvasShape": {
-          "Byte": {
-            "value": {
-              "Label": "CanvasShapes::NewEnumerator0"
-            },
-            "enum_type": "CanvasShapes"
-          }
+            "Byte": {
+                "value": {
+                    "Label": "CanvasShapes::NewEnumerator0"
+                },
+                "enum_type": "CanvasShapes"
+            }
         },
         "Emissive": {
-          "Float": {
-            "value": 0.0
-          }
+            "Float": {
+                "value": 0.0
+            }
         },
         "ScaleX": {
-          "Float": {
-            "value": 1.0
-          }
+            "Float": {
+                "value": 1.0
+            }
         },
         "ScaleY": {
-          "Float": {
-            "value": 1.0
-          }
+            "Float": {
+                "value": 1.0
+            }
         },
         "ScaleZ": {
-          "Float": {
-            "value": 1.0
-          }
+            "Float": {
+                "value": 1.0
+            }
         },
         "WorldScale": {
-          "Struct": {
-            "value": {
-              "Vector": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
-              }
-            },
-            "struct_type": "Vector",
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+            "Struct": {
+                "value": {
+                    "Vector": {
+                        "x": 1.0,
+                        "y": 1.0,
+                        "z": 1.0
+                    }
+                },
+                "struct_type": "Vector",
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         },
         "Tiling": {
-          "Struct": {
-            "value": {
-              "Vector": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 1.0
-              }
-            },
-            "struct_type": "Vector",
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+            "Struct": {
+                "value": {
+                    "Vector": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 1.0
+                    }
+                },
+                "struct_type": "Vector",
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         },
         "CacheToDisk": {
-          "Bool": {
-            "value": true
-          }
+            "Bool": {
+                "value": True
+            }
         },
         "AdditionalURLs": {
-          "Array": {
-            "array_type": "StrProperty",
-            "value": {
-              "Base": {
-                "Str": []
-              }
+            "Array": {
+                "array_type": "StrProperty",
+                "value": {
+                    "Base": {
+                        "Str": []
+                    }
+                }
             }
-          }
         },
         "SurfaceMaterial": {
-          "Object": {
-            "value": "None"
-          }
+            "Object": {
+                "value": "None"
+            }
         },
         "SurfaceColorable": {
-          "Struct": {
-            "value": {
-              "Struct": {
-                "Color": {
-                  "Struct": {
-                    "value": {
-                      "LinearColor": {
-                        "r": 1.0,
-                        "g": 1.0,
-                        "b": 1.0,
-                        "a": 1.0
-                      }
-                    },
-                    "struct_type": "LinearColor",
-                    "struct_id": "00000000-0000-0000-0000-000000000000"
-                  }
+            "Struct": {
+                "value": {
+                    "Struct": {
+                        "Color": {
+                            "Struct": {
+                                "value": {
+                                    "LinearColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    }
+                                },
+                                "struct_type": "LinearColor",
+                                "struct_id": "00000000-0000-0000-0000-000000000000"
+                            }
+                        },
+                        "DynamicMaterialIndex": {
+                            "Int": {
+                                "value": 0
+                            }
+                        }
+                    }
                 },
-                "DynamicMaterialIndex": {
-                  "Int": {
-                    "value": 0
-                  }
-                }
-              }
-            },
-            "struct_type": {
-              "Struct": "Colorable"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+                "struct_type": {
+                    "Struct": "Colorable"
+                },
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         },
         "AnimationMode": {
-          "Bool": {
-            "value": false
-          }
+            "Bool": {
+                "value": False
+            }
         },
         "AnimationColumns": {
-          "Int": {
-            "value": 5
-          }
+            "Int": {
+                "value": 5
+            }
         },
         "AnimationRows": {
-          "Int": {
-            "value": 5
-          }
+            "Int": {
+                "value": 5
+            }
         },
         "AnimationRate": {
-          "Float": {
-            "value": 1.0
-          }
+            "Float": {
+                "value": 1.0
+            }
         },
         "WorldAlignCanvas": {
-          "Bool": {
-            "value": false
-          }
+            "Bool": {
+                "value": False
+            }
         },
         "NSFW": {
-          "Bool": {
-            "value": false
-          }
+            "Bool": {
+                "value": False
+            }
         },
         "Rotation": {
-          "Float": {
-            "value": 0.0
-          }
+            "Float": {
+                "value": 0.0
+            }
         },
         "Activated": {
-          "Bool": {
-            "value": true
-          }
+            "Bool": {
+                "value": True
+            }
         },
         "ItemCustomName": {
-          "Name": {
-            "value": "None"
-          }
+            "Name": {
+                "value": "None"
+            }
         },
         "ItemCustomFolder": {
-          "Name": {
-            "value": "None"
-          }
+            "Name": {
+                "value": "None"
+            }
         },
         "PhysicsSettings": {
-          "Struct": {
-            "value": {
-              "Struct": {
-                "PhysicsEnabled": {
-                  "Bool": {
-                    "value": false
-                  }
-                },
-                "PhysicsCanPickup": {
-                  "Bool": {
-                    "value": true
-                  }
-                },
-                "MassMultiplier": {
-                  "Float": {
-                    "value": 1.0
-                  }
-                },
-                "PhysicsSurfaceType": {
-                  "Enum": {
-                    "value": "EItemSurfaceType::NORMAL",
-                    "enum_type": "EItemSurfaceType"
-                  }
-                },
-                "PhysicsRespawnAfterPickup": {
-                  "Bool": {
-                    "value": false
-                  }
-                },
-                "PhysicsRespawnLocation": {
-                  "Struct": {
-                    "value": {
-                      "Struct": {
-                        "Rotation": {
-                          "Struct": {
-                            "value": {
-                              "Quat": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0,
-                                "w": 1.0
-                              }
-                            },
-                            "struct_type": "Quat",
-                            "struct_id": "00000000-0000-0000-0000-000000000000"
-                          }
+            "Struct": {
+                "value": {
+                    "Struct": {
+                        "PhysicsEnabled": {
+                            "Bool": {
+                                "value": False
+                            }
                         },
-                        "Translation": {
-                          "Struct": {
-                            "value": {
-                              "Vector": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                              }
-                            },
-                            "struct_type": "Vector",
-                            "struct_id": "00000000-0000-0000-0000-000000000000"
-                          }
+                        "PhysicsCanPickup": {
+                            "Bool": {
+                                "value": True
+                            }
                         },
-                        "Scale3D": {
-                          "Struct": {
-                            "value": {
-                              "Vector": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                              }
-                            },
-                            "struct_type": "Vector",
-                            "struct_id": "00000000-0000-0000-0000-000000000000"
-                          }
+                        "MassMultiplier": {
+                            "Float": {
+                                "value": 1.0
+                            }
+                        },
+                        "PhysicsSurfaceType": {
+                            "Enum": {
+                                "value": "EItemSurfaceType::NORMAL",
+                                "enum_type": "EItemSurfaceType"
+                            }
+                        },
+                        "PhysicsRespawnAfterPickup": {
+                            "Bool": {
+                                "value": False
+                            }
+                        },
+                        "PhysicsRespawnLocation": {
+                            "Struct": {
+                                "value": {
+                                    "Struct": {
+                                        "Rotation": {
+                                            "Struct": {
+                                                "value": {
+                                                    "Quat": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0,
+                                                        "w": 1.0
+                                                    }
+                                                },
+                                                "struct_type": "Quat",
+                                                "struct_id": "00000000-0000-0000-0000-000000000000"
+                                            }
+                                        },
+                                        "Translation": {
+                                            "Struct": {
+                                                "value": {
+                                                    "Vector": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    }
+                                                },
+                                                "struct_type": "Vector",
+                                                "struct_id": "00000000-0000-0000-0000-000000000000"
+                                            }
+                                        },
+                                        "Scale3D": {
+                                            "Struct": {
+                                                "value": {
+                                                    "Vector": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                },
+                                                "struct_type": "Vector",
+                                                "struct_id": "00000000-0000-0000-0000-000000000000"
+                                            }
+                                        }
+                                    }
+                                },
+                                "struct_type": {
+                                    "Struct": "Transform"
+                                },
+                                "struct_id": "00000000-0000-0000-0000-000000000000"
+                            }
+                        },
+                        "PhysicsRespawnDelay": {
+                            "Float": {
+                                "value": 5.0
+                            }
                         }
-                      }
-                    },
-                    "struct_type": {
-                      "Struct": "Transform"
-                    },
-                    "struct_id": "00000000-0000-0000-0000-000000000000"
-                  }
+                    }
                 },
-                "PhysicsRespawnDelay": {
-                  "Float": {
-                    "value": 5.0
-                  }
-                }
-              }
-            },
-            "struct_type": {
-              "Struct": "ItemPhysics"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+                "struct_type": {
+                    "Struct": "ItemPhysics"
+                },
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         },
         "ItemGroupID": {
-          "Struct": {
-            "value": {
-              "Guid": "00000000-0000-0000-0000-000000000000"
-            },
-            "struct_type": "Guid",
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+            "Struct": {
+                "value": {
+                    "Guid": "00000000-0000-0000-0000-000000000000"
+                },
+                "struct_type": "Guid",
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         },
         "GroupID": {
-          "Int": {
-            "value": -1
-          }
+            "Int": {
+                "value": -1
+            }
         },
         "ItemLocked": {
-          "Bool": {
-            "value": false
-          }
+            "Bool": {
+                "value": False
+            }
         },
         "ItemNoCollide": {
-          "Bool": {
-            "value": false
-          }
+            "Bool": {
+                "value": False
+            }
         },
         "SpawnDefaults": {
-          "Struct": {
-            "value": {
-              "Struct": {
-                "Hidden": {
-                  "Bool": {
-                    "value": false
-                  }
+            "Struct": {
+                "value": {
+                    "Struct": {
+                        "Hidden": {
+                            "Bool": {
+                                "value": False
+                            }
+                        },
+                        "Active": {
+                            "Bool": {
+                                "value": True
+                            }
+                        }
+                    }
                 },
-                "Active": {
-                  "Bool": {
-                    "value": true
-                  }
-                }
-              }
-            },
-            "struct_type": {
-              "Struct": "ItemSpawnDefaults"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+                "struct_type": {
+                    "Struct": "ItemSpawnDefaults"
+                },
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         },
         "InteractiveState": {
-          "Enum": {
-            "value": "FItemInteractiveState::EVERYONE",
-            "enum_type": "FItemInteractiveState"
-          }
+            "Enum": {
+                "value": "FItemInteractiveState::EVERYONE",
+                "enum_type": "FItemInteractiveState"
+            }
         },
         "ItemConnections": {
-          "Array": {
-            "array_type": "StructProperty",
-            "value": {
-              "Struct": {
-                "_type": "ItemConnections",
-                "name": "StructProperty",
-                "struct_type": {
-                  "Struct": "ItemConnectionData"
-                },
-                "id": "00000000-0000-0000-0000-000000000000",
-                "value": []
-              }
+            "Array": {
+                "array_type": "StructProperty",
+                "value": {
+                    "Struct": {
+                        "_type": "ItemConnections",
+                        "name": "StructProperty",
+                        "struct_type": {
+                            "Struct": "ItemConnectionData"
+                        },
+                        "id": "00000000-0000-0000-0000-000000000000",
+                        "value": []
+                    }
+                }
             }
-          }
         },
         "OwningSteamID": {
-          "Struct": {
-            "value": {
-              "Struct": {}
-            },
-            "struct_type": {
-              "Struct": "SteamID"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
+            "Struct": {
+                "value": {
+                    "Struct": {}
+                },
+                "struct_type": {
+                    "Struct": "SteamID"
+                },
+                "struct_id": "00000000-0000-0000-0000-000000000000"
+            }
         },
         "ActiveDragSlot": {
-          "Byte": {
-            "value": {
-              "Byte": 0
-            },
-            "enum_type": "None"
-          }
+            "Byte": {
+                "value": {
+                    "Byte": 0
+                },
+                "enum_type": "None"
+            }
         },
         "bCanBeDamaged": {
-          "Bool": {
-            "value": true
-          }
+            "Bool": {
+                "value": True
+            }
         }
-      }
     }
-    ''')
+}
 
 
-def load_mesh(path):
+def load_mesh(path: str):
     mesh = o3d.io.read_triangle_mesh(path)
     vertices = np.asarray(mesh.vertices)
     tris = np.asarray(mesh.triangles)
