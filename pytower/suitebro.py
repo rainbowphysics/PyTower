@@ -73,6 +73,12 @@ class Suitebro:
             i = item_section[item_idx] if item_idx < num_items else None
             # print(p['name'] if p is not None else None)
             # print(i['name'] if i is not None else None)
+
+            if i['name'] == 'None':
+                # Skip the "None" object left behind by spline anchor points
+                item_idx += 1
+                continue
+
             if i is not None and i['name'] not in prop_names:
                 self.objects[x] = TowerObject(item=i, properties=None, nocopy=True)
                 item_idx += 1
