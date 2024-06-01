@@ -74,7 +74,7 @@ class Suitebro:
             # print(p['name'] if p is not None else None)
             # print(i['name'] if i is not None else None)
 
-            if i['name'] == 'None':
+            if i is not None and i['name'] == 'None':
                 # Skip the "None" object left behind by spline anchor points
                 item_idx += 1
                 continue
