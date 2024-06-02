@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from types import ModuleType
+from typing import Any, cast
 
 import colorama
 from colorama import Fore, Style
@@ -18,11 +19,11 @@ from .selection import *
 from .suitebro import load_suitebro, save_suitebro, run_suitebro_parser
 from .tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
     make_tools_index
-from .util import xyz
+from .util import not_none, xyz
 
 
 class PyTowerParser(argparse.ArgumentParser):
-    def error(self, message):
+    def error(self, message: str):
         if 'the following arguments are required' in message:
             self.print_help(sys.stderr)
             self.exit(2, f'\n{message.capitalize()}\n')
@@ -120,14 +121,14 @@ def get_parser(tool_names: str):
     return parser
 
 
-def parse_args(parser=None):
+def parse_args(parser: PyTowerParser | None = None):
     if parser is None:
         parser = get_parser('')
 
     return vars(parser.parse_args())
 
 
-def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDict:
+def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDict:
     # Ensure that all inputs were parsed correctly as strings
     params = {}
     for param in param_input:
@@ -174,9 +175,9 @@ def parse_parameters(param_input: list[str], meta: ToolMetadata) -> ParameterDic
     return params
 
 
-def run(input_filename: str, tool: ToolMainType, selector: Selector = None, params: list = []):
-    tool_path = tool.__globals__['__file__']
-    mock_tool, mock_metadata = load_tool(tool_path)
+def run(input_filename: str, tool: ToolMainType, selector: Selector | None = None, params: list[str] = []):
+    tool_path: str = tool.__globals__['__file__']
+    mock_tool, mock_metadata = not_none(load_tool(tool_path))
     mock_params = parse_parameters(params, mock_metadata)
 
     save = load_suitebro(input_filename)
@@ -303,7 +304,7 @@ def parse_selectors(selection_input: str) -> list[Selector]:
             print('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
             sys.exit(1)
 
-    return selectors
+    return cast(list[Selector], selectors)  # We know it's not None!
 
 
 def get_resource_backends() -> list[ResourceBackend]:
@@ -347,7 +348,7 @@ def main():
         case 'version':
             print(f'PyTower {__version__}')
         case 'convert':
-            filename = args['filename'].strip()
+            filename: str = args['filename'].strip()
             abs_filepath = os.path.realpath(filename)
             in_dir = os.path.dirname(abs_filepath)
 
@@ -379,6 +380,8 @@ def main():
                     backend = parse_resource_backend(backends, args['backend'])
 
                     restore_backup(path, force_reupload=args['force'], backend=backend)
+                case _:
+                    pass
         case 'list':
             print('Available tools:')
             for _, meta in tools:
@@ -539,6 +542,10 @@ def main():
                     if config_confirm_show():
                         for k, v in dict(config).items():
                             print(f'{k}: {v}')
+                case _:
+                    pass
+        case _:
+            pass
 
 
 if __name__ == '__main__':

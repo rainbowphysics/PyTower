@@ -3,25 +3,26 @@ import json
 import logging
 import os
 import pkgutil
+import importlib.util
 import importlib
 import sys
 from types import ModuleType
-from typing import Callable
+from typing import Any, Callable, TypeVar, overload
 
 from .__config__ import root_directory
 from .selection import Selection
 from .suitebro import Suitebro
-from .util import xyz, xyz_to_string, xyzint
+from .util import not_none, xyz, xyz_to_string, xyzint
 
 
 class ToolParameterInfo:
-    def __init__(self, dtype: Callable = str, description='', default=None):
+    def __init__(self, dtype: Callable[[Any], Any] = str, description: str='', default: Any=None):
         self.dtype = dtype
         self.description = description
         self.default = default
 
-    def to_dict(self) -> dict:
-        data = {}
+    def to_dict(self) -> dict[str, Any]:
+        data: dict[str, Any] = {}
         data['dtype'] = self.dtype.__name__
         data['description'] = self.description
 
@@ -32,7 +33,7 @@ class ToolParameterInfo:
         return data
 
     @staticmethod
-    def from_dict(data: dict) -> 'ToolParameterInfo':
+    def from_dict(data: dict[str, Any]) -> 'ToolParameterInfo':
         # Define conversion to/from registered parameter types
         type_table = {'str': str, 'bool': bool, 'int': int, 'float': float, 'xyz': xyz, 'xyzint': xyzint}
 
@@ -45,8 +46,8 @@ class ToolParameterInfo:
 
 
 class ToolMetadata:
-    def __init__(self, tool_name: str, params: dict[str, ToolParameterInfo], version: str, author: str, url: str,
-                 info: str, hidden: bool):
+    def __init__(self, tool_name: str, params: dict[str, ToolParameterInfo], version: str | None, author: str | None, url: str | None,
+                 info: str | None, hidden: bool = False):
         self.tool_name = tool_name
         self.params = params
         self.version = version
@@ -79,21 +80,30 @@ class ToolMetadata:
 
         return info_str
 
+    T = TypeVar('T')
     @staticmethod
-    def attr_or_default(module, attr, default):
+    def attr_or_default(module: object, attr: str, default: T) -> T:
         if hasattr(module, attr):
             return getattr(module, attr)
 
         return default
 
+    @overload
     @staticmethod
-    def strattr_or_default(module, attr, default):
+    def strattr_or_default(module: object, attr: str, default: str) -> str: ...
+
+    @overload
+    @staticmethod
+    def strattr_or_default(module: object, attr: str, default: str | None) -> str | None: ...
+
+    @staticmethod
+    def strattr_or_default(module: object, attr: str, default: str | None) -> str | None:
         if hasattr(module, attr):
             return str(getattr(module, attr)).strip()
 
         return default
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         data = {varname: value for (varname, value) in vars(self).items() if varname != 'params' and value is not None}
 
         # Special handling for parameters
@@ -104,7 +114,7 @@ class ToolMetadata:
         return data
 
     @staticmethod
-    def from_dict(data: dict) -> 'ToolMetadata':
+    def from_dict(data: dict[str, Any]) -> 'ToolMetadata':
         # Convert the input dict into a defaultdict so that missing entries become None
         data_or_none = collections.defaultdict(lambda: None, data)
         tool_name = data_or_none['tool_name']
@@ -115,15 +125,15 @@ class ToolMetadata:
         hidden = data_or_none['hidden']
 
         # Handle parameter list
-        params = data_or_none['params']
+        params: dict[str, Any] = data_or_none['params'] or {}
         for p_name, p_info_dict in params.items():
             params[p_name] = ToolParameterInfo.from_dict(p_info_dict)
 
-        return ToolMetadata(tool_name, params, version, author, url, info, hidden)
+        return ToolMetadata(not_none(tool_name), params, version, author, url, info, hidden if hidden is not None else False)
 
 
-class ParameterDict(dict):
-    def __getattr__(self, key):
+class ParameterDict(dict[str, Any]):
+    def __getattr__(self, key: str):
         if key in self:
             return self[key]
         else:
@@ -135,25 +145,25 @@ ToolListType = list[tuple[ModuleType, ToolMetadata]]
 PartialToolListType = list[tuple[ModuleType | str, ToolMetadata]]
 
 
-def load_tool(script_path, verbose=True) -> tuple[ModuleType, ToolMetadata] | None:
+def load_tool(script_path: str, verbose: bool=True) -> tuple[ModuleType, ToolMetadata] | None:
     script = os.path.basename(script_path)
     module_name = os.path.splitext(script)[0]
     if verbose:
         print(f"Loading tool script: {module_name}")
     try:
         # TODO convert from importlib.util to pkgutil
-        spec = importlib.util.spec_from_file_location(module_name, script_path)
+        spec = not_none(importlib.util.spec_from_file_location(module_name, script_path))
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        not_none(spec.loader).exec_module(module)
 
         # Get script directives/metadata variables
         tool_name = ToolMetadata.strattr_or_default(module, 'TOOL_NAME', module_name)
-        params = ToolMetadata.attr_or_default(module, 'PARAMETERS', {})
+        params = ToolMetadata.attr_or_default(module, 'PARAMETERS', dict[str, ToolParameterInfo]())
         version = ToolMetadata.strattr_or_default(module, 'VERSION', None)
         author = ToolMetadata.strattr_or_default(module, 'AUTHOR', None)
         url = ToolMetadata.strattr_or_default(module, 'URL', None)
         info = ToolMetadata.strattr_or_default(module, 'INFO', None)
-        hidden = ToolMetadata.strattr_or_default(module, 'HIDDEN', False)
+        hidden = ToolMetadata.attr_or_default(module, 'HIDDEN', False)
 
         # Check if the module has a main function before registering it
         if not hasattr(module, 'main') and not hidden:
@@ -183,14 +193,14 @@ TOOLS_INDEX_PATH = os.path.join(root_directory, TOOLS_INDEX_NAME)
 
 
 def make_tools_index(tools: PartialToolListType):
-    tools_dict = {}
+    tools_dict: dict[str, Any] = {}
     for module_or_path, meta in tools:
         # Convert tool metadata to dictionary
         tool_data = meta.to_dict()
 
         # Get path name
         if isinstance(module_or_path, ModuleType):
-            tool_path = module_or_path.__file__
+            tool_path = not_none(module_or_path.__file__)
         else:
             tool_path = module_or_path
 
@@ -228,7 +238,7 @@ def get_indexed_tools() -> PartialToolListType | None:
         logging.debug('Failed to load tools index... Will regenerate')
         return None
 
-    output_tools = []
+    output_tools = PartialToolListType()
     for tool_path, meta_dict in tools_index.items():
         # Normalize tool_path for Windows
         tool_path = os.path.normcase(tool_path)
@@ -275,7 +285,7 @@ def get_indexed_tools() -> PartialToolListType | None:
     return output_tools
 
 
-def load_tools(verbose=True) -> PartialToolListType:
+def load_tools(verbose: bool=True) -> PartialToolListType:
     # First load the index
     logging.debug('Loading index file...')
     tools_index = get_indexed_tools()
@@ -293,7 +303,7 @@ def load_tools(verbose=True) -> PartialToolListType:
     tool_paths = get_tool_scripts()
 
     # Append each successfully loaded tool to the output
-    tools = []
+    tools: PartialToolListType = []
     for path in tool_paths:
         load_result = load_tool(path, verbose=verbose)
         if load_result is None:

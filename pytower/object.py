@@ -1,30 +1,31 @@
+from __future__ import annotations
 import copy
-import json
 import logging
-import typing
 import uuid
+from typing import Any, Iterator, Mapping, MutableMapping, TypeVar, cast
 
+from deprecated import deprecated
 import numpy as np
 
 from .connections import ItemConnectionObject
-from .util import XYZ, XYZW
+from .util import XYZ, XYZW, not_none
 
-ITEMCONNECTIONS_DEFAULT = json.loads('''{
-              "Array": {
-                "array_type": "StructProperty",
-                "value": {
-                  "Struct": {
-                    "_type": "ItemConnections",
-                    "name": "StructProperty",
-                    "struct_type": {
-                      "Struct": "ItemConnectionData"
-                    },
-                    "id": "00000000-0000-0000-0000-000000000000",
-                    "value": []
-                  }
-                } 
-              }
-            }''')
+ITEMCONNECTIONS_DEFAULT: dict[str, Any] = {
+    "Array": {
+        "array_type": "StructProperty",
+        "value": {
+            "Struct": {
+                "_type": "ItemConnections",
+                "name": "StructProperty",
+                "struct_type": {
+                    "Struct": "ItemConnectionData"
+                },
+                "id": "00000000-0000-0000-0000-000000000000",
+                "value": []
+            }
+        }
+    }
+}
 
 
 class TowerObject:
@@ -33,7 +34,8 @@ class TowerObject:
     Represents an object appearing in the Suitebro file. This includes all the sections of the object.
     """
 
-    def __init__(self, item: dict | None = None, properties: dict | None = None, nocopy: bool = False):
+    def __init__(self, item: dict[str, Any] | None = None, properties: dict[str, Any] | None = None,
+                 nocopy: bool = False):
         """Initializes TowerObject instance taking in uesave json data
 
         Args:
@@ -53,21 +55,29 @@ class TowerObject:
             return False
 
         item_props = self.item['properties']
-        return self.get_name().startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props
+        return self.name.startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props
 
+    @deprecated(reason=f'Use object.name instead')
     def get_name(self) -> str:
-        if self.item is None:
-            return self.properties['name']
-        return self.item['name']
+        return self.name
 
+    @property
+    def name(self) -> str:
+        return self.item['name'] if self.item is not None else not_none(self.properties)['name']
+
+    @deprecated(reason=f'Use object.custom_name instead')
     def get_custom_name(self) -> str:
+        return self.custom_name
+
+    @property
+    def custom_name(self) -> str:
         if self.item is None or 'ItemCustomName' not in self.item['properties']:
             return ''
         return self.item['properties']['ItemCustomName']['Name']['value']
 
-    def matches_name(self, name) -> bool:
+    def matches_name(self, name: str) -> bool:
         name = name.casefold()
-        return self.get_name().casefold() == name or self.get_custom_name().casefold() == name
+        return self.name.casefold() == name or self.custom_name.casefold() == name
 
     def group_id(self) -> int:
         if self.item is None or 'GroupID' not in self.item['properties']:
@@ -75,6 +85,7 @@ class TowerObject:
         return self.item['properties']['GroupID']['Int']['value']
 
     def set_group_id(self, group_id: int):
+        assert self.item is not None
         self.item['properties']['GroupID'] = {'Int': {'value': group_id}}
         if self.properties is not None:
             self.properties['properties']['GroupID'] = {'Int': {'value': group_id}}
@@ -87,13 +98,14 @@ class TowerObject:
             if self.properties is not None:
                 del self.properties['properties']['GroupID']
 
-    def copy(self) -> 'TowerObject':
+    def copy(self) -> TowerObject:
         copied = TowerObject(item=self.item, properties=self.properties)
         if copied.item is not None:
             copied.item['guid'] = str(uuid.uuid4()).lower()
         return copied
 
     def guid(self) -> str:
+        assert self.item is not None
         return self.item['guid']
 
     def _get_xyz_attr(self, name: str) -> XYZ | None:
@@ -129,6 +141,7 @@ class TowerObject:
         pos['z'] = value[2]
         pos['w'] = value[3]
 
+    # region position
     @property
     def position(self) -> XYZ | None:
         """World position"""
@@ -150,7 +163,9 @@ class TowerObject:
 
                 item_props['RespawnLocation'] = prop_props['RespawnLocation']
 
+    # endregion position
 
+    # region rotation
     @property
     def rotation(self) -> XYZW | None:
         """Rotation quaternion"""
@@ -173,6 +188,9 @@ class TowerObject:
 
                 item_props['RespawnLocation'] = prop_props['RespawnLocation']
 
+    # endregion rotation
+
+    # region scale
     @property
     def scale(self) -> XYZ | None:
         """Local scale"""
@@ -190,17 +208,20 @@ class TowerObject:
                 props['WorldScale']['Struct']['value']['Vector']['y'] = value[1]
                 props['WorldScale']['Struct']['value']['Vector']['z'] = value[2]
 
-                self.item['properties']['WorldScale'] = props['WorldScale']
+                if self.item and 'properties' in self.item and 'WorldScale' in self.item['properties']:
+                    self.item['properties']['WorldScale'] = props['WorldScale']
 
-            if ('RespawnLocation' in props and 'properties' in self.item
-                    and 'RespawnLocation' in self.item['properties']):
+            if 'RespawnLocation' in props:
                 scale3d_data = props['RespawnLocation']['Struct']['value']['Struct']['Scale3D']
                 scale3d = scale3d_data['Struct']['value']['Vector']
                 scale3d['x'] = value[0]
                 scale3d['y'] = value[1]
                 scale3d['z'] = value[2]
 
-                self.item['properties']['RespawnLocation'] = props['RespawnLocation']
+                if self.item and 'properties' in self.item and 'RespawnLocation' in self.item['properties']:
+                    self.item['properties']['RespawnLocation'] = props['RespawnLocation']
+
+    # endregion scale
 
     def _check_connetions(self):
         if self.item is not None and 'ItemConnections' not in self.item.keys():
@@ -220,7 +241,7 @@ class TowerObject:
         assert self.item is not None
         self._check_connetions()
 
-        cons = []
+        cons = list[ItemConnectionObject]()
         for data in self.item['properties']['ItemConnections']['Array']['value']['Struct']['value']:
             cons.append(ItemConnectionObject(data))
 
@@ -236,21 +257,26 @@ class TowerObject:
         if self.properties is not None:
             self.properties['properties']['ItemConnections'] = self.item['properties']['ItemConnections']
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any):
         if not isinstance(other, TowerObject):
             return False
 
         if self.item is None and other.item is None:
-            # CondoWeather needs to always be first, followed by CondoSettingsManager, then Ultra_Dynamic_Sky?
-            if self.properties['name'].startswith('CondoWeather'):
-                return True
-            elif self.properties['name'].startswith('CondoSettingsManager'):
-                return not other.properties['name'].startswith('CondoWeather')
-            elif self.properties['name'].startswith('Ultra_Dynamic_Sky'):
-                return (not other.properties['name'].startswith('CondoWeather')) and \
-                    (not other.properties['name'].startswith('CondoSettingsManager'))
+            assert self.properties is not None
+            assert other.properties is not None
 
-            return self.properties['name'] < other.properties['name']
+            self_name = cast(str, self.properties['name'])
+            other_name = cast(str, other.properties['name'])
+
+            # CondoWeather needs to always be first, followed by CondoSettingsManager, then Ultra_Dynamic_Sky?
+            if self_name.startswith('CondoWeather'):
+                return True
+            elif self_name.startswith('CondoSettingsManager'):
+                return not other_name.startswith('CondoWeather')
+            elif self_name.startswith('Ultra_Dynamic_Sky'):
+                return not other_name.startswith('CondoWeather') and not other_name.startswith('CondoSettingsManager')
+
+            return self_name < other_name
 
         if self.item is None:
             return True
@@ -261,7 +287,7 @@ class TowerObject:
         return self.item['name'] < other.item['name']
 
     def __repl__(self):
-        return f'TowerObject({self.item}, {self.properties})'
+        return f'{__class__.__name__}({self.item}, {self.properties})'
 
     def __str__(self):
         return self.__repl__()

@@ -2,17 +2,30 @@ import asyncio
 import sys
 import threading
 from abc import ABC, abstractmethod
-from typing import Iterable, IO
+from typing import TYPE_CHECKING, Any, Iterable, IO, Literal, ParamSpec, Protocol, TypeVar, cast
+
+_T_contra = TypeVar("_T_contra", contravariant=True)
+
+
+class SupportsWrite(Protocol[_T_contra]):
+    def write(self, s: _T_contra, /) -> object: ...
 
 
 class ResourceBackend(ABC):
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self.print_lock = threading.Lock()
 
-    def safe_print(self, *args, **kwargs):
+    def safe_print(
+            self,
+            *values: object,
+            sep: str | None = " ",
+            end: str | None = "\n",
+            file: SupportsWrite[str] | None = None,
+            flush: Literal[False] = False
+    ):
         with self.print_lock:
-            print(*args, **kwargs)
+            print(values, sep=sep, end=end, file=file, flush=flush)
 
     # Upload image takes as input a path and returns the uploaded url
     @abstractmethod
@@ -30,16 +43,16 @@ class ResourceBackend(ABC):
             self.safe_print(f'Error while uploading file: {e}', file=sys.stderr)
             return None
 
-    async def _upload_async(self, files: Iterable[str]) -> dict:
+    async def _upload_async(self, files: Iterable[str]) -> dict[str, str]:
         results = await asyncio.gather(*[asyncio.to_thread(self._upload_thread, path) for path in files])
         # Zip each file with its result
         zipped = zip(files, results)
         # Filter out Nones
-        zipped = [zresult for zresult in zipped if zresult[1]]
+        zipped = cast(list[tuple[str, str]], [zresult for zresult in zipped if zresult[1]])
         # Convert to dict with dict comprehension
         return {k: v for k, v in zipped}
 
     # Default implementation that can be overridden for performance and to avoid rate limiting
     # Return value is dict where paths are keys and urls are values
-    def upload_files(self, files: Iterable[str]) -> dict:
+    def upload_files(self, files: Iterable[str]) -> dict[str, str]:
         return asyncio.run(self._upload_async(files))

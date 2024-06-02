@@ -2,9 +2,11 @@ import io
 import os
 from collections import deque
 from functools import reduce
-from typing import Any, Callable
+from typing import Any, Callable, Optional, TypeVar
 
 import numpy as np
+
+T = TypeVar('T')
 
 
 # Iteratively walks through dictionary using breadth-first search
@@ -164,6 +166,12 @@ def xyz_to_string(data: np.ndarray):
     return f'{data[0]},{data[1]},{data[2]}'
 
 
+# https://stackoverflow.com/a/71260806
+def not_none(obj: Optional[T]) -> T:
+    assert obj is not None
+    return obj
+
+
 if __name__ == '__main__':
     foo = XYZW(1.0, 2, 3, 4)
     foo.w = 10
@@ -171,4 +179,4 @@ if __name__ == '__main__':
     bar = XYZInt(1, 2, 3)
     print(repr(bar))
 
-    print(repr(XYZ(np.array([1,2,3.0]))))
+    print(repr(XYZ(np.array([1, 2, 3.0]))))
