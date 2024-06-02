@@ -1,6 +1,7 @@
 from __future__ import annotations
 import copy
 import logging
+import re
 import uuid
 from typing import Any, Iterator, Mapping, MutableMapping, TypeVar, cast
 
@@ -9,6 +10,9 @@ import numpy as np
 
 from .connections import ItemConnectionObject
 from .util import XYZ, XYZW, not_none
+
+from glom import glom, Assign, Delete
+import glom as glompkg
 
 ITEMCONNECTIONS_DEFAULT: dict[str, Any] = {
     "Array": {
@@ -28,15 +32,51 @@ ITEMCONNECTIONS_DEFAULT: dict[str, Any] = {
 }
 
 
-class TowerObject:
-    """Tower object
+def _v(name: str):
+    return f'{name}.value'
 
+
+def _s(name: str):
+    return f'Struct.{name}'
+
+
+_sv = _v('Struct')
+_iv = _v('Int')
+_nv = _v('Name')
+_av = _v('Array')
+
+
+def _exists(data, spec):
+    try:
+        # Attempt to access the path
+        glom(data, spec)
+        return True
+    except glompkg.PathAccessError:
+        # Path does not exist
+        return False
+
+
+_GROUP_ID_SPEC = f'properties.GroupID.{_iv}'
+_CUSTOM_NAME_SPEC = f'properties.ItemCustomName.{_nv}'
+_RESPAWN_TRANSLATION_SPEC = f'properties.RespawnLocation.{_sv}.{_s("Translation")}.{_sv}.Vector'
+_RESPAWN_ROTATION_SPEC = f'properties.RespawnLocation.{_sv}.{_s("Rotation")}.{_sv}.Quat'
+_RESPAWN_SCALE3D_SPEC = f'properties.RespawnLocation.{_sv}.{_s("Scale3D")}.{_sv}.Vector'
+_WORLD_SCALE_SPEC = f'properties.WorldScale.{_sv}.Vector'
+_ITEM_CONNECTIONS_SPEC = f'properties.ItemConnections.{_av}.{_sv}'
+
+# UUID4 regex pattern
+_UUID_PATTERN = re.compile('^' + '-'.join([fr'[\da-f]{{{d}}}' for d in [8, 4, 4, 4, 12]]) + '$')
+
+
+class TowerObject:
+    """
     Represents an object appearing in the Suitebro file. This includes all the sections of the object.
     """
 
     def __init__(self, item: dict[str, Any] | None = None, properties: dict[str, Any] | None = None,
                  nocopy: bool = False):
-        """Initializes TowerObject instance taking in uesave json data
+        """
+        Initializes TowerObject instance taking in uesave json data
 
         Args:
             item: The item section parsed, as parsed from tower-unite-suitebro
@@ -50,118 +90,141 @@ class TowerObject:
             self.item = copy.deepcopy(item)
             self.properties = copy.deepcopy(properties)
 
+    def _set_property(self, path: str | glompkg.Spec, value: Any):
+        assert self.item is not None
+        glom(self.item, Assign(path, value, missing=dict))
+        if self.properties is not None:
+            self._set_meta_property(path, value)
+
+    def _set_meta_property(self, path: str | glompkg.Spec, value: Any):
+        assert self.properties is not None
+        glom(self.properties, Assign(path, value, missing=dict))
+
     def is_canvas(self) -> bool:
+        """
+        Returns:
+            Whether or not object is a canvas object
+        """
         if self.item is None:
             return False
 
         item_props = self.item['properties']
         return self.name.startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props
 
-    @deprecated(reason=f'Use object.name instead')
+    @deprecated(reason='Use TowerObject.name instead')
     def get_name(self) -> str:
         return self.name
 
     @property
     def name(self) -> str:
+        """
+        Name used by Tower Unite internally
+        """
         return self.item['name'] if self.item is not None else not_none(self.properties)['name']
 
-    @deprecated(reason=f'Use object.custom_name instead')
+    @deprecated(reason='Use TowerObject.custom_name instead')
     def get_custom_name(self) -> str:
         return self.custom_name
 
     @property
     def custom_name(self) -> str:
-        if self.item is None or 'ItemCustomName' not in self.item['properties']:
-            return ''
-        return self.item['properties']['ItemCustomName']['Name']['value']
+        """
+        Custom name set by Tower Unite player
+        """
+        return glom(self.item, _CUSTOM_NAME_SPEC, default='')
+
+    @custom_name.setter
+    def custom_name(self, value: str):
+        self._set_property(_CUSTOM_NAME_SPEC, value)
 
     def matches_name(self, name: str) -> bool:
-        name = name.casefold()
-        return self.name.casefold() == name or self.custom_name.casefold() == name
+        """
+        Determines if instance matches input name
 
-    def group_id(self) -> int:
-        if self.item is None or 'GroupID' not in self.item['properties']:
-            return -1
-        return self.item['properties']['GroupID']['Int']['value']
+        Args:
+            name: Name to match against
 
+        Returns:
+            True if the input name matches name or custom_name, case-insensitive
+        """
+        name = name.casefold().strip()
+        return self.name.strip().casefold() == name or self.custom_name.strip().casefold() == name
+
+    @deprecated(reason='Assign to TowerObject.group_id instead')
     def set_group_id(self, group_id: int):
-        assert self.item is not None
-        self.item['properties']['GroupID'] = {'Int': {'value': group_id}}
-        if self.properties is not None:
-            self.properties['properties']['GroupID'] = {'Int': {'value': group_id}}
+        self.group_id = group_id
 
-    # Removes group info from self
+    @property
+    def group_id(self) -> int:
+        """TowerObject's Group ID"""
+        return glom(self.item, _GROUP_ID_SPEC, default=-1)
+
+    @group_id.setter
+    def group_id(self, value: int):
+        self._set_property(_GROUP_ID_SPEC, value)
+
     def ungroup(self):
-        if self.item is not None and 'GroupID' in self.item['properties']:
-            del self.item['properties']['GroupID']
-
-            if self.properties is not None:
-                del self.properties['properties']['GroupID']
+        """
+        Clears the group info attached to this object, effectively un-grouping it
+        """
+        spec = 'properties.GroupID'
+        glom(self.item, Delete(spec, ignore_missing=True))
+        self._set_meta_property(spec, -1)
 
     def copy(self) -> TowerObject:
+        """
+        Creates a new TowerObject with the same item and properties as this one.
+
+        To ensure uniqueness, this method assigns a new GUID to the object
+
+        Returns:
+            Copy of this TowerObject instance
+        """
         copied = TowerObject(item=self.item, properties=self.properties)
         if copied.item is not None:
-            copied.item['guid'] = str(uuid.uuid4()).lower()
+            copied.guid = str(uuid.uuid4()).lower()
         return copied
 
+    @property
     def guid(self) -> str:
+        """TowerObject's GUID"""
         assert self.item is not None
         return self.item['guid']
 
-    def _get_xyz_attr(self, name: str) -> XYZ | None:
-        if self.item is None:
-            return None
-        xyz = self.item[name]
-        return np.array([xyz['x'], xyz['y'], xyz['z']]).view(XYZ)
+    @guid.setter
+    def guid(self, value: str):
+        assert self.item is not None
+        value = value.lower().strip()
+        assert _UUID_PATTERN.match(value)
+        self.item['guid'] = value
 
-    def _set_xyz_attr(self, name: str, value: XYZ):
-        if self.item is None:
-            logging.warning(f'Attempted to xyz set {name} on a property-only object!')
-            return
+    def _get_xyz(self, spec: str | glompkg.Spec, meta: bool = False):
+        vec_data = glom(self.item if not meta else self.properties, spec)
+        vector = [vec_data['x'], vec_data['y'], vec_data['z']]
+        if 'w' in vec_data:
+            vector.append(vec_data['w'])
+            return np.array(vector).view(XYZW)
 
-        pos = self.item[name]
-        pos['x'] = value[0]
-        pos['y'] = value[1]
-        pos['z'] = value[2]
+        return np.array(vector).view(XYZ)
 
-    def _get_xyzw_attr(self, name: str) -> XYZW | None:
-        if self.item is None:
-            return None
-        xyzw = self.item[name]
-        return np.array([xyzw['x'], xyzw['y'], xyzw['z'], xyzw['w']]).view(XYZW)
-
-    def _set_xyzw_attr(self, name: str, value: XYZW):
-        if self.item is None:
-            logging.warning(f'Attempted to xyzw set {name} on a property-only object!')
-            return
-
-        pos = self.item[name]
-        pos['x'] = value[0]
-        pos['y'] = value[1]
-        pos['z'] = value[2]
-        pos['w'] = value[3]
+    def _set_xyz(self, spec: str | glompkg.Spec, value: XYZ, meta: bool = False):
+        vector_dict = value.to_dict()
+        glom(self.item, Assign(spec, vector_dict, missing=dict))
+        if meta:
+            glom(self.properties, Assign(spec, vector_dict, missing=dict))
 
     # region position
     @property
     def position(self) -> XYZ | None:
         """World position"""
-        return self._get_xyz_attr('position')
+        return self._get_xyz('position')
 
     @position.setter
     def position(self, value: XYZ):
-        self._set_xyz_attr('position', value)
+        self._set_xyz('position', value)
 
-        if self.item and self.properties:
-            item_props = self.item['properties']
-            prop_props = self.properties['properties']
-
-            if 'RespawnLocation' in prop_props:
-                translation = prop_props['RespawnLocation']['Struct']['value']['Struct']['Translation']['Struct']
-                translation['value']['Vector']['x'] = value[0]
-                translation['value']['Vector']['y'] = value[1]
-                translation['value']['Vector']['z'] = value[2]
-
-                item_props['RespawnLocation'] = prop_props['RespawnLocation']
+        if _exists(self.item, 'properties.RespawnLocation'):
+            self._set_xyz(_RESPAWN_TRANSLATION_SPEC, value, meta=True)
 
     # endregion position
 
@@ -169,24 +232,14 @@ class TowerObject:
     @property
     def rotation(self) -> XYZW | None:
         """Rotation quaternion"""
-        return self._get_xyzw_attr('rotation')
+        return self._get_xyz('rotation')
 
     @rotation.setter
     def rotation(self, value: XYZW):
-        self._set_xyzw_attr('rotation', value)
+        self._set_xyz('rotation', value)
 
-        if self.item and self.properties:
-            item_props = self.item['properties']
-            prop_props = self.properties['properties']
-
-            if 'RespawnLocation' in prop_props:
-                rot = prop_props['RespawnLocation']['Struct']['value']['Struct']['Rotation']['Struct']['value']
-                rot['Quat']['x'] = value[0]
-                rot['Quat']['y'] = value[1]
-                rot['Quat']['z'] = value[2]
-                rot['Quat']['w'] = value[3]
-
-                item_props['RespawnLocation'] = prop_props['RespawnLocation']
+        if _exists(self.item, 'properties.RespawnLocation'):
+            self._set_xyz(_RESPAWN_ROTATION_SPEC, value, meta=True)
 
     # endregion rotation
 
@@ -194,32 +247,17 @@ class TowerObject:
     @property
     def scale(self) -> XYZ | None:
         """Local scale"""
-        return self._get_xyz_attr('scale')
+        return self._get_xyz('scale')
 
     @scale.setter
     def scale(self, value: XYZ):
-        self._set_xyz_attr('scale', value)
+        self._set_xyz('scale', value)
 
-        if self.properties:
-            props = self.properties['properties']
+        if _exists(self.item, 'properties.WorldScale'):
+            self._set_xyz(_WORLD_SCALE_SPEC, value, meta=True)
 
-            if 'WorldScale' in props:
-                props['WorldScale']['Struct']['value']['Vector']['x'] = value[0]
-                props['WorldScale']['Struct']['value']['Vector']['y'] = value[1]
-                props['WorldScale']['Struct']['value']['Vector']['z'] = value[2]
-
-                if self.item and 'properties' in self.item and 'WorldScale' in self.item['properties']:
-                    self.item['properties']['WorldScale'] = props['WorldScale']
-
-            if 'RespawnLocation' in props:
-                scale3d_data = props['RespawnLocation']['Struct']['value']['Struct']['Scale3D']
-                scale3d = scale3d_data['Struct']['value']['Vector']
-                scale3d['x'] = value[0]
-                scale3d['y'] = value[1]
-                scale3d['z'] = value[2]
-
-                if self.item and 'properties' in self.item and 'RespawnLocation' in self.item['properties']:
-                    self.item['properties']['RespawnLocation'] = props['RespawnLocation']
+        if _exists(self.item, 'properties.RespawnLocation'):
+            self._set_xyz(_RESPAWN_SCALE3D_SPEC, value, meta=True)
 
     # endregion scale
 
@@ -228,34 +266,45 @@ class TowerObject:
             self.item['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
 
     def add_connection(self, con: ItemConnectionObject):
+        """
+        Adds a connection to this object
+
+        Args:
+            con: The connection to add to this object
+        """
         assert self.item is not None
         self._check_connetions()
 
-        connections = self.item['properties']['ItemConnections']['Array']['value']['Struct']['value']
+        connections = glom(self.item, _ITEM_CONNECTIONS_SPEC)
         connections.append(con.to_dict())
-
-        if self.properties is not None:
-            self.properties['properties']['ItemConnections'] = self.item['properties']['ItemConnections']
+        self._set_property(_ITEM_CONNECTIONS_SPEC, connections)
 
     def get_connections(self) -> list[ItemConnectionObject]:
+        """
+        Returns:
+            List of connections attached to this object
+        """
         assert self.item is not None
         self._check_connetions()
 
-        cons = list[ItemConnectionObject]()
-        for data in self.item['properties']['ItemConnections']['Array']['value']['Struct']['value']:
-            cons.append(ItemConnectionObject(data))
+        cons_list = list[ItemConnectionObject]()
+        connections_data = glom(self.item, _ITEM_CONNECTIONS_SPEC)
+        for con_data in connections_data:
+            cons_list.append(ItemConnectionObject(con_data))
 
-        return cons
+        return cons_list
 
     def set_connections(self, cons: list[ItemConnectionObject]):
+        """
+        Set all of the connections attached to this object. Useful when resetting/overriding connections
+
+        Args:
+            cons: List of connections to attach onto this object
+        """
         assert self.item is not None
         self._check_connetions()
-
-        self.item['properties']['ItemConnections']['Array']['value']['Struct']['value'] \
-            = list(map(lambda con: con.to_dict(), cons))
-
-        if self.properties is not None:
-            self.properties['properties']['ItemConnections'] = self.item['properties']['ItemConnections']
+        cons_list = [con.to_dict() for con in cons]
+        self._set_property(_ITEM_CONNECTIONS_SPEC, cons_list)
 
     def __lt__(self, other: Any):
         if not isinstance(other, TowerObject):

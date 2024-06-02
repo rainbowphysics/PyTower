@@ -12,14 +12,14 @@ from .util import XYZ
 class Selection(set[TowerObject]):
     @staticmethod
     def _group_key(obj: TowerObject):
-        return obj.group_id()
+        return obj.group_id
 
     def groups(self) -> set[tuple[int, 'Selection']]:
-        data = sorted(filter(lambda obj: obj.group_id() >= 0, self), key=Selection._group_key)
+        data = sorted(filter(lambda obj: obj.group_id >= 0, self), key=Selection._group_key)
         return {(group_id, Selection(group)) for group_id, group in itertools.groupby(data, Selection._group_key)}
 
     def ungrouped(self) -> 'Selection':
-        return Selection({obj for obj in self if obj.group_id() < 0})
+        return Selection({obj for obj in self if obj.group_id < 0})
 
     def destroy_groups(self):
         for obj in self:
@@ -112,7 +112,7 @@ class GroupSelector(Selector):
         self.group_id = group_id
 
     def select(self, everything: Selection) -> Selection:
-        return Selection({obj for obj in everything if obj.group_id() == self.group_id})
+        return Selection({obj for obj in everything if obj.group_id == self.group_id})
 
 
 class ItemSelector(Selector):

@@ -27,11 +27,10 @@ def copy_selection(selection: Selection) -> Selection:
 
         copied = obj.copy()
 
-        old_group_id = obj.group_id()
+        old_group_id = obj.group_id
         if old_group_id >= 0:
             if old_group_id not in new_groups:
                 save = get_active_save()
-                save.update_groups_meta()
                 max_new_groupid = max(new_groups.values()) if new_groups.values() else -1
                 new_groupid = max(save.get_max_groupid(), max_new_groupid) + 1
                 new_groups[old_group_id] = new_groupid

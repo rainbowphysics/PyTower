@@ -63,6 +63,8 @@ class Suitebro:
             except ValueError:
                 continue
 
+        self.max_groupid = -1
+
         # This algorithm handles inserting TowerObjects from the (indexed) json by handling three cases:
         #  Case 1: There is an item but no corresponding property
         #  Case 2 (Most likely): There is an item and a corresponding property
@@ -91,6 +93,9 @@ class Suitebro:
             elif p is not None:
                 self.objects[x] = TowerObject(item=None, properties=p, nocopy=True)
                 prop_idx += 1
+
+            self.max_groupid = max(self.objects[x].group_id, self.max_groupid)
+
             x += 1
 
         # Now cull Nones at the end of array
@@ -106,6 +111,8 @@ class Suitebro:
         """
         self.objects += [obj]
 
+        self.max_groupid = max(obj.group_id, self.max_groupid)
+
     def add_objects(self, objs: Sequence[TowerObject]):
         """Adds a list of objects to the Suitebro file
 
@@ -113,6 +120,9 @@ class Suitebro:
             objs: The list of objects to add
         """
         self.objects += objs
+
+        for obj in objs:
+            self.max_groupid = max(self.max_groupid, obj.group_id)
 
     def find_item(self, name: str) -> TowerObject | None:
         """Find a TowerObject by its name
@@ -134,9 +144,7 @@ class Suitebro:
 
     # TODO Definitely a better way to do this
     def get_max_groupid(self):
-        sel = Selection(self.objects)
-        # Get the max group_id tuple in group and get its id (first slot of tuple)
-        return max(sel.groups(), key=lambda group_data: group_data[0])[0]
+        return self.max_groupid
 
     def update_groups_meta(self):
         class GroupData(TypedDict):

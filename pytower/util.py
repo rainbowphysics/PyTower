@@ -97,9 +97,11 @@ class XYZ(np.ndarray):
     def normalize(self):
         return self / self.norm()
 
+    def to_dict(self):
+        return {'x': self.x, 'y': self.y, 'z': self.z}
+
     def __eq__(self, other: 'XYZ'):
         return np.isclose(self, other)
-
 
 class XYZInt(XYZ):
     pass
@@ -116,6 +118,11 @@ class XYZW(XYZ):
     @w.setter
     def w(self, new):
         self[3] = new
+
+    def to_dict(self):
+        data = super().to_dict()
+        data['w'] = self.w
+        return data
 
 
 def xyz(*args, length=3) -> XYZ:

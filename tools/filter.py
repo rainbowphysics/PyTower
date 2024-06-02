@@ -14,9 +14,6 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
     # Filter out everything except for metadata objects
     save.objects = [obj for obj in save.objects if obj.item is None or obj in selection]
 
-    # Update group metadata
-    save.update_groups_meta()
-
 
 if __name__ == '__main__':
     tower.run('popcorn', main, selector=ObjectNameSelector('CanvasCube'))
