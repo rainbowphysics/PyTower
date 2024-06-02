@@ -20,9 +20,8 @@ PyTower wouldn't have been possible without their support, feedback, and early t
  - (Automatically installed by pip): numpy, scipy, requests, colorama, and any other Python packages in requirements.txt  
 
 ## Quick Installation
-1. Download the `install-pytower.py` script from latest release
-2. Run the installer script from command line using Python. For example, `python install-pytower-v0.2.0.py`. 
-    - Alternatively, (on Windows) you can drag the install script onto python.exe or otherwise open the install script with python.exe
+1. Download the `install-pytower` script from latest release
+2. Execute the installer script by opening with Python, which will prompt for install options like install directory
 
 ## Recommened Installation Instructions
 1. (On Windows) Install Git Bash: https://git-scm.com/download/win. 
