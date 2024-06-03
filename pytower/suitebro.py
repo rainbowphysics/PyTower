@@ -7,6 +7,7 @@ import sys
 from subprocess import Popen, PIPE
 from typing import Any, Sequence, TypedDict
 
+import numpy as np
 from colorama import Fore, Back, Style
 
 from .__config__ import root_directory
@@ -356,6 +357,17 @@ def load_suitebro(filename: str, only_json: bool = False) -> Suitebro:
     _active_save = save
 
     return save
+
+
+class NumpySafeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int_)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float_)):
+            return float(obj)
+        elif isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+        return super().default(obj)
 
 
 def save_suitebro(save: Suitebro, filename: str, only_json: bool = False):

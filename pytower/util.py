@@ -38,6 +38,8 @@ def run_if_not_none(func, data):
 
 
 class XYZ(np.ndarray):
+    py_dtype = float
+
     def __new__(cls, *args) -> 'XYZ':
         new_instance = xyz(*args).view(cls)
 
@@ -63,7 +65,7 @@ class XYZ(np.ndarray):
 
     @property
     def x(self):
-        return self[0]
+        return self.py_dtype(self[0])
 
     @x.setter
     def x(self, new):
@@ -71,7 +73,7 @@ class XYZ(np.ndarray):
 
     @property
     def y(self):
-        return self[1]
+        return self.py_dtype(self[1])
 
     @y.setter
     def y(self, new):
@@ -79,7 +81,7 @@ class XYZ(np.ndarray):
 
     @property
     def z(self):
-        return self[2]
+        return self.py_dtype(self[2])
 
     @z.setter
     def z(self, new):
@@ -103,8 +105,12 @@ class XYZ(np.ndarray):
     def __eq__(self, other: 'XYZ'):
         return np.isclose(self, other)
 
+    def __getitem__(self, item):
+        return self.py_dtype(super().__getitem__(item))
+
+
 class XYZInt(XYZ):
-    pass
+    py_dtype = int
 
 
 class XYZW(XYZ):
@@ -113,7 +119,7 @@ class XYZW(XYZ):
 
     @property
     def w(self):
-        return self[3]
+        return self.py_dtype(self[3])
 
     @w.setter
     def w(self, new):
