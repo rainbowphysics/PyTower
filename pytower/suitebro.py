@@ -14,16 +14,6 @@ from .__config__ import root_directory
 from .selection import Selection
 from .object import TowerObject
 
-IO_GW_ITEMS = ['AmmoPickup', 'CustomSpawnPoint', 'HealthPickup', 'SDNL_ArmorPickup', 'GW_SDNLOddball', 'GW_SDNLFlag',
-               'GW_BallRaceFinish', 'GW_BallRaceSpawn', 'LaserBeam', 'LeverBasic', 'ButtonShapes', 'PhysicsSlot',
-               'WeaponPickupIO', 'ButtonCanvas', 'LocationVolumeIO', 'DamageHealVolume', 'BlockingVolume',
-               'WaterVolume', 'CommentVolume', 'DialogueVolume', 'GravityVolume', 'ButtonVolume', 'HitTargetVolume',
-               'LadderVolume', 'PlayerMovementVolume', 'PostProcessVolume', 'PushVolume', 'SizeVolume',
-               'SkyProcessVolume', 'SpawnPointTagVolume', 'TriggerVolume', 'WeaponStripVolume', 'TeleportVolume',
-               'GameWorldEvents', 'LaserBeamReciever', 'Mover', 'Counter', 'LogicGateAnd', 'SwitchBoolean',
-               'LogicGateNot', 'LogicGateOr', 'LogicGateXor', 'Random', 'Relay', 'Timer', 'Toggle', 'WorldControl',
-               'LeverLightSwitch', 'MoverAdvanced', 'MoverPlayerSlide', 'MoverTrain']
-
 
 class Suitebro:
     """Suitebro file
@@ -174,7 +164,7 @@ class Suitebro:
         Returns:
             List of TowerObject instances in the Suitebro that exist in a player's Steam inventory
         """
-        return [obj for obj in self.objects if obj.item is not None and obj.get_name() not in IO_GW_ITEMS]
+        return [obj for obj in self.objects if obj.item is not None and obj.item['steam_item_id'] != 0]
 
     def _item_count(self, objs: Sequence[TowerObject]) -> dict[str, int]:
         ordered = sorted(objs, key=TowerObject.get_name)
