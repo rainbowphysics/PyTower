@@ -83,12 +83,19 @@ class TowerObject:
             properties: The properties section, as parsed from tower-unite-suitebro
             nocopy: If True, then do not deep-copy the item and properties dictionaries
         """
+        # When nocopy true, just set item and properties for performance
         if nocopy:
             self.item = item
             self.properties = properties
-        else:
-            self.item = copy.deepcopy(item)
-            self.properties = copy.deepcopy(properties)
+            return
+
+        # Deep copy dicts
+        self.item = copy.deepcopy(item)
+        self.properties = copy.deepcopy(properties)
+
+        # Generate new UUID4
+        if self.item is not None:
+            self.guid = str(uuid.uuid4()).lower()
 
     def _set_property(self, path: str | glompkg.Spec, value: Any):
         assert self.item is not None
@@ -181,8 +188,6 @@ class TowerObject:
             Copy of this TowerObject instance
         """
         copied = TowerObject(item=self.item, properties=self.properties)
-        if copied.item is not None:
-            copied.guid = str(uuid.uuid4()).lower()
         return copied
 
     @property

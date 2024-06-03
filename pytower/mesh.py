@@ -469,7 +469,6 @@ def convert_triangle(face: np.ndarray):
         #print('Face')
         #print(tri)
         wedge = TowerObject(item=WEDGE_ITEM_DATA, properties=WEDGE_PROPERTY_DATA)
-        wedge.item['guid'] = str(uuid.uuid4()).lower()
 
         # Scale from side lengths
         scale = wedge.scale
