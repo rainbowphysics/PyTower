@@ -78,6 +78,8 @@ class TowerObject:
         """
         Initializes TowerObject instance taking in uesave json data
 
+        To ensure uniqueness, this assigns a new GUID to this object
+
         Args:
             item: The item section parsed, as parsed from tower-unite-suitebro
             properties: The properties section, as parsed from tower-unite-suitebro
@@ -181,8 +183,6 @@ class TowerObject:
     def copy(self) -> TowerObject:
         """
         Creates a new TowerObject with the same item and properties as this one.
-
-        To ensure uniqueness, this method assigns a new GUID to the object
 
         Returns:
             Copy of this TowerObject instance
