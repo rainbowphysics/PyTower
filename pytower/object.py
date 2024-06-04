@@ -281,7 +281,7 @@ class TowerObject:
     # endregion scale
 
     def _check_connetions(self):
-        if not _exists(self.item, _ITEM_CONNECTIONS_PARENT_SPEC):
+        if not _exists(self.item, _ITEM_CONNECTIONS_SPEC):
             update_in(self.item, _ITEM_CONNECTIONS_PARENT_SPEC, lambda _: copy.deepcopy(ITEMCONNECTIONS_DEFAULT))
 
     def add_connection(self, con: ItemConnectionObject):
