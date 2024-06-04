@@ -103,7 +103,7 @@ class XYZ(np.ndarray):
         return {'x': self.x, 'y': self.y, 'z': self.z}
 
     def __eq__(self, other: 'XYZ'):
-        return np.isclose(self, other)
+        return bool(np.isclose(self, other).all())
 
     def __getitem__(self, item):
         return self.py_dtype(super().__getitem__(item))
