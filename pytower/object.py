@@ -112,13 +112,13 @@ class TowerObject:
 
     def _set_property(self, path: Spec, value: Any):
         assert self.item is not None
-        update_in(self.item, path, lambda _: value)
+        self.item = update_in(self.item, path, lambda _: value)
         if self.properties is not None:
             self._set_meta_property(path, value)
 
     def _set_meta_property(self, path: Spec, value: Any):
         assert self.properties is not None
-        update_in(self.properties, path, lambda _: value)
+        self.properties = update_in(self.properties, path, lambda _: value)
 
     def is_canvas(self) -> bool:
         """
@@ -227,10 +227,10 @@ class TowerObject:
 
     def _set_xyz(self, spec: Spec, value: XYZ, meta: bool = False):
         vector_dict = value.to_dict()
-        update_in(self.item, spec, lambda _: vector_dict)
+        self.item = update_in(self.item, spec, lambda _: vector_dict)
 
         if meta:
-            update_in(self.properties, spec, lambda _: vector_dict)
+            self.properties = update_in(self.properties, spec, lambda _: vector_dict)
 
     # region position
     @property
@@ -282,7 +282,8 @@ class TowerObject:
 
     def _check_connetions(self):
         if not _exists(self.item, _ITEM_CONNECTIONS_SPEC):
-            update_in(self.item, _ITEM_CONNECTIONS_PARENT_SPEC, lambda _: copy.deepcopy(ITEMCONNECTIONS_DEFAULT))
+            self.item = update_in(self.item, _ITEM_CONNECTIONS_PARENT_SPEC,
+                                  lambda _: copy.deepcopy(ITEMCONNECTIONS_DEFAULT))
 
     def add_connection(self, con: ItemConnectionObject):
         """
