@@ -1,9 +1,8 @@
 from __future__ import annotations
 import copy
-import logging
 import re
 import uuid
-from typing import Any, Iterator, Mapping, MutableMapping, TypeVar, cast
+from typing import Any, cast
 
 from deprecated import deprecated
 import numpy as np
@@ -11,8 +10,7 @@ import numpy as np
 from .connections import ItemConnectionObject
 from .util import XYZ, XYZW, not_none
 
-from glom import glom, Assign, Delete
-import glom as glompkg
+from toolz import get_in, update_in
 
 ITEMCONNECTIONS_DEFAULT: dict[str, Any] = {
     "Array": {
@@ -45,24 +43,37 @@ _iv = _v('Int')
 _nv = _v('Name')
 _av = _v('Array')
 
+Spec = list[str]
 
-def _exists(data, spec):
+
+def spec_keys(spec: str) -> Spec:
+    return spec.split('.')
+
+
+def _exists(data, spec: Spec):
     try:
         # Attempt to access the path
-        glom(data, spec)
+        get_in(spec, data, no_default=True)
         return True
-    except glompkg.PathAccessError:
+    except (KeyError, IndexError):
         # Path does not exist
         return False
 
 
-_GROUP_ID_SPEC = f'properties.GroupID.{_iv}'
-_CUSTOM_NAME_SPEC = f'properties.ItemCustomName.{_nv}'
-_RESPAWN_TRANSLATION_SPEC = f'properties.RespawnLocation.{_sv}.{_s("Translation")}.{_sv}.Vector'
-_RESPAWN_ROTATION_SPEC = f'properties.RespawnLocation.{_sv}.{_s("Rotation")}.{_sv}.Quat'
-_RESPAWN_SCALE3D_SPEC = f'properties.RespawnLocation.{_sv}.{_s("Scale3D")}.{_sv}.Vector'
-_WORLD_SCALE_SPEC = f'properties.WorldScale.{_sv}.Vector'
-_ITEM_CONNECTIONS_SPEC = f'properties.ItemConnections.{_av}.{_sv}'
+_GROUP_ID_SPEC = spec_keys(f'properties.GroupID.{_iv}')
+_CUSTOM_NAME_SPEC = spec_keys(f'properties.ItemCustomName.{_nv}')
+
+_POS_SPEC = spec_keys('position')
+_ROT_SPEC = spec_keys('rotation')
+_SCALE_SPEC = spec_keys('scale')
+
+_RESPAWN_SPEC = spec_keys('properties.RespawnLocation')
+_RESPAWN_TRANSLATION_SPEC = spec_keys(f'properties.RespawnLocation.{_sv}.{_s("Translation")}.{_sv}.Vector')
+_RESPAWN_ROTATION_SPEC = spec_keys(f'properties.RespawnLocation.{_sv}.{_s("Rotation")}.{_sv}.Quat')
+_RESPAWN_SCALE3D_SPEC = spec_keys(f'properties.RespawnLocation.{_sv}.{_s("Scale3D")}.{_sv}.Vector')
+_WORLD_SCALE_SPEC = spec_keys(f'properties.WorldScale.{_sv}.Vector')
+_ITEM_CONNECTIONS_PARENT_SPEC = spec_keys(f'properties.ItemConnections')
+_ITEM_CONNECTIONS_SPEC = spec_keys(f'properties.ItemConnections.{_av}.{_sv}')
 
 # UUID4 regex pattern
 _UUID_PATTERN = re.compile('^' + '-'.join([fr'[\da-f]{{{d}}}' for d in [8, 4, 4, 4, 12]]) + '$')
@@ -99,20 +110,20 @@ class TowerObject:
         if self.item is not None:
             self.guid = str(uuid.uuid4()).lower()
 
-    def _set_property(self, path: str | glompkg.Spec, value: Any):
+    def _set_property(self, path: Spec, value: Any):
         assert self.item is not None
-        glom(self.item, Assign(path, value, missing=dict))
+        update_in(self.item, path, lambda _: value)
         if self.properties is not None:
             self._set_meta_property(path, value)
 
-    def _set_meta_property(self, path: str | glompkg.Spec, value: Any):
+    def _set_meta_property(self, path: Spec, value: Any):
         assert self.properties is not None
-        glom(self.properties, Assign(path, value, missing=dict))
+        update_in(self.properties, path, lambda _: value)
 
     def is_canvas(self) -> bool:
         """
         Returns:
-            Whether or not object is a canvas object
+            Whether object is a canvas object
         """
         if self.item is None:
             return False
@@ -140,7 +151,7 @@ class TowerObject:
         """
         Custom name set by Tower Unite player
         """
-        return glom(self.item, _CUSTOM_NAME_SPEC, default='')
+        return get_in(_CUSTOM_NAME_SPEC, self.item, default='')
 
     @custom_name.setter
     def custom_name(self, value: str):
@@ -166,7 +177,7 @@ class TowerObject:
     @property
     def group_id(self) -> int:
         """TowerObject's Group ID"""
-        return glom(self.item, _GROUP_ID_SPEC, default=-1)
+        return get_in(_GROUP_ID_SPEC, self.item, default=-1)
 
     @group_id.setter
     def group_id(self, value: int):
@@ -176,11 +187,11 @@ class TowerObject:
         """
         Clears the group info attached to this object, effectively un-grouping it
         """
-        spec = 'properties.GroupID'
-        glom(self.item, Delete(spec, ignore_missing=True))
+        if _exists(self.item, _GROUP_ID_SPEC):
+            del self.item['properties']['GroupID']
 
         if self.properties is not None:
-            self._set_meta_property(spec, -1)
+            self._set_meta_property(_GROUP_ID_SPEC, -1)
 
     def copy(self) -> TowerObject:
         """
@@ -205,8 +216,8 @@ class TowerObject:
         assert _UUID_PATTERN.match(value)
         self.item['guid'] = value
 
-    def _get_xyz(self, spec: str | glompkg.Spec, meta: bool = False):
-        vec_data = glom(self.item if not meta else self.properties, spec)
+    def _get_xyz(self, spec: Spec, meta: bool = False):
+        vec_data = get_in(spec, self.item if not meta else self.properties)
         vector = [vec_data['x'], vec_data['y'], vec_data['z']]
         if 'w' in vec_data:
             vector.append(vec_data['w'])
@@ -214,23 +225,24 @@ class TowerObject:
 
         return np.array(vector).view(XYZ)
 
-    def _set_xyz(self, spec: str | glompkg.Spec, value: XYZ, meta: bool = False):
+    def _set_xyz(self, spec: Spec, value: XYZ, meta: bool = False):
         vector_dict = value.to_dict()
-        glom(self.item, Assign(spec, vector_dict, missing=dict))
+        update_in(self.item, spec, lambda _: vector_dict)
+
         if meta:
-            glom(self.properties, Assign(spec, vector_dict, missing=dict))
+            update_in(self.properties, spec, lambda _: vector_dict)
 
     # region position
     @property
     def position(self) -> XYZ | None:
         """World position"""
-        return self._get_xyz('position')
+        return self._get_xyz(_POS_SPEC)
 
     @position.setter
     def position(self, value: XYZ):
-        self._set_xyz('position', value)
+        self._set_xyz(_POS_SPEC, value)
 
-        if _exists(self.item, 'properties.RespawnLocation'):
+        if _exists(self.item, _RESPAWN_SPEC):
             self._set_xyz(_RESPAWN_TRANSLATION_SPEC, value, meta=True)
 
     # endregion position
@@ -239,13 +251,13 @@ class TowerObject:
     @property
     def rotation(self) -> XYZW | None:
         """Rotation quaternion"""
-        return self._get_xyz('rotation')
+        return self._get_xyz(_ROT_SPEC)
 
     @rotation.setter
     def rotation(self, value: XYZW):
-        self._set_xyz('rotation', value)
+        self._set_xyz(_ROT_SPEC, value)
 
-        if _exists(self.item, 'properties.RespawnLocation'):
+        if _exists(self.item, _RESPAWN_SPEC):
             self._set_xyz(_RESPAWN_ROTATION_SPEC, value, meta=True)
 
     # endregion rotation
@@ -254,24 +266,23 @@ class TowerObject:
     @property
     def scale(self) -> XYZ | None:
         """Local scale"""
-        return self._get_xyz('scale')
+        return self._get_xyz(_SCALE_SPEC)
 
     @scale.setter
     def scale(self, value: XYZ):
-        self._set_xyz('scale', value)
+        self._set_xyz(_SCALE_SPEC, value)
 
-        if _exists(self.item, 'properties.WorldScale'):
+        if _exists(self.item, _WORLD_SCALE_SPEC):
             self._set_xyz(_WORLD_SCALE_SPEC, value, meta=True)
 
-        if _exists(self.item, 'properties.RespawnLocation'):
+        if _exists(self.item, _RESPAWN_SPEC):
             self._set_xyz(_RESPAWN_SCALE3D_SPEC, value, meta=True)
 
     # endregion scale
 
     def _check_connetions(self):
-        spec = 'properties.ItemConnections'
-        if not _exists(self.item, spec):
-            glom(self.item, Assign(spec, copy.deepcopy(ITEMCONNECTIONS_DEFAULT), missing=dict))
+        if not _exists(self.item, _ITEM_CONNECTIONS_PARENT_SPEC):
+            update_in(self.item, _ITEM_CONNECTIONS_PARENT_SPEC, copy.deepcopy(ITEMCONNECTIONS_DEFAULT))
 
     def add_connection(self, con: ItemConnectionObject):
         """
@@ -283,7 +294,7 @@ class TowerObject:
         assert self.item is not None
         self._check_connetions()
 
-        connections = glom(self.item, _ITEM_CONNECTIONS_SPEC)
+        connections = get_in(_ITEM_CONNECTIONS_SPEC, self.item)
         connections.append(con.to_dict())
         self._set_property(_ITEM_CONNECTIONS_SPEC, connections)
 
@@ -296,7 +307,7 @@ class TowerObject:
         self._check_connetions()
 
         cons_list = list[ItemConnectionObject]()
-        connections_data = glom(self.item, _ITEM_CONNECTIONS_SPEC)
+        connections_data = get_in(_ITEM_CONNECTIONS_SPEC, self.item)
         for con_data in connections_data:
             cons_list.append(ItemConnectionObject(con_data))
 
@@ -304,7 +315,7 @@ class TowerObject:
 
     def set_connections(self, cons: list[ItemConnectionObject]):
         """
-        Set all of the connections attached to this object. Useful when resetting/overriding connections
+        Set all the connections attached to this object. Useful when resetting/overriding connections
 
         Args:
             cons: List of connections to attach onto this object
