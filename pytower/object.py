@@ -178,7 +178,9 @@ class TowerObject:
         """
         spec = 'properties.GroupID'
         glom(self.item, Delete(spec, ignore_missing=True))
-        self._set_meta_property(spec, -1)
+
+        if self.properties is not None:
+            self._set_meta_property(spec, -1)
 
     def copy(self) -> TowerObject:
         """
@@ -267,8 +269,9 @@ class TowerObject:
     # endregion scale
 
     def _check_connetions(self):
-        if self.item is not None and 'ItemConnections' not in self.item['properties']:
-            self.item['properties']['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
+        spec = 'properties.ItemConnections'
+        if not _exists(self.item, spec):
+            glom(self.item, Assign(spec, copy.deepcopy(ITEMCONNECTIONS_DEFAULT), missing=dict))
 
     def add_connection(self, con: ItemConnectionObject):
         """
