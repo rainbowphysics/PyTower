@@ -349,17 +349,6 @@ def load_suitebro(filename: str, only_json: bool = False) -> Suitebro:
     return save
 
 
-class NumpySafeEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (np.integer, np.int_)):
-            return int(obj)
-        elif isinstance(obj, (np.floating, np.float_)):
-            return float(obj)
-        elif isinstance(obj, (np.ndarray,)):
-            return obj.tolist()
-        return super().default(obj)
-
-
 def save_suitebro(save: Suitebro, filename: str, only_json: bool = False):
     abs_filepath = os.path.realpath(filename)
     out_dir = os.path.dirname(abs_filepath)
