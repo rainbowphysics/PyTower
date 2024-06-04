@@ -267,8 +267,8 @@ class TowerObject:
     # endregion scale
 
     def _check_connetions(self):
-        if self.item is not None and 'ItemConnections' not in self.item.keys():
-            self.item['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
+        if self.item is not None and 'ItemConnections' not in self.item['properties']:
+            self.item['properties']['ItemConnections'] = copy.deepcopy(ITEMCONNECTIONS_DEFAULT)
 
     def add_connection(self, con: ItemConnectionObject):
         """
