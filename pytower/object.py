@@ -217,7 +217,7 @@ class TowerObject:
         self.item['guid'] = value
 
     def _get_xyz(self, spec: Spec, meta: bool = False):
-        vec_data = get_in(spec, self.item if not meta else self.properties)
+        vec_data = get_in(spec, self.item if not meta else self.properties, no_default=True)
         vector = [vec_data['x'], vec_data['y'], vec_data['z']]
         if 'w' in vec_data:
             vector.append(vec_data['w'])
@@ -294,7 +294,7 @@ class TowerObject:
         assert self.item is not None
         self._check_connetions()
 
-        connections = get_in(_ITEM_CONNECTIONS_SPEC, self.item)
+        connections = get_in(_ITEM_CONNECTIONS_SPEC, self.item, no_default=True)
         connections.append(con.to_dict())
         self._set_property(_ITEM_CONNECTIONS_SPEC, connections)
 
@@ -307,7 +307,7 @@ class TowerObject:
         self._check_connetions()
 
         cons_list = list[ItemConnectionObject]()
-        connections_data = get_in(_ITEM_CONNECTIONS_SPEC, self.item)
+        connections_data = get_in(_ITEM_CONNECTIONS_SPEC, self.item, no_default=True)
         for con_data in connections_data:
             cons_list.append(ItemConnectionObject(con_data))
 
