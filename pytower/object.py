@@ -4,7 +4,7 @@ import re
 import uuid
 from typing import Any, cast
 
-from deprecated import deprecated
+from deprecated.sphinx import deprecated
 import numpy as np
 
 from .connections import ItemConnectionObject
@@ -131,7 +131,7 @@ class TowerObject:
         item_props = self.item['properties']
         return self.name.startswith('Canvas') or 'SurfaceMaterial' in item_props or 'URL' in item_props
 
-    @deprecated(reason='Use TowerObject.name instead')
+    @deprecated(reason='Use TowerObject.name instead', version='0.3.0')
     def get_name(self) -> str:
         return self.name
 
@@ -142,7 +142,7 @@ class TowerObject:
         """
         return self.item['name'] if self.item is not None else not_none(self.properties)['name']
 
-    @deprecated(reason='Use TowerObject.custom_name instead')
+    @deprecated(reason='Use TowerObject.custom_name instead', version='0.3.0')
     def get_custom_name(self) -> str:
         return self.custom_name
 
@@ -170,7 +170,7 @@ class TowerObject:
         name = name.casefold().strip()
         return self.name.strip().casefold() == name or self.custom_name.strip().casefold() == name
 
-    @deprecated(reason='Assign to TowerObject.group_id instead')
+    @deprecated(reason='Assign to TowerObject.group_id instead', version='0.3.0')
     def set_group_id(self, group_id: int):
         self.group_id = group_id
 
