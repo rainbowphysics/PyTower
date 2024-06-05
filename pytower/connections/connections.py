@@ -69,10 +69,10 @@ class ItemConnectionObject:
 
     # Returns connected item GUID
     def get_item_guid(self) -> str:
-        return self.data['Struct']['Item']['value']['Struct']['value']['Guid']
+        return self.data['Struct']['Item']['Struct']['value']['Guid']
 
     def set_item_guid(self, guid: str):
-        self.data['Struct']['Item']['value']['Struct']['value']['Guid'] = guid
+        self.data['Struct']['Item']['Struct']['value']['Guid'] = guid
 
     # Returns targeted event on item
     def get_event_name(self) -> str:
