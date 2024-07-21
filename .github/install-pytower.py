@@ -55,7 +55,7 @@ def main():
         install_dir = default_install_dir
 
     confirm = input(f'Install path: {install_dir}\nConfirm? (Y/n): ')
-    confirm = confirm.strip()
+    confirm = confirm.strip().casefold()
     if confirm != 'y' and confirm != 'ye' and confirm != 'yes':
         cancel()
 
