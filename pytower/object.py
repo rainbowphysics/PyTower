@@ -51,6 +51,9 @@ def spec_keys(spec: str) -> Spec:
 
 
 def _exists(data, spec: Spec):
+    if data is None:
+        return False
+
     try:
         # Attempt to access the path
         get_in(spec, data, no_default=True)
@@ -229,7 +232,7 @@ class TowerObject:
         vector_dict = value.to_dict()
         self.item = update_in(self.item, spec, lambda _: vector_dict)
 
-        if meta:
+        if meta and self.properties is not None:
             self.properties = update_in(self.properties, spec, lambda _: vector_dict)
 
     # region position
@@ -271,9 +274,13 @@ class TowerObject:
     @scale.setter
     def scale(self, value: XYZ):
         self._set_xyz(_SCALE_SPEC, value)
-
-        if _exists(self.item, _WORLD_SCALE_SPEC):
-            self._set_xyz(_WORLD_SCALE_SPEC, value, meta=True)
+        if not _exists(self.item, spec_keys('properties.WorldScale')) and self.item is not None:
+            self.item = update_in(self.item, spec_keys('properties.WorldScale.Struct.struct_type'), lambda _: 'Vector')
+            self.item = update_in(self.item, spec_keys('properties.WorldScale.Struct.struct_id'), lambda _: '00000000-0000-0000-0000-000000000000')
+        if not _exists(self.properties, spec_keys('properties.WorldScale')) and self.properties is not None:
+            self.properties = update_in(self.properties, spec_keys('properties.WorldScale.Struct.struct_type'), lambda _: 'Vector')
+            self.properties = update_in(self.properties, spec_keys('properties.WorldScale.Struct.struct_id'), lambda _: '00000000-0000-0000-0000-000000000000')
+        self._set_xyz(_WORLD_SCALE_SPEC, value, meta=True)
 
         if _exists(self.item, _RESPAWN_SPEC):
             self._set_xyz(_RESPAWN_SCALE3D_SPEC, value, meta=True)
