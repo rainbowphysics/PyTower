@@ -338,7 +338,7 @@ def load_suitebro(filename: str, only_json: bool = False) -> Suitebro:
         run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
 
     logging.info('Loading JSON file...')
-    with open(json_output_path, 'r') as fd:
+    with open(json_output_path, 'r', encoding='utf-8') as fd:
         save_json = json.load(fd)
 
     save = Suitebro(os.path.basename(abs_filepath), in_dir, save_json)
@@ -355,7 +355,7 @@ def save_suitebro(save: Suitebro, filename: str, only_json: bool = False):
     json_final_path = os.path.join(save.directory, f'{filename}.json')
     final_output_path = os.path.join(out_dir, f'{filename}')
 
-    with open(json_final_path, 'w') as fd:
+    with open(json_final_path, 'w', encoding='utf-8') as fd:
         json.dump(save.to_dict(), fd, indent=2)
 
     # Finally run!
