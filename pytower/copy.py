@@ -14,6 +14,10 @@ def replace_guids(datadict: Mapping[str, Any] | None, replacement_table: dict[st
     return json.loads(encoding)
 
 
+def fitem_guid(guid: str) -> str:
+    return guid.replace('-', '').upper()
+
+
 # Returns new selection containing the new copied objects
 def copy_selection(selection: Selection) -> Selection:
     # First pass: new guids and setup replacement table
@@ -43,9 +47,14 @@ def copy_selection(selection: Selection) -> Selection:
 
         copies[x] = copied
 
+    full_replacement_table = {}
+    for old, new in replacement_table.items():
+        full_replacement_table[old] = new
+        full_replacement_table[fitem_guid(old)] = fitem_guid(new)
+
     # Second pass: replace any references to old guids with new guids
     for obj in copies:
-        obj.item = replace_guids(obj.item, replacement_table)
-        obj.properties = replace_guids(obj.properties, replacement_table)
+        obj.item = replace_guids(obj.item, full_replacement_table)
+        obj.properties = replace_guids(obj.properties, full_replacement_table)
 
     return Selection(copies)
