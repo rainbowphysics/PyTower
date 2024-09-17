@@ -17,4 +17,8 @@ Contents
 .. toctree::
 
    installation
+   getting_started
+   updating
+   canvas_backup
+   canvas_fix
    api
