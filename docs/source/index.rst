@@ -16,7 +16,6 @@ Contents
 
 .. toctree::
 
-   index
    installation
    getting_started
    updating

@@ -24,6 +24,8 @@ release = f'{pytower.__version__}'
 version = f'{pytower.__version__}'
 project_language = 'en'
 
+master_doc = 'index'
+
 # -- General configuration
 
 extensions = [
