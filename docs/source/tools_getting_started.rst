@@ -24,6 +24,8 @@ As a full example, here are the contents of center.py_ (as of 0.1.0):
 .. _center.py: https://github.com/rainbowphysics/PyTower/blob/main/tools/center.py
 
 .. code-block:: python
+   :linenos:
+
    # Python Imports
    from pytower import tower
    from pytower.selection import Selection

@@ -22,6 +22,7 @@ Example of PARAMETERS from rotate.py_ (as of v0.1.0):
 
 .. _rotate.py: https://github.com/rainbowphysics/PyTower/tree/main/tools/rotate.py
 .. code-block:: python
+
    PARAMETERS = {'rotation': ToolParameterInfo(dtype=xyz, description='Rotation to perform (in Euler angles and degrees)'),
                  'local': ToolParameterInfo(dtype=bool, description='Whether to only rotate locally', default=False)}
 
