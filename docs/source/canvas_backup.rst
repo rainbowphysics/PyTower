@@ -11,5 +11,5 @@ After running the ``cd`` command the directory should show next to the command l
 | .. figure:: https://i.imgur.com/SavrSOR.png   |
 |   :alt: Screenshot showing backed-up canvases | 
 |                                               |
-|   <br />Backup example                        |
+|   Backup example                              |
 +-----------------------------------------------+
