@@ -21,4 +21,6 @@ Contents
    updating
    canvas_backup
    canvas_fix
+   tools_getting_started
+   tools_directives
    api
