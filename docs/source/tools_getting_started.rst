@@ -8,14 +8,14 @@ Tool scripts are located in the ``tools/`` folder. There are a dozen built-in to
 Tool Script Anatomy
 -------------------
 Tool scripts have the following general anatomy:
-- Python import statements (``import ...``, ``from ... import ...``)
-- Tooling directives (``TOOL_NAME``, ``AUTHOR``, ``PARAMETERS``, ...)
-- The main function (``def main(...):``)
-- Prototype mocking at the bottom (``if __name__ == '__main__': tower.run(...)``)
+ - Python import statements (``import ...``, ``from ... import ...``)
+ - Tooling directives (``TOOL_NAME``, ``AUTHOR``, ``PARAMETERS``, ...)
+ - The main function (``def main(...):``)
+ - Prototype mocking at the bottom (``if __name__ == '__main__': tower.run(...)``)
 
 For more information about import statements in Python see: https://realpython.com/lessons/import-statement/
 
-And for more information about the tooling directives currently available, see :ref:`Wiki: Tool Script Directives <tool_script_directives>`
+And for more information about the tooling directives currently available, see :ref:`Tool Script Directives <tool_script_directives>`
 
 The main function is the most important part of the tooling script. It contains the Python code to actually be executed. It takes in the save data (as a ``Suitebro`` object), the active selection as a ``Selection`` set object, and any tool parameters (passed-through using ``-@`` or ``--parameters``) as a dictionary (``ParameterDict``).
 

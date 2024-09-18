@@ -1,4 +1,4 @@
-.. tool_script_directives:
+.. _tool_script_directives:
 Tool Script Directives
 ======================
 
