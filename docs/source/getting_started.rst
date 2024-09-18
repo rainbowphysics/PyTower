@@ -7,7 +7,7 @@ Installation
 ------------
 To start, ensure that PyTower is correctly installed. If the installation was a success, then you should be able to use the command ``pytower`` in terminal, and you should find the sub-directory tower-unite-suitebro in the main installation/repository folder, which contains a suitebro file format parser written in Rust by Brecert: https://github.com/brecert/tower-unite-suitebro
 
-For more info about the installation process, see [Installation Guide & Troubleshooting.](https://github.com/rainbowphysics/PyTower/wiki/Installation-Guide-&-Troubleshooting)
+For more info about the installation process, see :ref:`Installation Guide & Troubleshooting. <install_guide>`
 
 General Usage
 -------------
@@ -42,7 +42,10 @@ Using ``pytower run``
 
 To access your CondoData files, you need to first navigate to your Steam program files. From here, the path is typically given by ``Steam\userdata[steamid3]\394690\remote\Condos\``. Here you'll find folders that correspond to each condo type, for example ``WK_LevelEditor`` corresponds to the workshop level editor. Within each folder, there is CondoData (main currently active save) and folders for each snapshot taken, each with its own CondoData used when saving/loading a new snapshot.
 
-One current limitation of Tower Unite is that there's no way to hot-reload a map from disk. Even if you exit the condo and reenter it, the file from the start of the session will load instead. Therefore, whenever you make a change to CondoData, remember that the game must be exited and relaunched. For further discussion of this, see [Issue: Reloading Saves In-Game](https://github.com/rainbowphysics/PyTower/issues/3)
+One current limitation of Tower Unite is that there's no way to hot-reload a map from disk. Even if you exit the condo and reenter it, the file from the start of the session will load instead. Therefore, whenever you make a change to CondoData, remember that the game must be exited and relaunched. For further discussion of this, see `Issue: Reloading Saves In-Game`__
+
+.. _reload_issue: https://github.com/rainbowphysics/PyTower/issues/3
+__ reload_issue_
 
 By default, the ``--output`` filename will be the same as the input filename but with ``_output`` appended to the end. If you find this inconvenient, you can make PyTower overwrite a file instead by inputting the same value for ``--output`` as input. For example: ``pytower run center --input CondoData --output CondoData``. Just make sure you back-up your save in a snapshot or outside of Tower Unite before doing this!
 
