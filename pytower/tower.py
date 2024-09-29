@@ -45,10 +45,10 @@ def get_parser(tool_names: str):
     subparsers = parser.add_subparsers(dest='subcmd')
 
     # Help subcommand
-    subparsers.add_parser('help', help='%(prog)s help')
+    subparsers.add_parser('help', help='PyTower help')
 
     # Version subcommand
-    subparsers.add_parser('version', help='%(prog)s version')
+    subparsers.add_parser('version', help='PyTower version')
 
     # Convert subcommand
     convert_parser = subparsers.add_parser('convert', help='Convert given file to .json or CondoData')
@@ -109,7 +109,7 @@ def get_parser(tool_names: str):
                             help='Backend to use (Imgur or Catbox)')
 
     # Config subcommand
-    config_parser = subparsers.add_parser('config', help='PyTower Configuration')
+    config_parser = subparsers.add_parser('config', help='PyTower configuration')
     config_subparsers = config_parser.add_subparsers(dest='config_mode', required=True)
     config_get_parser = config_subparsers.add_parser('get', help='Get value in config')
     config_get_parser.add_argument('key', type=str, help='Key to get in config')
