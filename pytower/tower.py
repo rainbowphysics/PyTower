@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 import sys
 from types import ModuleType
@@ -402,7 +401,8 @@ def main():
                 print(meta.get_info())
                 sys.exit(0)
 
-            logging.error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
+            print(Fore.RED + f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
+            print(Style.RESET_ALL)
             sys.exit(1)
         case 'scan':
             for file in os.listdir(args['path']):

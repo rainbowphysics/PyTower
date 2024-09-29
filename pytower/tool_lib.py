@@ -1,6 +1,6 @@
 import collections
+from colorama import Fore, Style
 import json
-import logging
 import os
 import pkgutil
 import importlib.util
@@ -168,7 +168,8 @@ def load_tool(script_path: str, verbose: bool=True) -> tuple[ModuleType, ToolMet
         # Check if the module has a main function before registering it
         if not hasattr(module, 'main') and not hidden:
             if verbose:
-                logging.warning(f"No 'main' function found in tool '{tool_name}'. Skipping.")
+                print(Fore.RED + f"No 'main' function found in tool '{tool_name}'. Skipping.")
+                print(Style.RESET_ALL)
             return None
 
         if verbose:
@@ -179,12 +180,14 @@ def load_tool(script_path: str, verbose: bool=True) -> tuple[ModuleType, ToolMet
                 success_message += f' by {author}'
 
             if not hidden and verbose:
-                logging.info(success_message)
+                print(Fore.GREEN + success_message)
+                print(Style.RESET_ALL)
 
         return module, ToolMetadata(tool_name, params, version, author, url, info, hidden)
 
     except Exception as e:
-        logging.error(f"Error loading tool '{script}': {e}")
+        print(Fore.RED + f"Error loading tool '{script}': {e}")
+        print(Style.RESET_ALL)
 
 
 TOOLS_PATH = os.path.join(root_directory, 'tools')
@@ -221,7 +224,8 @@ def get_tool_scripts() -> list[str]:
 
     python_files = [f for f in files if f.endswith('.py') and f != '__init__.py']
     if not python_files:
-        logging.warning("No Python scripts found in 'tools' folder.")
+        print(Fore.RED + "No Python scripts found in 'tools' folder.")
+        print(Style.RESET_ALL)
         return []
 
     python_files = sorted(python_files)
@@ -235,7 +239,7 @@ def get_indexed_tools() -> PartialToolListType | None:
         with open(TOOLS_INDEX_PATH, 'r') as fd:
             tools_index = json.load(fd)
     except (OSError, json.JSONDecodeError):
-        logging.debug('Failed to load tools index... Will regenerate')
+        print('Failed to load tools index... Will regenerate')
         return None
 
     output_tools = PartialToolListType()
@@ -287,7 +291,7 @@ def get_indexed_tools() -> PartialToolListType | None:
 
 def load_tools(verbose: bool=True) -> PartialToolListType:
     # First load the index
-    logging.debug('Loading index file...')
+    print('Loading index file...')
     tools_index = get_indexed_tools()
 
     # If we were successful in loading the tools index, perfect we're done!

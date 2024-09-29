@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 import os
 import platform
 import sys
@@ -321,7 +320,8 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str,
     exit_code = process.wait()
 
     if exit_code != 0:
-        logging.error('Suitebro parser did not complete successfully!')
+        print(Fore.RED + 'Suitebro parser did not complete successfully!')
+        print(Style.RESET_ALL)
         return False
 
     print(
@@ -337,7 +337,7 @@ def load_suitebro(filename: str, only_json: bool = False) -> Suitebro:
     if not only_json:
         run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
 
-    logging.info('Loading JSON file...')
+    print('Loading JSON file...')
     with open(json_output_path, 'r', encoding='utf-8') as fd:
         save_json = json.load(fd)
 

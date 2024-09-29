@@ -9,7 +9,6 @@ from setuptools import setup
 from setuptools.command.develop import develop
 from setuptools.command.build_py import build_py
 from distutils.util import convert_path
-import logging
 
 
 def run_command(args, error_context='Error', can_fail=False, shell=False):
@@ -22,7 +21,7 @@ def run_command(args, error_context='Error', can_fail=False, shell=False):
         if process.returncode != 0:
             raise subprocess.CalledProcessError(process.returncode, process.args)
     except Exception as e:
-        logging.error(f"{error_context}: {e}")
+        print(f"{error_context}: {e}")
         if can_fail:
             sys.exit(1)
 
