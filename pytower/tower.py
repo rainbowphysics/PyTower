@@ -502,6 +502,9 @@ def main():
                     module.main(save, Selection({obj}), params)
 
             # Writeback save
+            if meta.nowrite:
+                return
+
             save_suitebro(save, args['output'], only_json=only_json)
             success(f'Exported to {args["output"]}!')
 

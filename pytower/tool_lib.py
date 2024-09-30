@@ -45,7 +45,7 @@ class ToolParameterInfo:
 
 class ToolMetadata:
     def __init__(self, tool_name: str, params: dict[str, ToolParameterInfo], version: str | None, author: str | None, url: str | None,
-                 info: str | None, hidden: bool = False):
+                 info: str | None, hidden: bool = False, nowrite: bool = False):
         self.tool_name = tool_name
         self.params = params
         self.version = version
@@ -53,6 +53,7 @@ class ToolMetadata:
         self.url = url
         self.info = info
         self.hidden = hidden
+        self.nowrite = nowrite
 
     def get_info(self) -> str:
         info_str = f'{self.tool_name} Information:'
@@ -115,19 +116,21 @@ class ToolMetadata:
     def from_dict(data: dict[str, Any]) -> 'ToolMetadata':
         # Convert the input dict into a defaultdict so that missing entries become None
         data_or_none = collections.defaultdict(lambda: None, data)
+        data_or_false = collections.defaultdict(lambda: False, data)
         tool_name = data_or_none['tool_name']
         version = data_or_none['version']
         author = data_or_none['author']
         url = data_or_none['url']
-        info = data_or_none['info']
-        hidden = data_or_none['hidden']
+        tool_info = data_or_none['info']
+        hidden = data_or_false['hidden']
+        nowrite = data_or_false['nowrite']
 
         # Handle parameter list
         params: dict[str, Any] = data_or_none['params'] or {}
         for p_name, p_info_dict in params.items():
             params[p_name] = ToolParameterInfo.from_dict(p_info_dict)
 
-        return ToolMetadata(not_none(tool_name), params, version, author, url, info, hidden if hidden is not None else False)
+        return ToolMetadata(not_none(tool_name), params, version, author, url, tool_info, hidden, nowrite)
 
 
 class ParameterDict(dict[str, Any]):
@@ -161,6 +164,7 @@ def load_tool(script_path: str) -> tuple[ModuleType, ToolMetadata] | None:
         url = ToolMetadata.strattr_or_default(module, 'URL', None)
         tool_info = ToolMetadata.strattr_or_default(module, 'INFO', None)
         hidden = ToolMetadata.attr_or_default(module, 'HIDDEN', False)
+        nowrite = ToolMetadata.attr_or_default(module, 'NOWRITE', False)
 
         # Check if the module has a main function before registering it
         if not hasattr(module, 'main') and not hidden:
@@ -176,7 +180,7 @@ def load_tool(script_path: str) -> tuple[ModuleType, ToolMetadata] | None:
         if not hidden:
             success(success_message)
 
-        return module, ToolMetadata(tool_name, params, version, author, url, tool_info, hidden)
+        return module, ToolMetadata(tool_name, params, version, author, url, tool_info, hidden, nowrite)
 
     except Exception as e:
         error(f"Error loading tool '{script}': {e}")
