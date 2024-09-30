@@ -12,7 +12,7 @@ List of directives:
  - ``INFO``: Further info printed when calling ``pytower info <toolname>``
  - ``PARAMETERS``: Dictionary of required parameters and their types (registered as ``ToolParameterInfo`` instances)
  - ``IGNORE=True``: Tells PyTower to skip over this script. Useful for shared libraries or utility scripts
- - ``NOWRITE=True``: Tells PyTower that this script does not modify the CondoData/.map file
+ - ``NO_WRITE=True``: Tells PyTower that this script does not modify the CondoData/.map file
 
 By default ``PARAMETERS`` will be loaded as an empty dictionary. For examples involving the directives, `see the built-in tool scripts`__
 

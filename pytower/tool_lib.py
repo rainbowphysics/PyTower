@@ -164,7 +164,7 @@ def load_tool(script_path: str) -> tuple[ModuleType, ToolMetadata] | None:
         url = ToolMetadata.strattr_or_default(module, 'URL', None)
         tool_info = ToolMetadata.strattr_or_default(module, 'INFO', None)
         hidden = ToolMetadata.attr_or_default(module, 'HIDDEN', False)
-        nowrite = ToolMetadata.attr_or_default(module, 'NOWRITE', False)
+        nowrite = ToolMetadata.attr_or_default(module, 'NO_WRITE', False)
 
         # Check if the module has a main function before registering it
         if not hasattr(module, 'main') and not hidden:
