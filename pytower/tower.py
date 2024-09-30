@@ -325,6 +325,117 @@ def parse_resource_backend(backends: list[ResourceBackend], backend_input: str) 
     sys.exit(1)
 
 
+def version() -> str:
+    return f'PyTower {__version__}'
+
+
+def convert(filename: str):
+    filename = filename.strip()
+    abs_filepath = os.path.realpath(filename)
+    in_dir = os.path.dirname(abs_filepath)
+
+    if filename.endswith('.json'):
+        output = os.path.join(in_dir, filename[:-5])
+        run_suitebro_parser(abs_filepath, True, output, overwrite=True)
+    else:
+        output = os.path.join(in_dir, os.path.basename(abs_filepath) + '.json')
+        run_suitebro_parser(abs_filepath, False, output, overwrite=True)
+
+
+def backup(backends: list[ResourceBackend], mode: str, filename: str, backend: str = 'Catbox', force: bool = False):
+    match mode:
+        case 'save':
+            if not os.path.isfile(filename):
+                error(f'Could not find {filename}!')
+                sys.exit(1)
+
+            save = load_suitebro(filename)
+            make_backup(save)
+        case 'restore':
+            from .backup import BACKUP_DIR
+            path = os.path.join(BACKUP_DIR, filename)
+            if not os.path.isdir(path):
+                error(f'Could not find backup {path}!'
+                      f' Input must be the name of a folder in backups dictory')
+                sys.exit(1)
+
+            backend = parse_resource_backend(backends, backend)
+
+            restore_backup(path, force_reupload=force, backend=backend)
+        case _:
+            pass
+
+
+def list_tools(tools: PartialToolListType):
+    info('Available tools:')
+    for _, meta in tools:
+        if meta.hidden:
+            continue
+
+        tool_str = f'  {meta.tool_name}'
+        if meta.version is not None:
+            tool_str += f' (v{meta.version})'
+        if meta.author is not None:
+            tool_str += f' by {meta.author}'
+        info(tool_str)
+
+
+def info_tool(tools: PartialToolListType, tool_input, tool_names: str = ''):
+    tool_name = tool_input.strip().casefold()
+    tool = find_tool(tools, tool_name)
+    if tool:
+        _, meta = tool
+        info(meta.get_info())
+        return
+
+    error(f'Could not find {tool_input}! \n')
+    if tool_names:
+        info(f'Available tools: {tool_names}')
+    sys.exit(1)
+
+
+def scan(path: str, tools: PartialToolListType | None = None) -> PartialToolListType:
+    if tools is None:
+        tools = []
+
+    for file in os.listdir(path):
+        if file.endswith('.py') and file != '__init__.py' and file != '__main__.py' and file != 'setup.py':
+            abs_path = os.path.normcase(os.path.abspath(file))
+
+            # Check if files already exist before registering them
+            exists = False
+            for tool_tuple in tools:
+                module_or_path, _ = tool_tuple
+                if isinstance(module_or_path, ModuleType):
+                    path = os.path.normcase(module_or_path.__file__)
+                else:
+                    path = module_or_path
+
+                if abs_path == path:
+                    exists = True
+                    break
+
+            if exists:
+                info(f'Found already registered script {file}')
+                continue
+
+            # At this point, the tool script must be novel so load it
+            tool_tuple = load_tool(file)
+            if tool_tuple is not None:
+                tools.append(tool_tuple)
+
+    # Finally update tools index
+    make_tools_index(tools)
+    return tools
+
+
+def fix(backends: list[ResourceBackend], filename: str, backend: str = 'Catbox', force: bool = False):
+    filename = filename.strip()
+    path = os.path.abspath(os.path.expanduser(filename))
+    backend = parse_resource_backend(backends, backend)
+    fix_canvases(path, force_reupload=force, backend=backend)
+
+
 def main():
     debug(f"Ran command {' '.join(sys.argv)}")
 
@@ -348,93 +459,17 @@ def main():
         case 'help':
             parser.print_help(sys.stdout)
         case 'version':
-            info(f'PyTower {__version__}')
+            info(version())
         case 'convert':
-            filename: str = args['filename'].strip()
-            abs_filepath = os.path.realpath(filename)
-            in_dir = os.path.dirname(abs_filepath)
-
-            if filename.endswith('.json'):
-                output = os.path.join(in_dir, filename[:-5])
-                run_suitebro_parser(abs_filepath, True, output, overwrite=True)
-            else:
-                output = os.path.join(in_dir, os.path.basename(abs_filepath) + '.json')
-                run_suitebro_parser(abs_filepath, False, output, overwrite=True)
+            convert(args['filename'])
         case 'backup':
-            match args['mode']:
-                case 'save':
-                    filename = args['filename']
-                    if not os.path.isfile(filename):
-                        error(f'Could not find {filename}!')
-                        sys.exit(1)
-
-                    save = load_suitebro(filename)
-                    make_backup(save)
-                case 'restore':
-                    filename = args['filename']
-                    from .backup import BACKUP_DIR
-                    path = os.path.join(BACKUP_DIR, filename)
-                    if not os.path.isdir(path):
-                        error(f'Could not find backup {path}!'
-                              f' Input must be the name of a folder in backups dictory')
-                        sys.exit(1)
-
-                    backend = parse_resource_backend(backends, args['backend'])
-
-                    restore_backup(path, force_reupload=args['force'], backend=backend)
-                case _:
-                    pass
+            backup(backends, args['mode'], args['filename'], args['backend'], args['force'])
         case 'list':
-            info('Available tools:')
-            for _, meta in tools:
-                if meta.hidden:
-                    continue
-
-                tool_str = f'  {meta.tool_name}'
-                if meta.version is not None:
-                    tool_str += f' (v{meta.version})'
-                if meta.author is not None:
-                    tool_str += f' by {meta.author}'
-                info(tool_str)
+            list_tools(tools)
         case 'info':
-            tool_name = args['tool'].strip().casefold()
-            tool = find_tool(tools, tool_name)
-            if tool:
-                _, meta = tool
-                info(meta.get_info())
-                sys.exit(0)
-
-            error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
-            sys.exit(1)
+            info_tool(tools, args['tool'], tool_names)
         case 'scan':
-            for file in os.listdir(args['path']):
-                if file.endswith('.py') and file != '__init__.py' and file != '__main__.py' and file != 'setup.py':
-                    abs_path = os.path.normcase(os.path.abspath(file))
-
-                    # Check if files already exist before registering them
-                    exists = False
-                    for tool_tuple in tools:
-                        module_or_path, _ = tool_tuple
-                        if isinstance(module_or_path, ModuleType):
-                            path = os.path.normcase(module_or_path.__file__)
-                        else:
-                            path = module_or_path
-
-                        if abs_path == path:
-                            exists = True
-                            break
-
-                    if exists:
-                        info(f'Found already registered script {file}')
-                        continue
-
-                    # At this point, the tool script must be novel so load it
-                    tool_tuple = load_tool(file)
-                    if tool_tuple is not None:
-                        tools.append(tool_tuple)
-
-            # Finally update tools index
-            make_tools_index(tools)
+            scan(args['path'], tools)
         case 'run':
             # Parse tool name
             tool_name = args['tool'].strip().casefold()
@@ -521,10 +556,7 @@ def main():
                 for name, count in final_inv_items_count.items():
                     info(f'{count:>9,}x {name}')
         case 'fix':
-            filename = args['filename'].strip()
-            path = os.path.abspath(os.path.expanduser(filename))
-            backend = parse_resource_backend(backends, args['backend'])
-            fix_canvases(path, force_reupload=args['force'], backend=backend)
+            fix(backends, args['filename'], args['backend'], args['force'])
         case 'config':
             match args['config_mode']:
                 case 'get':
