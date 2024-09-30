@@ -5,6 +5,7 @@ import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from pytower.image_backends.backend import ResourceBackend
+from pytower.logging import *
 
 
 class CatboxBackend(ResourceBackend):
@@ -40,5 +41,5 @@ class CatboxBackend(ResourceBackend):
             return response.text
         else:
             # Upload failed
-            print(f"Catbox upload failed with status code: {response.status_code}", file=sys.stderr)
+            error(f"Catbox upload failed with status code: {response.status_code}", file=sys.stderr)
             return None

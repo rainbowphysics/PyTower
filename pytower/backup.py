@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import struct
 import sys
@@ -9,30 +10,24 @@ from typing_extensions import Buffer
 
 import requests
 import asyncio
-from threading import Lock
 from colorama import Fore, Back, Style
 
 from .__config__ import root_directory, __version__
 from .config import KEY_INSTALL_PATH
 from .image_backends.backend import ResourceBackend
 from .image_backends.catbox import CatboxBackend
+from .logging import *
 from .suitebro import Suitebro, load_suitebro, save_suitebro
 from .tool_lib import ParameterDict
 from .util import dict_walk
 from .selection import Selection
 from .tools import replace_url
 
-PRINT_LOCK = Lock()
 BACKUP_DIR = os.path.join(root_directory, 'backup')
 
 
 def _hash_image(data: Buffer):
     return hashlib.sha1(data, usedforsecurity=False).hexdigest()[:10]
-
-
-def print_safe(msg: str):
-    with PRINT_LOCK:
-        print(msg)
 
 
 def _url_hash(url: str):
@@ -76,7 +71,7 @@ def _download_image(url: str, cache: dict[str, str]) -> tuple[str, str | None]:
         if filename is None:
             return url, None
 
-        print_safe(f'Successfully retrieved {url} from the cache!')
+        info(f'Successfully retrieved {url} from the cache!')
         return url, filename
 
     try:
@@ -91,13 +86,13 @@ def _download_image(url: str, cache: dict[str, str]) -> tuple[str, str | None]:
             if filename is None:
                 return url, None
 
-            print_safe(f'{url} downloaded successfully.')
+            info(f'{url} downloaded successfully.')
 
             return url, filename
         else:
-            print_safe(f"Failed to download {url}. Status code: {response.status_code}")
+            error(f"Failed to download {url}. Status code: {response.status_code}")
     except Exception as e:
-        print_safe(f"An error occurred: {e}")
+        error(f"An error occurred: {e}")
 
     return url, None
 
@@ -137,11 +132,11 @@ async def _download_images(urls: Collection[str], install_dir: str, use_cache: b
                 for cacheline in cachelines:
                     md5_hash = os.path.basename(cacheline)[:-6]
                     canvas_cache[md5_hash] = cacheline
-            print(f'{Fore.GREEN}Successfully located {len(canvas_cache)} cached resources!{Style.RESET_ALL}')
+            success(f'Located {len(canvas_cache)} cached resources!')
         else:
-            from config import KEY_INSTALL_PATH
-            print(f'{Fore.RED} Failed to locate canvas cache! Make sure Tower Unite install path is set in the config'
-                  f' ({KEY_INSTALL_PATH}){Style.RESET_ALL}')
+            from .config import KEY_INSTALL_PATH
+            error(f'Failed to locate canvas cache! Make sure Tower Unite install path is set in the config'
+                  f' ({KEY_INSTALL_PATH})')
 
     results = await asyncio.gather(*[asyncio.to_thread(_download_image, url, canvas_cache) for url in urls])
 
@@ -208,8 +203,8 @@ def make_backup(save: Suitebro) -> str:
     with open('index.json', 'w') as fd:
         json.dump(index.to_dict(), fd, indent=2)
 
-    print(f'{Fore.GREEN}Successfully created backup at {os.path.relpath(backup_path, root_directory)}{Style.RESET_ALL}')
-    print(f'To restore this backup, run the command: pytower backup restore {os.path.basename(backup_path)}')
+    success(f'Created backup at {os.path.relpath(backup_path, root_directory)}')
+    info(f'To restore this backup, run the command: pytower backup restore {os.path.basename(backup_path)}')
 
     # Return to previous cwd
     os.chdir(old_cwd)
@@ -217,34 +212,29 @@ def make_backup(save: Suitebro) -> str:
     return backup_path
 
 
-def resource_available(url: str, debug: bool=False) -> bool:
+def resource_available(url: str) -> bool:
     try:
         # Use HEAD request for faster response
         response = requests.head(url, timeout=2, headers={'User-agent': 'PyTower'})
         if response.status_code == 200:
-            if debug:
-                print_safe(f"The website {url} is online and reachable.")
+            debug(f"The website {url} is online and reachable.")
             return True
         else:
-            if debug:
-                print_safe(f"The website {url} is online but returned status code: {response.status_code}")
+            debug(f"The website {url} is online but returned status code: {response.status_code}")
             return False
     except requests.ConnectionError:
-        if debug:
-            print_safe(f"The website {url} is unreachable.")
+        debug(f"The website {url} is unreachable.")
         return False
     except requests.Timeout:
-        if debug:
-            print_safe(f"Timeout occurred while trying to reach {url}.")
+        debug(f"Timeout occurred while trying to reach {url}.")
         return False
     except requests.RequestException as e:
-        if debug:
-            print_safe(f"An error occurred: {e}")
+        debug(f"An error occurred: {e}")
         return False
 
 
 def _reachable_thread(url: str) -> bool:
-    return resource_available(url, debug=True)
+    return resource_available(url)
 
 
 async def _check_links(urls: list[str]) -> set[str]:
@@ -265,7 +255,7 @@ def restore_backup(path: str, force_reupload: bool=False, backend: ResourceBacke
         if url not in available_urls or force_reupload:
             broken_files.append(filename)
 
-    print(f'Marked {len(broken_files)}/{len(index.resources.items())} resources for reupload')
+    info(f'Marked {len(broken_files)}/{len(index.resources.items())} resources for reupload')
 
     url_dict = backend.upload_files(broken_files)
     url_replacements: dict[str, str] = {}
@@ -277,15 +267,13 @@ def restore_backup(path: str, force_reupload: bool=False, backend: ResourceBacke
     num_success = len(url_replacements)
     num_total = len(broken_files)
     if num_success > 0:
-        color = Fore.YELLOW
+        level = WARNING_LEVEL_NUM
         if num_success == num_total:
-            color = Fore.GREEN
+            level = SUCCESS_LEVEL_NUM
 
-        print(f'{color}Successfully reuploaded {len(url_replacements)}/{len(broken_files)} to {backend.name}!', end='')
-        print(Style.RESET_ALL)
+        log(level, f'Reuploaded {len(url_replacements)}/{len(broken_files)} to {backend.name}!')
     elif num_total > 0:
-        print(f'{Fore.RED}Failed to reupload any files :(', end='')
-        print(Style.RESET_ALL)
+        error('Failed to reupload any files :(')
 
     # Now get the backed-up save
     save = load_suitebro(index.filename)

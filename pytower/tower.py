@@ -14,6 +14,7 @@ from .image_backends.backend import ResourceBackend
 from .image_backends.custom import CustomBackend
 from .image_backends.catbox import CatboxBackend
 from .image_backends.imgur import ImgurBackend
+from .logging import *
 from .selection import *
 from .suitebro import load_suitebro, save_suitebro, run_suitebro_parser
 from .tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
@@ -132,13 +133,13 @@ def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDic
     params = {}
     for param in param_input:
         if not isinstance(param, str):
-            print(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.',
+            error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.',
                   file=sys.stderr)
             sys.exit(1)
 
         param_split = param.split('=')
         if len(param_split) != 2:
-            print(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces and only'
+            error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces and only'
                   f'one equal sign.', file=sys.stderr)
             sys.exit(1)
 
@@ -165,7 +166,7 @@ def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDic
         try:
             value = info.dtype(value)
         except Exception as e:
-            print(f'Invalid value for {param.lower()}: {e}')
+            error(f'Invalid value for {param.lower()}: {e}')
             sys.exit(1)
         params[param] = value
 
@@ -181,7 +182,7 @@ def run(input_filename: str, tool: ToolMainType, selector: Selector | None = Non
 
     save = load_suitebro(input_filename)
 
-    print(f'Running tool {mock_metadata.tool_name}...')
+    info(f'Running tool {mock_metadata.tool_name}...')
 
     if selector is None:
         selector = ItemSelector()
@@ -227,7 +228,7 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
 
 
 def config_confirm_show() -> bool:
-    print('Warning, this config command may display personal information. Are you sure you want to continue?')
+    warning('This config command may display personal information. Are you sure you want to continue?')
     response = input('Y/n? >')
     if 'yes'.startswith(response.strip().casefold()):
         return True
@@ -254,7 +255,7 @@ def parse_selector(selection_input: str):
             group_id = int(gid_input)
             selector = GroupSelector(group_id)
         except ValueError:
-            print(f'{gid_input} is not valid group_id!')
+            error(f'{gid_input} is not valid group_id!')
             return None
     elif sel_input.startswith('regex:'):
         selector = RegexSelector(sel_split_case_sensitive[1])
@@ -299,8 +300,8 @@ def parse_selectors(selection_input: str) -> list[Selector]:
     # Validate
     for selector, sel_input in zip(selectors, inputs):
         if not selector:
-            print(f'Invalid selection: {sel_input}')
-            print('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
+            error(f'Invalid selection: {sel_input}')
+            info('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
             sys.exit(1)
 
     return cast(list[Selector], selectors)  # We know it's not None!
@@ -319,18 +320,20 @@ def parse_resource_backend(backends: list[ResourceBackend], backend_input: str) 
         if backend.name.strip().casefold().startswith(sanitized):
             return backend
 
-    print(f'Invalid backend {backend_input}! Available backends: {", ".join([backend.name for backend in backends])}',
+    error(f'Invalid backend {backend_input}! Available backends: {", ".join([backend.name for backend in backends])}',
           file=sys.stderr)
     sys.exit(1)
 
 
 def main():
+    debug(f"Ran command {' '.join(sys.argv)}")
+
     # Initialize colorama for pretty printing
     colorama.init(convert=sys.platform == 'win32')
 
     config = TowerConfig('config.json')
 
-    tools = load_tools(verbose=True)
+    tools = load_tools()
     tool_names = ', '.join([meta.tool_name for _, meta in tools if not meta.hidden])
     parser = get_parser(tool_names)
     args = parse_args(parser)
@@ -345,7 +348,7 @@ def main():
         case 'help':
             parser.print_help(sys.stdout)
         case 'version':
-            print(f'PyTower {__version__}')
+            info(f'PyTower {__version__}')
         case 'convert':
             filename: str = args['filename'].strip()
             abs_filepath = os.path.realpath(filename)
@@ -362,7 +365,7 @@ def main():
                 case 'save':
                     filename = args['filename']
                     if not os.path.isfile(filename):
-                        print(f'Could not find {filename}!')
+                        error(f'Could not find {filename}!')
                         sys.exit(1)
 
                     save = load_suitebro(filename)
@@ -372,7 +375,7 @@ def main():
                     from .backup import BACKUP_DIR
                     path = os.path.join(BACKUP_DIR, filename)
                     if not os.path.isdir(path):
-                        print(f'Could not find backup {path}!'
+                        error(f'Could not find backup {path}!'
                               f' Input must be the name of a folder in backups dictory')
                         sys.exit(1)
 
@@ -382,7 +385,7 @@ def main():
                 case _:
                     pass
         case 'list':
-            print('Available tools:')
+            info('Available tools:')
             for _, meta in tools:
                 if meta.hidden:
                     continue
@@ -392,17 +395,16 @@ def main():
                     tool_str += f' (v{meta.version})'
                 if meta.author is not None:
                     tool_str += f' by {meta.author}'
-                print(tool_str)
+                info(tool_str)
         case 'info':
             tool_name = args['tool'].strip().casefold()
             tool = find_tool(tools, tool_name)
             if tool:
                 _, meta = tool
-                print(meta.get_info())
+                info(meta.get_info())
                 sys.exit(0)
 
-            print(Fore.RED + f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
-            print(Style.RESET_ALL)
+            error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
             sys.exit(1)
         case 'scan':
             for file in os.listdir(args['path']):
@@ -423,7 +425,7 @@ def main():
                             break
 
                     if exists:
-                        print(f'Found already registered script {file}')
+                        info(f'Found already registered script {file}')
                         continue
 
                     # At this point, the tool script must be novel so load it
@@ -440,7 +442,7 @@ def main():
 
             # Error if could not find specified tool
             if not tool:
-                print(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}', file=sys.stderr)
+                error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}', file=sys.stderr)
                 sys.exit(1)
 
             module_or_path, meta = tool
@@ -475,7 +477,7 @@ def main():
                 selection = selector.select(selection)
 
             if args['invert-full'] and args['invert']:
-                print('--invert-all and --invert cannot be used at the same time!')
+                critical('--invert-all and --invert cannot be used at the same time!')
                 sys.exit(1)
 
             if args['invert-full']:
@@ -485,7 +487,7 @@ def main():
 
             # Run tool
             params = parse_parameters(args['parameters'], meta)
-            print(f'Running tool {meta.tool_name}...')
+            info(f'Running tool {meta.tool_name}...')
 
             if not args['per_group']:
                 # Normal execution
@@ -501,9 +503,7 @@ def main():
 
             # Writeback save
             save_suitebro(save, args['output'], only_json=only_json)
-
-            print(Fore.GREEN + f'\nSuccessfully exported to {args["output"]}!')
-            print(Style.RESET_ALL)
+            success(f'Exported to {args["output"]}!')
 
             # Display items in save
             final_inv_items_count = save.inventory_count()
@@ -514,9 +514,9 @@ def main():
                     break
 
             if print_items:
-                print('Make sure you have the following items in your inventory before loading the map:')
+                info('Make sure you have the following items in your inventory before loading the map:')
                 for name, count in final_inv_items_count.items():
-                    print(f'{count:>9,}x {name}')
+                    info(f'{count:>9,}x {name}')
         case 'fix':
             filename = args['filename'].strip()
             path = os.path.abspath(os.path.expanduser(filename))
@@ -526,7 +526,7 @@ def main():
             match args['config_mode']:
                 case 'get':
                     if config_confirm_show():
-                        print(config.get(args['key']))
+                        info(config.get(args['key']))
                 case 'set':
                     k, v = args['key'], ' '.join(args['value'])
                     try:
@@ -534,14 +534,14 @@ def main():
                             config.set(k, bool(v))
                         else:
                             config.set(k, v)
+                        success(f'{k} is now set to {v}')
                     except ValueError:
-                        print(f'{k} is not in config!')
-                        print(f'List of config keys: {"".join(config.keys())}')
-                    print(f'{k} is now set to {v}')
+                        error(f'{k} is not in config!')
+                        info(f'List of config keys: {"".join(config.keys())}')
                 case 'view':
                     if config_confirm_show():
                         for k, v in dict(config).items():
-                            print(f'{k}: {v}')
+                            info(f'{k}: {v}')
                 case _:
                     pass
         case _:

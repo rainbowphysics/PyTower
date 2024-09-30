@@ -3,6 +3,7 @@ from typing import Iterable
 import requests
 
 from .backend import ResourceBackend
+from pytower.logging import *
 
 IMGUR_API = "https://api.imgur.com/3/upload"
 
@@ -28,5 +29,5 @@ class ImgurBackend(ResourceBackend):
             return data['data']['link']
         else:
             # Request was not successful
-            print(f"Error uploading image: {response.status_code} {response.reason}")
+            error(f"Error uploading image: {response.status_code} {response.reason}")
             return None

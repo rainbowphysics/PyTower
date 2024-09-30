@@ -3,29 +3,12 @@ import sys
 import threading
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Iterable, IO, Literal, ParamSpec, Protocol, TypeVar, cast
-
-_T_contra = TypeVar("_T_contra", contravariant=True)
-
-
-class SupportsWrite(Protocol[_T_contra]):
-    def write(self, s: _T_contra, /) -> object: ...
+from pytower.logging import *
 
 
 class ResourceBackend(ABC):
     def __init__(self, name: str):
         self.name = name
-        self.print_lock = threading.Lock()
-
-    def safe_print(
-            self,
-            *values: object,
-            sep: str | None = " ",
-            end: str | None = "\n",
-            file: SupportsWrite[str] | None = None,
-            flush: Literal[False] = False
-    ):
-        with self.print_lock:
-            print(values, sep=sep, end=end, file=file, flush=flush)
 
     # Upload image takes as input a path and returns the uploaded url
     @abstractmethod
@@ -36,11 +19,11 @@ class ResourceBackend(ABC):
         try:
             url = self.upload_file(path)
             if url:
-                self.safe_print(f'Successfully uploaded {path} to {self.name}: {url}')
+                info(f'Successfully uploaded {path} to {self.name}: {url}')
 
             return url
         except Exception as e:
-            self.safe_print(f'Error while uploading file: {e}', file=sys.stderr)
+            error(f'Error while uploading file: {e}')
             return None
 
     async def _upload_async(self, files: Iterable[str]) -> dict[str, str]:

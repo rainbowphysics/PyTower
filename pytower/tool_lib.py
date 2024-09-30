@@ -1,7 +1,5 @@
 import collections
-from colorama import Fore, Style
 import json
-import os
 import pkgutil
 import importlib.util
 import importlib
@@ -9,7 +7,7 @@ import sys
 from types import ModuleType
 from typing import Any, Callable, TypeVar, overload
 
-from .__config__ import root_directory
+from .logging import *
 from .selection import Selection
 from .suitebro import Suitebro
 from .util import not_none, xyz, xyz_to_string, xyzint
@@ -145,11 +143,10 @@ ToolListType = list[tuple[ModuleType, ToolMetadata]]
 PartialToolListType = list[tuple[ModuleType | str, ToolMetadata]]
 
 
-def load_tool(script_path: str, verbose: bool=True) -> tuple[ModuleType, ToolMetadata] | None:
+def load_tool(script_path: str) -> tuple[ModuleType, ToolMetadata] | None:
     script = os.path.basename(script_path)
     module_name = os.path.splitext(script)[0]
-    if verbose:
-        print(f"Loading tool script: {module_name}")
+    info(f'Loading tool script: {module_name}')
     try:
         # TODO convert from importlib.util to pkgutil
         spec = not_none(importlib.util.spec_from_file_location(module_name, script_path))
@@ -162,32 +159,27 @@ def load_tool(script_path: str, verbose: bool=True) -> tuple[ModuleType, ToolMet
         version = ToolMetadata.strattr_or_default(module, 'VERSION', None)
         author = ToolMetadata.strattr_or_default(module, 'AUTHOR', None)
         url = ToolMetadata.strattr_or_default(module, 'URL', None)
-        info = ToolMetadata.strattr_or_default(module, 'INFO', None)
+        tool_info = ToolMetadata.strattr_or_default(module, 'INFO', None)
         hidden = ToolMetadata.attr_or_default(module, 'HIDDEN', False)
 
         # Check if the module has a main function before registering it
         if not hasattr(module, 'main') and not hidden:
-            if verbose:
-                print(Fore.RED + f"No 'main' function found in tool '{tool_name}'. Skipping.")
-                print(Style.RESET_ALL)
+            error(f"No 'main' function found in tool '{tool_name}'. Skipping.")
             return None
 
-        if verbose:
-            success_message = f'Successfully loaded {tool_name}'
-            if version is not None:
-                success_message += f' {version}'
-            if author is not None:
-                success_message += f' by {author}'
+        success_message = f'Successfully loaded {tool_name}'
+        if version is not None:
+            success_message += f' {version}'
+        if author is not None:
+            success_message += f' by {author}'
 
-            if not hidden and verbose:
-                print(Fore.GREEN + success_message)
-                print(Style.RESET_ALL)
+        if not hidden:
+            success(success_message)
 
-        return module, ToolMetadata(tool_name, params, version, author, url, info, hidden)
+        return module, ToolMetadata(tool_name, params, version, author, url, tool_info, hidden)
 
     except Exception as e:
-        print(Fore.RED + f"Error loading tool '{script}': {e}")
-        print(Style.RESET_ALL)
+        error(f"Error loading tool '{script}': {e}")
 
 
 TOOLS_PATH = os.path.join(root_directory, 'tools')
@@ -224,8 +216,7 @@ def get_tool_scripts() -> list[str]:
 
     python_files = [f for f in files if f.endswith('.py') and f != '__init__.py']
     if not python_files:
-        print(Fore.RED + "No Python scripts found in 'tools' folder.")
-        print(Style.RESET_ALL)
+        error("No Python scripts found in 'tools' folder.")
         return []
 
     python_files = sorted(python_files)
@@ -239,7 +230,7 @@ def get_indexed_tools() -> PartialToolListType | None:
         with open(TOOLS_INDEX_PATH, 'r') as fd:
             tools_index = json.load(fd)
     except (OSError, json.JSONDecodeError):
-        print('Failed to load tools index... Will regenerate')
+        warning('Failed to load tools index... Will regenerate')
         return None
 
     output_tools = PartialToolListType()
@@ -259,7 +250,7 @@ def get_indexed_tools() -> PartialToolListType | None:
         if index_mtime != actual_mtime:
             tool_tuple = load_tool(tool_path)
             if tool_tuple is None:
-                print(f'Failed to load tool from index: {tool_path}')
+                warning(f'Failed to load tool from index: {tool_path}')
                 continue
 
             output_tools.append(tool_tuple)
@@ -270,16 +261,16 @@ def get_indexed_tools() -> PartialToolListType | None:
     for script_path in get_tool_scripts():
         # If tool not found in index, load and add it
         if script_path not in tools_index:
-            print(f'NEW TOOL SCRIPT DETECTED: {os.path.basename(script_path)} (located in '
+            info(f'NEW TOOL SCRIPT DETECTED: {os.path.basename(script_path)} (located in '
                   f'{os.path.dirname(script_path)})')
             response = input('Are you sure you want to trust this script? (Y/n)\n').strip().casefold()
             if response == 'y' or response == 'ye' or response == 'yes':
                 tool_tuple = load_tool(script_path)
                 if tool_tuple is None:
-                    print(f'Failed to load tool: {script_path}')
+                    error(f'Failed to load tool: {script_path}')
                     continue
             else:
-                print('Aborting program.')
+                info('Aborting program.')
                 sys.exit(0)
 
             output_tools.append(tool_tuple)
@@ -289,9 +280,9 @@ def get_indexed_tools() -> PartialToolListType | None:
     return output_tools
 
 
-def load_tools(verbose: bool=True) -> PartialToolListType:
+def load_tools() -> PartialToolListType:
     # First load the index
-    print('Loading index file...')
+    info('Loading index file...')
     tools_index = get_indexed_tools()
 
     # If we were successful in loading the tools index, perfect we're done!
@@ -309,7 +300,7 @@ def load_tools(verbose: bool=True) -> PartialToolListType:
     # Append each successfully loaded tool to the output
     tools: PartialToolListType = []
     for path in tool_paths:
-        load_result = load_tool(path, verbose=verbose)
+        load_result = load_tool(path)
         if load_result is None:
             continue
         tools.append(load_result)

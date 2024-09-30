@@ -7,9 +7,9 @@ from subprocess import Popen, PIPE
 from typing import Any, Sequence, TypedDict
 
 import numpy as np
-from colorama import Fore, Back, Style
 
 from .__config__ import root_directory
+from .logging import *
 from .selection import Selection
 from .object import TowerObject
 
@@ -268,8 +268,7 @@ def get_suitebro_path():
         if os.path.isdir(source_dir):
             return source_dir
         else:
-            print('Error: could not find tower-unite-suitebro. Is suitebro installed in a folder named tower-unite-'
-                  'suitebro?', file=sys.stderr)
+            critical('Could not find tower-unite-suitebro. Is suitebro installed in a folder named tower-unite-suitebro?')
             sys.exit(1)
 
     if sys.platform == 'win32':
@@ -293,7 +292,7 @@ def get_suitebro_path():
         else:
             subdir = os.path.join(os.path.join('lib', 'linux'), 'tower-unite-save-x86_64-unknown-linux-gnu')
     else:
-        print(f'{sys.platform} is not supported :( try running in json-only mode with the -j flag', file=sys.stderr)
+        critical(f'{sys.platform} is not supported :( try running in json-only mode with the -j flag')
         sys.exit(1)
 
     return os.path.join(root_directory, subdir)
@@ -315,17 +314,15 @@ def run_suitebro_parser(input_path: str, to_save: bool, output_path: str,
                     f' -i \"{input_path}\" -o \"{output_path}\"', stdout=PIPE, shell=True)
     (output, err) = process.communicate()
     for line in output.splitlines(False):
-        print(line.decode('ascii'))
+        info(line.decode('ascii'))
 
     exit_code = process.wait()
 
     if exit_code != 0:
-        print(Fore.RED + 'Suitebro parser did not complete successfully!')
-        print(Style.RESET_ALL)
+        critical('Suitebro parser did not complete successfully!')
         return False
 
-    print(
-        Fore.GREEN + f'Successfully converted {pretty_path(input_path)} to {pretty_path(output_path)}' + Style.RESET_ALL)
+    success(f'Converted {pretty_path(input_path)} to {pretty_path(output_path)}')
     return True
 
 
@@ -337,7 +334,7 @@ def load_suitebro(filename: str, only_json: bool = False) -> Suitebro:
     if not only_json:
         run_suitebro_parser(abs_filepath, False, json_output_path, overwrite=True)
 
-    print('Loading JSON file...')
+    info('Loading JSON file...')
     with open(json_output_path, 'r', encoding='utf-8') as fd:
         save_json = json.load(fd)
 
