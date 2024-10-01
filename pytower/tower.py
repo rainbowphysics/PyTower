@@ -175,7 +175,17 @@ def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDic
     return params
 
 
-def run(input_filename: str, tool: ToolMainType, selector: Selector | None = None, params: list[str] = []):
+def run(input_filename: str, tool: ToolMainType, selector: Selector | None = None, params: list[str] | None = None):
+    """ Mock run for rapid prototyping tools
+
+    Args:
+        input_filename: Path or filename of the CondoData/.map file to use
+        tool: Main method reference for the tool to run
+        selector: Selector to use on input
+        params: Parameter list
+    """
+    if params is None:
+        params = []
     tool_path: str = tool.__globals__['__file__']
     mock_tool, mock_metadata = not_none(load_tool(tool_path))
     mock_params = parse_parameters(params, mock_metadata)
@@ -330,10 +340,20 @@ def parse_resource_backend(backends: list[ResourceBackend], backend_input: str) 
 
 
 def version() -> str:
+    """ PyTower version
+
+    Returns:
+        The version as a string, in the format "PyTower {version}"
+    """
     return f'PyTower {__version__}'
 
 
 def convert(filename: str):
+    """Converts input into .json or vice versa, from the uesave tower-unite-suitebro .json format
+
+    Args:
+        filename: Path or file name of the CondoData/.map file to convert
+    """
     filename = filename.strip()
     abs_filepath = os.path.realpath(filename)
     in_dir = os.path.dirname(abs_filepath)
@@ -348,6 +368,15 @@ def convert(filename: str):
 
 def backup(mode: str, filename: str, backends: list[ResourceBackend] | None = None, backend: str = 'Catbox',
            force: bool = False):
+    """Prints list of tools
+
+    Args:
+        mode: Either 'save' or 'restore'
+        filename: Path or file name of the CondoData/.map file to backup
+        backends: List of resource backends, if included avoids reloading
+        backend: Backend to use when restoring
+        force: Whether to force reupload of resources
+    """
     if backends is None:
         backends = get_resource_backends()
 
@@ -464,7 +493,18 @@ def scan(path: str, tools: PartialToolListType | None = None) -> PartialToolList
     return tools
 
 
-def fix(backends: list[ResourceBackend], filename: str, backend: str = 'Catbox', force: bool = False):
+def fix(filename: str, backends: list[ResourceBackend] | None = None, backend: str = 'Catbox', force: bool = False):
+    """Scans a directory for tool scripts and registers detected tool scripts
+
+    Args:
+        filename: Path or file name of the CondoData/.map file to fix
+        backends: List of resource backends, if included avoids reloading
+        backend: Backend to use when fixing
+        force: Whether to force reupload of resources
+    """
+    if backends is None:
+        backends = get_resource_backends()
+
     filename = filename.strip()
     path = os.path.abspath(os.path.expanduser(filename))
     backend = parse_resource_backend(backends, backend)
@@ -591,7 +631,7 @@ def main():
                 for name, count in final_inv_items_count.items():
                     info(f'{count:>9,}x {name}')
         case 'fix':
-            fix(backends, args['filename'], args['backend'], args['force'])
+            fix(args['filename'], backends, args['backend'], args['force'])
         case 'config':
             match args['config_mode']:
                 case 'get':
