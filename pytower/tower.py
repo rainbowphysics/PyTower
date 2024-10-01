@@ -396,7 +396,7 @@ def info_tool(tools: PartialToolListType, tool_input, tool_names: str = ''):
 
 def scan(path: str, tools: PartialToolListType | None = None) -> PartialToolListType:
     if tools is None:
-        tools = []
+        tools = load_tools()
 
     for file in os.listdir(path):
         if file.endswith('.py') and file != '__init__.py' and file != '__main__.py' and file != 'setup.py':
