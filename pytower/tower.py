@@ -227,6 +227,10 @@ def find_tool(tools: PartialToolListType, name: str) -> tuple[ModuleType | str, 
     return best_match
 
 
+def get_tool_names(tools: PartialToolListType) -> str:
+    return ', '.join([meta.tool_name for _, meta in tools if not meta.hidden])
+
+
 def config_confirm_show() -> bool:
     warning('This config command may display personal information. Are you sure you want to continue?')
     response = input('Y/n? >')
@@ -342,7 +346,11 @@ def convert(filename: str):
         run_suitebro_parser(abs_filepath, False, output, overwrite=True)
 
 
-def backup(backends: list[ResourceBackend], mode: str, filename: str, backend: str = 'Catbox', force: bool = False):
+def backup(mode: str, filename: str, backends: list[ResourceBackend] | None = None, backend: str = 'Catbox',
+           force: bool = False):
+    if backends is None:
+        backends = get_resource_backends()
+
     match mode:
         case 'save':
             if not os.path.isfile(filename):
@@ -366,7 +374,15 @@ def backup(backends: list[ResourceBackend], mode: str, filename: str, backend: s
             pass
 
 
-def list_tools(tools: PartialToolListType):
+def list_tools(tools: PartialToolListType | None = None):
+    """Prints list of tools
+
+    Args:
+        tools: List of tools, if included avoids reloading the tool index
+    """
+    if tools is None:
+        tools = load_tools()
+
     info('Available tools:')
     for _, meta in tools:
         if meta.hidden:
@@ -380,7 +396,17 @@ def list_tools(tools: PartialToolListType):
         info(tool_str)
 
 
-def info_tool(tools: PartialToolListType, tool_input, tool_names: str = ''):
+def info_tool(tool_input: str, tools: PartialToolListType | None = None, tool_names: str = ''):
+    """Prints information about input tool name
+
+    Args:
+        tool_input: Name of the tool to print info for
+        tools: List of tools, if included avoids reloading the tool index
+        tool_names: Tool names, if included avoids recalculating
+    """
+    if tools is None:
+        tools = load_tools()
+
     tool_name = tool_input.strip().casefold()
     tool = find_tool(tools, tool_name)
     if tool:
@@ -389,12 +415,21 @@ def info_tool(tools: PartialToolListType, tool_input, tool_names: str = ''):
         return
 
     error(f'Could not find {tool_input}! \n')
-    if tool_names:
-        info(f'Available tools: {tool_names}')
+
+    if not tool_names:
+        tool_names = get_tool_names(tools)
+    info(f'Available tools: {tool_names}')
+
     sys.exit(1)
 
 
 def scan(path: str, tools: PartialToolListType | None = None) -> PartialToolListType:
+    """Scans a directory for tool scripts and registers detected tool scripts
+
+    Args:
+        path: Path of directory to scan
+        tools: List of tools, if included avoids reloading the tool index
+    """
     if tools is None:
         tools = load_tools()
 
@@ -445,7 +480,7 @@ def main():
     config = TowerConfig('config.json')
 
     tools = load_tools()
-    tool_names = ', '.join([meta.tool_name for _, meta in tools if not meta.hidden])
+    tool_names = get_tool_names(tools)
     parser = get_parser(tool_names)
     args = parse_args(parser)
 
@@ -463,11 +498,11 @@ def main():
         case 'convert':
             convert(args['filename'])
         case 'backup':
-            backup(backends, args['mode'], args['filename'], args['backend'], args['force'])
+            backup(args['mode'], args['filename'], backends, args['backend'], args['force'])
         case 'list':
             list_tools(tools)
         case 'info':
-            info_tool(tools, args['tool'], tool_names)
+            info_tool(args['tool'], tools, tool_names)
         case 'scan':
             scan(args['path'], tools)
         case 'run':
