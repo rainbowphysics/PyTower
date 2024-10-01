@@ -35,7 +35,15 @@ class PyTowerParser(argparse.ArgumentParser):
         return super().add_subparsers(**kwargs)
 
 
-def get_parser(tool_names: str):
+def get_parser(tool_names: str) -> PyTowerParser:
+    """
+
+    Args:
+        tool_names: List of tool names as a string. Used when running `pytower`
+
+    Returns:
+        The argparse parser used to parse the program input
+    """
     parser = PyTowerParser(prog='pytower',
                            description='High-level toolset and Python API for Tower Unite map editing',
                            epilog=f'Detected tools: {tool_names}')
@@ -129,18 +137,26 @@ def parse_args(parser: PyTowerParser | None = None):
 
 
 def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDict:
+    """Parse input parameters into a ParameterDict to pass into tool's main method
+
+    Args:
+        param_input: List of strings in the format "parameter=value" to be parsed
+        meta: Accompanying metadata of the tool being run
+
+    Returns:
+        ParameterDict object containing parsed parameters, which can be accessed with dot notation or like a dictionary
+    """
     # Ensure that all inputs were parsed correctly as strings
     params = {}
     for param in param_input:
         if not isinstance(param, str):
-            error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.',
-                  file=sys.stderr)
+            error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces.')
             sys.exit(1)
 
         param_split = param.split('=')
         if len(param_split) != 2:
             error(f'Invalid parameter: {param}.\n\nShould have format "parameter=value" with no spaces and only'
-                  f'one equal sign.', file=sys.stderr)
+                  f'one equal sign.')
             sys.exit(1)
 
         param_name, value = param_split
@@ -250,7 +266,15 @@ def config_confirm_show() -> bool:
     return False
 
 
-def parse_selector(selection_input: str):
+def parse_selector(selection_input: str) -> Selector | None:
+    """Parses a single selector string input into a Selector object
+
+    Args:
+        selection_input: Input string to parse
+
+    Returns:
+        Parsed Selector object
+    """
     sel_input = selection_input.casefold().strip()
     sel_split = sel_input.split(':')
     sel_split_case_sensitive = selection_input.strip().split(':')
@@ -308,6 +332,14 @@ def parse_selector(selection_input: str):
 
 
 def parse_selectors(selection_input: str) -> list[Selector]:
+    """Parses an input string, where each selector is separated with a ';', into a sequence of Selector objects
+
+    Args:
+        selection_input: String input to parse
+
+    Returns:
+        List of Selector
+    """
     inputs = selection_input.split(';')
     selectors = [parse_selector(input_sel) for input_sel in inputs]
 
@@ -322,6 +354,10 @@ def parse_selectors(selection_input: str) -> list[Selector]:
 
 
 def get_resource_backends() -> list[ResourceBackend]:
+    """
+    Returns:
+        List of ResourceBackends registered with PyTower
+    """
     from pytower.config import CONFIG, KEY_IMGUR_CLIENT_ID, KEY_CATBOX_USERHASH
     imgur_client_id = CONFIG.get(KEY_IMGUR_CLIENT_ID, str)
     user_hash = CONFIG.get(KEY_CATBOX_USERHASH, str)
@@ -334,8 +370,8 @@ def parse_resource_backend(backends: list[ResourceBackend], backend_input: str) 
         if backend.name.strip().casefold().startswith(sanitized):
             return backend
 
-    error(f'Invalid backend {backend_input}! Available backends: {", ".join([backend.name for backend in backends])}',
-          file=sys.stderr)
+    error(f'Invalid backend {backend_input}!'
+          f' Available backends: {", ".join([backend.name for backend in backends])}')
     sys.exit(1)
 
 
@@ -512,6 +548,7 @@ def fix(filename: str, backends: list[ResourceBackend] | None = None, backend: s
 
 
 def main():
+    """Entrypoint for PyTower"""
     debug(f"Ran command {' '.join(sys.argv)}")
 
     # Initialize colorama for pretty printing
@@ -552,7 +589,7 @@ def main():
 
             # Error if could not find specified tool
             if not tool:
-                error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}', file=sys.stderr)
+                error(f'Could not find {args["tool"]}! \n\nAvailable tools: {tool_names}')
                 sys.exit(1)
 
             module_or_path, meta = tool
@@ -611,10 +648,11 @@ def main():
                 for obj in selection.ungrouped():
                     module.main(save, Selection({obj}), params)
 
-            # Writeback save
+            # Skip writeback if tool has NO_WRITE = True
             if meta.nowrite:
                 return
 
+            # Writeback save
             save_suitebro(save, args['output'], only_json=only_json)
             success(f'Exported to {args["output"]}!')
 

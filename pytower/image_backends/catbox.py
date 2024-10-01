@@ -41,5 +41,5 @@ class CatboxBackend(ResourceBackend):
             return response.text
         else:
             # Upload failed
-            error(f"Catbox upload failed with status code: {response.status_code}", file=sys.stderr)
+            error(f"Catbox upload failed with status code: {response.status_code}")
             return None
