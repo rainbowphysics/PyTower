@@ -161,9 +161,21 @@ def make_backup(save: Suitebro) -> str:
     save_name = save_name.replace(' ', '-').strip()
 
     cur_time = datetime.datetime.now()
-    timestamp = str(cur_time).replace(' ', '-').replace(':', '-')
+    timestamp = cur_time.strftime('%m-%d-%Y_%H%M%S')
 
     backup_path = os.path.join(BACKUP_DIR, f'{save_name}_{timestamp}')
+
+    # Attach a suffix starting with _1 and incrementing upwards if the backup name already exists
+    """
+    while os.path.exists(backup_path):
+        split = backup_path.split('_')
+        suffix = split[-1]
+        if '-' in suffix:
+            backup_path = f'{backup_path}_1'
+        else:
+            backup_path = f"{''.join(split[:-1])}_{int(suffix)+1}"
+    """
+
     os.makedirs(backup_path)
 
     # chdir to it
