@@ -7,6 +7,7 @@ import numpy as np
 
 from scipy.spatial.transform import Rotation as R
 
+from .logging import *
 from .object import TowerObject
 from .suitebro import Suitebro
 from .util import xyz, XYZ
@@ -425,6 +426,41 @@ WEDGE_PROPERTY_DATA = json.loads('''
     ''')
 
 
+class OctreeNode:
+    """Axis-aligned octree node implementation"""
+
+    def __init__(self, centroid: XYZ, size: float, point: XYZ):
+        self.centroid = centroid
+        self.size = size
+        self.point = point
+        self.children = [None] * 8
+
+    def contains(self, point: XYZ) -> bool:
+        return point.clamp(self.centroid - self.size / 2, self.centroid + self.size / 2).distance(point) < XYZ.EPSILON
+
+    def traverse(self, point: XYZ) -> 'OctreeNode' | None:
+        if not self.contains(point):
+            return None
+
+        pos_dirs = point >= self.centroid
+        dirs = [1 if x else 0 for x in pos_dirs]
+        bitstring = dirs[2] << 2 | dirs[1] << 1 | dirs[0]
+        return self.children[bitstring]
+
+
+class OctreeBVH:
+    def __init__(self, centroid: XYZ, size: float):
+        self.root = None
+        self.centroid = centroid
+        self.size = size
+
+    def add_point(self, p: XYZ):
+        if self.root is None:
+            self.root = OctreeNode(self.centroid, self.size, p)
+
+        # TODO
+
+
 def load_mesh(path):
     mesh = o3d.io.read_triangle_mesh(path)
     vertices = np.asarray(mesh.vertices)
@@ -466,8 +502,8 @@ def convert_triangle(face: np.ndarray):
     tris = divide_triangle(face)
     wedges = []
     for tri in tris:
-        #print('Face')
-        #print(tri)
+        # print('Face')
+        # print(tri)
         wedge = TowerObject(item=WEDGE_ITEM_DATA, properties=WEDGE_PROPERTY_DATA)
 
         # Scale from side lengths
@@ -477,7 +513,7 @@ def convert_triangle(face: np.ndarray):
         scale[2] = xyz(tri[0]).distance(tri[2]) / 50
         wedge.scale = scale
 
-        #if scale[0] < 0.01 or scale[1] < 0.01 or scale[2] < 0.01:
+        # if scale[0] < 0.01 or scale[1] < 0.01 or scale[2] < 0.01:
         #    print(f'FUUCK: {scale}')
 
         # Apply rotation
@@ -485,13 +521,13 @@ def convert_triangle(face: np.ndarray):
         ac_dir = xyz(tri[2] - tri[0]).normalize()
         perp = xyz(np.cross(ab_dir, ac_dir)).normalize()
         rot_matrix = np.matrix.transpose(np.array([ab_dir, -perp, ac_dir]))
-        #print('Rotation matrix:')
-        #print(rot_matrix)
-        #print(np.linalg.det(rot_matrix))
-        #eggs = np.linalg.eigvals(rot_matrix)
-        #print(eggs)
+        # print('Rotation matrix:')
+        # print(rot_matrix)
+        # print(np.linalg.det(rot_matrix))
+        # eggs = np.linalg.eigvals(rot_matrix)
+        # print(eggs)
         rot = R.from_matrix(rot_matrix)
-        #print(rot.as_matrix())
+        # print(rot.as_matrix())
         wedge.rotation = rot.as_quat()
 
         # Translate to centroid
@@ -504,8 +540,8 @@ def convert_triangle(face: np.ndarray):
         tri_centroid = np.sum(tri, axis=0) / 3
         wedge.position += tri_centroid
 
-        #print('Position:')
-        #print(wedge.position)
+        # print('Position:')
+        # print(wedge.position)
 
         wedges.append(wedge)
 

@@ -39,6 +39,7 @@ def run_if_not_none(func, data):
 
 class XYZ(np.ndarray):
     py_dtype = float
+    EPSILON = 1e-7
 
     def __new__(cls, *args) -> 'XYZ':
         new_instance = xyz(*args).view(cls)
