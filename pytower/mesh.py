@@ -1,6 +1,7 @@
 import json
 import sys
 import uuid
+from typing import Optional
 
 import open3d as o3d
 import numpy as np
@@ -438,7 +439,7 @@ class OctreeNode:
     def contains(self, point: XYZ) -> bool:
         return point.clamp(self.centroid - self.size / 2, self.centroid + self.size / 2).distance(point) < XYZ.EPSILON
 
-    def traverse(self, point: XYZ) -> 'OctreeNode' | None:
+    def traverse(self, point: XYZ) -> Optional['OctreeNode']:
         if not self.contains(point):
             return None
 
