@@ -42,6 +42,8 @@ _sv = _v('Struct')
 _iv = _v('Int')
 _nv = _v('Name')
 _av = _v('Array')
+_fv = _v('Float')
+_bv = _v('Bool')
 
 Spec = list[str]
 
@@ -77,6 +79,17 @@ _RESPAWN_SCALE3D_SPEC = spec_keys(f'properties.RespawnLocation.{_sv}.{_s("Scale3
 _WORLD_SCALE_SPEC = spec_keys(f'properties.WorldScale.{_sv}.Vector')
 _ITEM_CONNECTIONS_PARENT_SPEC = spec_keys(f'properties.ItemConnections')
 _ITEM_CONNECTIONS_SPEC = spec_keys(f'properties.ItemConnections.{_av}.{_sv}')
+
+DEFAULT_PROPS = {
+    f'Emissive.{_fv}': 0.0,
+    f'ScaleX.{_fv}': 1.0,
+    f'ScaleY.{_fv}': 1.0,
+    f'ScaleZ.{_fv}': 1.0,
+    f'Rotation.{_fv}': 0.0,
+    f'ItemCustomName.{_nv}': 'None',
+    f'ItemCustomFolder.{_nv}': 'None',
+    f'bCanBeDamaged.{_bv}': True
+}
 
 # UUID4 regex pattern
 _UUID_PATTERN = re.compile('^' + '-'.join([fr'[\da-f]{{{d}}}' for d in [8, 4, 4, 4, 12]]) + '$')
@@ -287,6 +300,21 @@ class TowerObject:
 
     # endregion scale
 
+    def compress(self):
+        if self.properties is None:
+            return
+
+        props = self.properties['properties']
+        for raw_spec, default in DEFAULT_PROPS.items():
+            spec = spec_keys(raw_spec)
+            try:
+                value = get_in(spec, props, no_default=True)
+                if value == default:
+                    del props[spec[0]]
+            except KeyError:
+                continue
+
+        self.properties['properties'] = props
     def _check_connetions(self):
         if not _exists(self.item, _ITEM_CONNECTIONS_SPEC):
             self.item = update_in(self.item, _ITEM_CONNECTIONS_PARENT_SPEC,

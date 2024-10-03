@@ -116,6 +116,10 @@ def get_parser(tool_names: str) -> PyTowerParser:
     fix_parser.add_argument('-b', '--backend', dest='backend', type=str, default='catbox',
                             help='Backend to use (Imgur or Catbox)')
 
+    # Compress subcommand
+    compress_parser = subparsers.add_parser('compress', help='Compress file by removing some default fields')
+    compress_parser.add_argument('filename', type=str, help='File to use as input')
+
     # Config subcommand
     config_parser = subparsers.add_parser('config', help='PyTower configuration')
     config_subparsers = config_parser.add_subparsers(dest='config_mode', required=True)
@@ -429,7 +433,7 @@ def backup(mode: str, filename: str, backends: list[ResourceBackend] | None = No
             path = os.path.join(BACKUP_DIR, filename)
             if not os.path.isdir(path):
                 error(f'Could not find backup {path}!'
-                      f' Input must be the name of a folder in backups dictory')
+                      f' Input must be the name of a folder in backups directory')
                 sys.exit(1)
 
             backend = parse_resource_backend(backends, backend)
@@ -670,6 +674,17 @@ def main():
                     info(f'{count:>9,}x {name}')
         case 'fix':
             fix(args['filename'], backends, args['backend'], args['force'])
+        case 'compress':
+            filename = args['filename']
+            if not os.path.isfile(filename):
+                error(f'Could not find {filename}!')
+                sys.exit(1)
+
+            save = load_suitebro(filename)
+            for obj in save.objects:
+                obj.compress()
+
+            save_suitebro(save, filename)
         case 'config':
             match args['config_mode']:
                 case 'get':
