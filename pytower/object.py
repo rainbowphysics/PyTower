@@ -301,20 +301,15 @@ class TowerObject:
     # endregion scale
 
     def compress(self):
-        if self.properties is None:
+        if self.properties is None or self.item is None:
             return
 
-        props = self.properties['properties']
-        for raw_spec, default in DEFAULT_PROPS.items():
-            spec = spec_keys(raw_spec)
-            try:
-                value = get_in(spec, props, no_default=True)
-                if value == default:
-                    del props[spec[0]]
-            except KeyError:
-                continue
+        prop_entries = copy.copy(set(self.properties['properties'].keys()))
+        for prop in prop_entries:
+            if prop not in self.item['properties']:
+                del self.properties['properties'][prop]
 
-        self.properties['properties'] = props
+
     def _check_connetions(self):
         if not _exists(self.item, _ITEM_CONNECTIONS_SPEC):
             self.item = update_in(self.item, _ITEM_CONNECTIONS_PARENT_SPEC,
