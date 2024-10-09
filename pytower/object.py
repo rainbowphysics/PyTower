@@ -126,14 +126,22 @@ class TowerObject:
         if self.item is not None:
             self.guid = str(uuid.uuid4()).lower()
 
-    def _set_property(self, path: Spec, value: Any):
+    def set_property(self, path: Spec | str, value: Any):
         assert self.item is not None
+
+        if isinstance(path, str):
+            path = spec_keys(path)
+
         self.item = update_in(self.item, path, lambda _: value)
         if self.properties is not None:
-            self._set_meta_property(path, value)
+            self.set_meta_property(path, value)
 
-    def _set_meta_property(self, path: Spec, value: Any):
+    def set_meta_property(self, path: Spec | str, value: Any):
         assert self.properties is not None
+
+        if isinstance(path, str):
+            path = spec_keys(path)
+
         self.properties = update_in(self.properties, path, lambda _: value)
 
     def is_canvas(self) -> bool:
@@ -171,7 +179,7 @@ class TowerObject:
 
     @custom_name.setter
     def custom_name(self, value: str):
-        self._set_property(_CUSTOM_NAME_SPEC, value)
+        self.set_property(_CUSTOM_NAME_SPEC, value)
 
     def matches_name(self, name: str) -> bool:
         """
@@ -197,7 +205,7 @@ class TowerObject:
 
     @group_id.setter
     def group_id(self, value: int):
-        self._set_property(_GROUP_ID_SPEC, value)
+        self.set_property(_GROUP_ID_SPEC, value)
 
     def ungroup(self):
         """
@@ -207,7 +215,7 @@ class TowerObject:
             del self.item['properties']['GroupID']
 
         if self.properties is not None:
-            self._set_meta_property(_GROUP_ID_SPEC, -1)
+            self.set_meta_property(_GROUP_ID_SPEC, -1)
 
     def copy(self) -> TowerObject:
         """
@@ -327,7 +335,7 @@ class TowerObject:
 
         connections = get_in(_ITEM_CONNECTIONS_SPEC, self.item, no_default=True)
         connections.append(con.to_dict())
-        self._set_property(_ITEM_CONNECTIONS_SPEC, connections)
+        self.set_property(_ITEM_CONNECTIONS_SPEC, connections)
 
     def get_connections(self) -> list[ItemConnectionObject]:
         """
@@ -354,7 +362,7 @@ class TowerObject:
         assert self.item is not None
         self._check_connetions()
         cons_list = [con.to_dict() for con in cons]
-        self._set_property(_ITEM_CONNECTIONS_SPEC, cons_list)
+        self.set_property(_ITEM_CONNECTIONS_SPEC, cons_list)
 
     def __lt__(self, other: Any):
         if not isinstance(other, TowerObject):
