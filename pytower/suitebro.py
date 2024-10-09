@@ -145,7 +145,15 @@ class Suitebro:
         group_data: list[GroupData] = []
         for group_id, group in sel.groups():
             group_data.append({'group_id': group_id, 'item_count': len(group)})
+            self.max_groupid = max(self.max_groupid, group_id)
         self.data['groups'] = group_data
+
+    def group(self, objs: Selection):
+        self.update_groups_meta()
+        new_group_id = self.get_max_groupid() + 1
+        for obj in objs:
+            obj.group_id = new_group_id
+        self.update_groups_meta()
 
     def items(self) -> list[TowerObject]:
         """Lists all non-property TowerObjects
