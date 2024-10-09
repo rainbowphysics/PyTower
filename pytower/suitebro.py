@@ -148,9 +148,9 @@ class Suitebro:
             self.max_groupid = max(self.max_groupid, group_id)
         self.data['groups'] = group_data
 
-    def group(self, objs: Selection):
+    def group(self, objs: Selection, group_id: None | int = None):
         self.update_groups_meta()
-        new_group_id = self.get_max_groupid() + 1
+        new_group_id = self.get_max_groupid() + 1 if group_id is None else group_id
         for obj in objs:
             obj.group_id = new_group_id
         self.update_groups_meta()
