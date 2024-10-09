@@ -127,6 +127,15 @@ class TowerObject:
             self.guid = str(uuid.uuid4()).lower()
 
     def set_property(self, path: Spec | str, value: Any):
+        """Sets property in both item and properties sections
+
+        Args:
+            path: Either a list of string keys or a period-separated string representing the path to take through
+                the dictionary. For example, "properties.ItemCustomName.Name.value" and ["properties", "ItemCustomName",
+                "Name", "value"]
+
+            value: Value to set
+        """
         assert self.item is not None
 
         if isinstance(path, str):
@@ -137,6 +146,15 @@ class TowerObject:
             self.set_meta_property(path, value)
 
     def set_meta_property(self, path: Spec | str, value: Any):
+        """Sets property only the properties section
+
+        Args:
+            path: Either a list of string keys or a period-separated string representing the path to take through
+                the dictionary. For example, "properties.ItemCustomName.Name.value" and ["properties", "ItemCustomName",
+                "Name", "value"]
+
+            value: Value to set
+        """
         assert self.properties is not None
 
         if isinstance(path, str):

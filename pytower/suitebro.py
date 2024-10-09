@@ -149,6 +149,12 @@ class Suitebro:
         self.data['groups'] = group_data
 
     def group(self, objs: Selection, group_id: None | int = None):
+        """Groups a selection of objects together
+
+        Args:
+            objs: Selection of objects to group
+            group_id: (Optional) The group ID to use
+        """
         self.update_groups_meta()
         new_group_id = self.get_max_groupid() + 1 if group_id is None else group_id
         for obj in objs:
