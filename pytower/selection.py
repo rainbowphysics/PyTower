@@ -15,38 +15,59 @@ class Selection(set[TowerObject]):
         return obj.group_id
 
     def groups(self) -> set[tuple[int, 'Selection']]:
+        """
+
+        Returns:
+            Groups present in the Selection, as a set of tuples in the form (group_id: int, sel: Selection)
+        """
         data = sorted(filter(lambda obj: obj.group_id >= 0, self), key=Selection._group_key)
         return {(group_id, Selection(group)) for group_id, group in itertools.groupby(data, Selection._group_key)}
 
     def ungrouped(self) -> 'Selection':
+        """
+
+        Returns:
+            TowerObjects in the Selection without a group_id
+        """
         return Selection({obj for obj in self if obj.group_id < 0})
 
     def destroy_groups(self):
+        """Destroys all groups in the selection, rendering the objects ungrouped."""
         for obj in self:
             obj.ungroup()
 
-    def get(self) -> TowerObject:
-        return next(iter(self))
+    def get(self) -> TowerObject | None:
+        """Converts Selection into TowerObject, which is useful when only one TowerObject is expected
+
+        Returns:
+            Gets the first object in this Selection object, or None if Selection is empty
+
+        """
+        return next(iter(self)) if len(self) != 0 else None
 
     def __add__(self, other: 'Selection') -> 'Selection':
+        """Implements the + operator as union for Selection objects"""
         if not isinstance(other, Selection):
             raise ValueError(f'Cannot add Selection with {type(other)}!')
 
         return Selection(self.union(other))
 
     def __iadd__(self, other: 'Selection') -> None:
+        """Implements the += operator as union for Selection objects"""
         if not isinstance(other, Selection):
             raise ValueError(f'Cannot add Selection with {type(other)}!')
 
         self.update(other)
 
     def __mul__(self, other: 'Selection') -> 'Selection':
+        """Implements the * operator as intersection for Selection objects"""
         if not isinstance(other, Selection):
             raise ValueError(f'Cannot multiply Selection with {type(other)}!')
 
         return Selection(self.intersection(other))
 
     def __imul__(self, other: 'Selection') -> None:
+        """Implements the *= operator as intersection for Selection objects"""
         if not isinstance(other, Selection):
             raise ValueError(f'Cannot multiply Selection with {type(other)}!')
 
@@ -58,14 +79,25 @@ class Selection(set[TowerObject]):
 
 class Selector(ABC):
     def __init__(self, name):
+        """
+
+        Args:
+            name: Readable name for Selector object
+        """
         self.name = name
 
-    # Selectors take in a Selection and output a new Selection.
-    # Can think of these Selectors operating on the set of everything, and selecting a subset.
-    # But nothing's stopping you from then selecting on that subset, and so on, further and further refining the
-    #  selection using Selector objects.
     @abstractmethod
     def select(self, everything: Selection) -> Selection:
+        """Selectors take in a Selection and output a new Selection. You can think of these Selectors operating on the
+        set of everything, and selecting a subset. However, nothing's stopping you from then selecting on that subset,
+        and so on, further and further refining the selection using Selector objects.
+
+        Args:
+            everything: Everything the Selector selects on
+
+        Returns:
+            A new refined Selection object
+        """
         pass
 
 
@@ -75,6 +107,11 @@ class NameSelector(Selector):
         self.select_name = select_name.casefold()
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection where each object's name or custom name matches self.select_name
+        """
         return Selection({obj for obj in everything if obj.matches_name(self.select_name)})
 
 
@@ -84,6 +121,11 @@ class CustomNameSelector(Selector):
         self.select_name = select_name.casefold()
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection where each object's custom name matches self.select_name
+        """
         return Selection({obj for obj in everything if obj.get_custom_name().casefold() == self.select_name})
 
 
@@ -93,6 +135,11 @@ class ObjectNameSelector(Selector):
         self.select_name = select_name.casefold()
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection where each object's name matches self.select_name
+        """
         return Selection({obj for obj in everything if obj.get_name().casefold() == self.select_name})
 
 
@@ -102,6 +149,11 @@ class RegexSelector(Selector):
         self.pattern = re.compile(pattern.casefold())
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection where each object's name or custom name matches the self.pattern regular expression pattern
+        """
         return Selection({obj for obj in everything if self.pattern.match(obj.get_name().casefold())
                           or self.pattern.match(obj.get_custom_name().casefold())})
 
@@ -112,6 +164,11 @@ class GroupSelector(Selector):
         self.group_id = group_id
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection where each object's group id matches self.group_id
+        """
         return Selection({obj for obj in everything if obj.group_id == self.group_id})
 
 
@@ -120,6 +177,11 @@ class ItemSelector(Selector):
         super().__init__('ItemSelector')
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection excluding objects that only have a properties section
+        """
         return Selection({obj for obj in everything if obj.item is not None})
 
 
@@ -128,6 +190,11 @@ class EverythingSelector(Selector):
         super().__init__('EverythingSelector')
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            The input Selection, acting as an identity function
+        """
         return everything
 
 
@@ -136,6 +203,11 @@ class NothingSelector(Selector):
         super().__init__('NothingSelector')
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            An empty Selection. Potentially useful when a tool doesn't depend on input selection
+        """
         return Selection()
 
 
@@ -145,6 +217,11 @@ class PercentSelector(Selector):
         self.percentage = percentage
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection with a random subset of self.percentage % of objects
+        """
         sequence = list(everything)
         random.shuffle(sequence)
         cutoff = int(len(sequence) * self.percentage / 100 + 0.5)
@@ -157,6 +234,11 @@ class TakeSelector(Selector):
         self.number = number
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection with a random subset of self.number of objects
+        """
         sequence = list(everything)
         random.shuffle(sequence)
         return Selection(sequence[0:self.number])
@@ -168,6 +250,11 @@ class RandomSelector(Selector):
         self.probability = probability
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection where every object is selected with probability self.probability
+        """
         return Selection({obj for obj in everything if random.uniform(0, 1) <= self.probability})
 
 
@@ -181,6 +268,11 @@ class BoxSelector(Selector):
         return pos == pos.clamp(self.min_pos, self.max_pos)
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection of objects contained in the box formed by self.min_pos and self.max_pos
+        """
         return Selection({obj for obj in everything if self._contains(obj.position)})
 
 
@@ -194,4 +286,9 @@ class SphereSelector(Selector):
         return self.center.distance(pos) < self.radius
 
     def select(self, everything: Selection) -> Selection:
+        """
+
+        Returns:
+            Selection of objects contained in the sphere defined by self.center and self.radius
+        """
         return Selection({obj for obj in everything if self._contains(obj.position)})
