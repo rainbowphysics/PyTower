@@ -24,14 +24,14 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
         # Since obj.rotation is quaternion, need to convert to/from
         q = R.from_quat(obj.rotation)
         p = r * q
-        obj.rotation = p.as_quat()
+        obj.rotation = xyz(p.as_quat())
 
         #TODO special treatment of groups--groups are still considered local
 
         if not params.local:
             # Rotate positions around centroid with help from scipy
             obj.position -= centroid
-            obj.position = r.apply(obj.position)
+            obj.position = xyz(r.apply(obj.position))
             obj.position += centroid
 
 

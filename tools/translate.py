@@ -39,7 +39,7 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
         # Rotate each of the standard basis vectors by obj.rotation to get local coordinates
         xlocal, ylocal, zlocal = [r.apply(basis_vec) for basis_vec in std_basis]
         # Now use this to peform a local translation
-        obj.position += offset[0] * xlocal + offset[1] * ylocal + offset[2] * zlocal
+        obj.position += xyz(offset[0] * xlocal + offset[1] * ylocal + offset[2] * zlocal)
 
 
 if __name__ == '__main__':
