@@ -11,7 +11,7 @@ TOOL_NAME = 'Cylinder'
 VERSION = '1.0'
 AUTHOR = 'Physics System'
 URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/cylinder.py'
-INFO = '''Uses selection to form a cylinder centered at <center> of radius <radius> and height <height>'''
+INFO = '''Uses selection to form a cylinder of radius <radius> and height <height>'''
 PARAMETERS = {'radius': ToolParameterInfo(dtype=float, description='radius of cylinder'),
               'height': ToolParameterInfo(dtype=float, description='height of cylinder'),
               'r_segments': ToolParameterInfo(dtype=int, description='number of radial segments', default=20),
