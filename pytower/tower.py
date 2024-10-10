@@ -105,6 +105,8 @@ def get_parser(tool_names: str) -> PyTowerParser:
                             help='Whether to load/save as .json, instead of converting to CondoData')
     run_parser.add_argument('-g', '--groups', '--per-group', dest='per_group', action='store_true',
                             help='Whether or not to apply the tool per group')
+    run_parser.add_argument('-r', '--num-runs', '--num-times', dest='num_runs', type=int, default=1,
+                            help='Number of times to run tool')
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default=[],
                             help='Parameters to pass onto tooling script (must come at end)')
 
@@ -638,19 +640,24 @@ def main():
 
             # Run tool
             params = parse_parameters(args['parameters'], meta)
-            info(f'Running tool {meta.tool_name}...')
+            num_runs: int = args['num_runs']
+            if num_runs == 1:
+                info(f'Running tool {meta.tool_name}...')
+            elif num_runs > 1:
+                info(f'Running tool {meta.tool_name} {num_runs} times...')
 
-            if not args['per_group']:
-                # Normal execution
-                module.main(save, selection, params)
-            else:
-                # Per group execution
-                for (group_id, group) in selection.groups():
-                    module.main(save, group, params)
+            for _ in range(num_runs):
+                if not args['per_group']:
+                    # Normal execution
+                    module.main(save, selection, params)
+                else:
+                    # Per group execution
+                    for (group_id, group) in selection.groups():
+                        module.main(save, group, params)
 
-                # Ungrouped items are treated as being in a group by themselves
-                for obj in selection.ungrouped():
-                    module.main(save, Selection({obj}), params)
+                    # Ungrouped items are treated as being in a group by themselves
+                    for obj in selection.ungrouped():
+                        module.main(save, Selection({obj}), params)
 
             # Skip writeback if tool has NO_WRITE = True
             if meta.nowrite:
