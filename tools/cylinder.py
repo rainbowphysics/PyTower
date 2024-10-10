@@ -1,13 +1,11 @@
 import math
-from scipy.spatial.transform import Rotation as R
 
-from pytower import tower
 from pytower.copy import copy_selection
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
 from pytower.tools import rotate
 from pytower.tool_lib import ToolParameterInfo, ParameterDict
-from pytower.util import xyz, xyzint, XYZInt
+from pytower.util import xyz
 
 TOOL_NAME = 'Cylinder'
 VERSION = '1.0'
