@@ -38,13 +38,15 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
 
         # Rotate then set position of copy
         deg_theta = math.degrees(theta)
-        deg_phi = math.degrees(phi)
+        deg_phi = math.degrees(phi) - 90
 
+        params.rotation.z += deg_theta
         params.rotation.y += deg_phi
         params.rotation.x += deg_theta
         rotate.main(save, copies, params)
         params.rotation.x -= deg_theta
         params.rotation.y -= deg_phi
+        params.rotation.z -= deg_theta
 
         for obj in copies:
             obj.position += offset
