@@ -129,14 +129,10 @@ class Suitebro:
                 return obj
         return None
 
-    def get_groups_meta(self):
+    def _get_groups_meta(self):
         return self.data['groups']
 
-    # TODO Definitely a better way to do this
-    def get_max_groupid(self):
-        return self.max_groupid
-
-    def update_groups_meta(self):
+    def _update_groups_meta(self):
         class GroupData(TypedDict):
             group_id: int
             item_count: int
@@ -145,8 +141,18 @@ class Suitebro:
         group_data: list[GroupData] = []
         for group_id, group in sel.groups():
             group_data.append({'group_id': group_id, 'item_count': len(group)})
-            self.max_groupid = max(self.max_groupid, group_id)
         self.data['groups'] = group_data
+
+    def groups(self) -> set[tuple[int, Selection]]:
+        sel = Selection(self.objects)
+        return sel.groups()
+
+    def get_max_groupid(self) -> int:
+        grps = self.groups()
+        max_id = -1
+        for group_id, _ in grps:
+            max_id = max(group_id, max_id)
+        return max_id
 
     def group(self, objs: Selection, group_id: None | int = None):
         """Groups a selection of objects together
@@ -155,11 +161,9 @@ class Suitebro:
             objs: Selection of objects to group
             group_id: (Optional) The group ID to use
         """
-        self.update_groups_meta()
         new_group_id = self.get_max_groupid() + 1 if group_id is None else group_id
         for obj in objs:
             obj.group_id = new_group_id
-        self.update_groups_meta()
 
     def items(self) -> list[TowerObject]:
         """Lists all non-property TowerObjects
@@ -210,7 +214,7 @@ class Suitebro:
         new_dict: dict[str, Any] = {}
 
         # Update groups based on group ids and info
-        self.update_groups_meta()
+        self._update_groups_meta()
 
         for k, v in self.data.items():
             if k != 'items' and k != 'properties':
@@ -256,6 +260,7 @@ class Suitebro:
         # Finally set new dictionary and return
         new_dict['items'] = item_arr
         new_dict['properties'] = prop_arr
+
         return new_dict
 
     def __repl__(self):

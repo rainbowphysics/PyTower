@@ -24,6 +24,7 @@ def copy_selection(selection: Selection) -> Selection:
     replacement_table: dict[str, str] = {}
     copies: list[TowerObject] = [None] * len(selection)  # type: ignore
     new_groups: dict[int, int] = {}
+    save_max_groupid = get_active_save().get_max_groupid()
     for x, obj in enumerate(selection):
         old_guid = None
         if obj.item is not None:
@@ -34,9 +35,8 @@ def copy_selection(selection: Selection) -> Selection:
         old_group_id = obj.group_id
         if old_group_id >= 0:
             if old_group_id not in new_groups:
-                save = get_active_save()
                 max_new_groupid = max(new_groups.values()) if new_groups.values() else -1
-                new_groupid = max(save.get_max_groupid(), max_new_groupid) + 1
+                new_groupid = max(save_max_groupid, max_new_groupid) + 1
                 new_groups[old_group_id] = new_groupid
 
             copied.set_group_id(new_groups[old_group_id])
