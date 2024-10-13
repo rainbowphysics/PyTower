@@ -7,6 +7,7 @@ from .backend import ResourceBackend
 class CustomBackend(ResourceBackend):
     """Custom backend stub for custom user implementations"""
     def __init__(self):
+        """"""
         super().__init__('CustomCDN')
 
     # Must implement this!

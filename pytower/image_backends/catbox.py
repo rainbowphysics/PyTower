@@ -11,6 +11,11 @@ from pytower.logging import *
 class CatboxBackend(ResourceBackend):
     """Catbox backend that submits multipart form to https://catbox.moe/user/api.php"""
     def __init__(self, user_hash: str | None = None):
+        """
+
+        Args:
+            user_hash: (Optional) Catbox user hash to use
+        """
         super().__init__('Catbox')
         self.user_hash = user_hash
 
