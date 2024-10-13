@@ -37,7 +37,8 @@ class Selection(set[TowerObject]):
             obj.ungroup()
 
     def get(self) -> TowerObject | None:
-        """Converts Selection into TowerObject, which is useful when only one TowerObject is expected
+        """
+        Converts Selection into TowerObject, which is useful when only one TowerObject is expected
 
         Returns:
             Gets the first object in this Selection object, or None if Selection is empty
@@ -60,14 +61,14 @@ class Selection(set[TowerObject]):
         self.update(other)
 
     def __mul__(self, other: 'Selection') -> 'Selection':
-        """Implements the * operator as intersection for Selection objects"""
+        """Implements the \\* operator as intersection for Selection objects"""
         if not isinstance(other, Selection):
             raise ValueError(f'Cannot multiply Selection with {type(other)}!')
 
         return Selection(self.intersection(other))
 
     def __imul__(self, other: 'Selection') -> None:
-        """Implements the *= operator as intersection for Selection objects"""
+        """Implements the \\*= operator as intersection for Selection objects"""
         if not isinstance(other, Selection):
             raise ValueError(f'Cannot multiply Selection with {type(other)}!')
 
@@ -88,7 +89,8 @@ class Selector(ABC):
 
     @abstractmethod
     def select(self, everything: Selection) -> Selection:
-        """Selectors take in a Selection and output a new Selection. You can think of these Selectors operating on the
+        """
+        Selectors take in a Selection and output a new Selection. You can think of these Selectors operating on the
         set of everything, and selecting a subset. However, nothing's stopping you from then selecting on that subset,
         and so on, further and further refining the selection using Selector objects.
 

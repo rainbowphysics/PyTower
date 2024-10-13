@@ -96,9 +96,7 @@ _UUID_PATTERN = re.compile('^' + '-'.join([fr'[\da-f]{{{d}}}' for d in [8, 4, 4,
 
 
 class TowerObject:
-    """
-    Represents an object appearing in the Suitebro file. This includes all the sections of the object.
-    """
+    """Represents an object appearing in the Suitebro file. This includes all the sections of the object."""
 
     def __init__(self, item: dict[str, Any] | None = None, properties: dict[str, Any] | None = None,
                  nocopy: bool = False):
@@ -127,7 +125,8 @@ class TowerObject:
             self.guid = str(uuid.uuid4()).lower()
 
     def set_property(self, path: Spec | str, value: Any):
-        """Sets property in both item and properties sections
+        """
+        Sets property in both item and properties sections
 
         Args:
             path: Either a list of string keys or a period-separated string representing the path to take through
@@ -146,7 +145,8 @@ class TowerObject:
             self.set_meta_property(path, value)
 
     def set_meta_property(self, path: Spec | str, value: Any):
-        """Sets property only the properties section
+        """
+        Sets property only the properties section
 
         Args:
             path: Either a list of string keys or a period-separated string representing the path to take through
@@ -164,6 +164,7 @@ class TowerObject:
 
     def is_canvas(self) -> bool:
         """
+
         Returns:
             Whether object is a canvas object
         """
@@ -179,9 +180,7 @@ class TowerObject:
 
     @property
     def name(self) -> str:
-        """
-        Name used by Tower Unite internally
-        """
+        """Name used by Tower Unite internally"""
         return self.item['name'] if self.item is not None else not_none(self.properties)['name']
 
     @deprecated(reason='Use TowerObject.custom_name instead', version='0.3.0')
@@ -190,9 +189,7 @@ class TowerObject:
 
     @property
     def custom_name(self) -> str:
-        """
-        Custom name set by Tower Unite player
-        """
+        """Custom name set by Tower Unite player"""
         return get_in(_CUSTOM_NAME_SPEC, self.item, default='')
 
     @custom_name.setter
@@ -226,9 +223,7 @@ class TowerObject:
         self.set_property(_GROUP_ID_SPEC, value)
 
     def ungroup(self):
-        """
-        Clears the group info attached to this object, effectively un-grouping it
-        """
+        """Clears the group info attached to this object, effectively un-grouping it"""
         if _exists(self.item, _GROUP_ID_SPEC):
             del self.item['properties']['GroupID']
 
