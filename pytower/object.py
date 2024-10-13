@@ -164,7 +164,6 @@ class TowerObject:
 
     def is_canvas(self) -> bool:
         """
-
         Returns:
             Whether object is a canvas object
         """

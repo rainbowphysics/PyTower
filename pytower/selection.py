@@ -16,7 +16,6 @@ class Selection(set[TowerObject]):
 
     def groups(self) -> set[tuple[int, 'Selection']]:
         """
-
         Returns:
             Groups present in the Selection, as a set of tuples in the form (group_id: int, sel: Selection)
         """
@@ -25,7 +24,6 @@ class Selection(set[TowerObject]):
 
     def ungrouped(self) -> 'Selection':
         """
-
         Returns:
             TowerObjects in the Selection without a group_id
         """
@@ -81,7 +79,6 @@ class Selection(set[TowerObject]):
 class Selector(ABC):
     def __init__(self, name):
         """
-
         Args:
             name: Printed name for Selector object
         """
@@ -110,7 +107,6 @@ class NameSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection where each object's name or custom name matches self.select_name
         """
@@ -124,7 +120,6 @@ class CustomNameSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection where each object's custom name matches self.select_name
         """
@@ -138,7 +133,6 @@ class ObjectNameSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection where each object's name matches self.select_name
         """
@@ -152,7 +146,6 @@ class RegexSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection where each object's name or custom name matches the self.pattern regular expression pattern
         """
@@ -167,7 +160,6 @@ class GroupSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection where each object's group id matches self.group_id
         """
@@ -180,7 +172,6 @@ class ItemSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection excluding objects that only have a properties section
         """
@@ -193,7 +184,6 @@ class EverythingSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             The input Selection, acting as an identity function
         """
@@ -206,7 +196,6 @@ class NothingSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             An empty Selection. Potentially useful when a tool doesn't depend on input selection
         """
@@ -220,7 +209,6 @@ class PercentSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection with a random subset of self.percentage % of objects
         """
@@ -237,7 +225,6 @@ class TakeSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection with a random subset of self.number of objects
         """
@@ -253,7 +240,6 @@ class RandomSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection where every object is selected with probability self.probability
         """
@@ -271,7 +257,6 @@ class BoxSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection of objects contained in the box formed by self.min_pos and self.max_pos
         """
@@ -289,7 +274,6 @@ class SphereSelector(Selector):
 
     def select(self, everything: Selection) -> Selection:
         """
-
         Returns:
             Selection of objects contained in the sphere defined by self.center and self.radius
         """

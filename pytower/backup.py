@@ -98,6 +98,7 @@ def _download_image(url: str, cache: dict[str, str]) -> tuple[str, str | None]:
 
 
 class BackupIndex:
+    """Data structure used internally to represent information about each backup"""
     original_path: str
     filename: str
     pytower_version: str
@@ -150,6 +151,15 @@ async def _download_images(urls: Collection[str], install_dir: str, use_cache: b
 
 
 def make_backup(save: Suitebro) -> str:
+    """
+    Given a Suitebro save, creates a new backup
+
+    Args:
+        save: Suitebro object to make a backup of
+
+    Returns:
+        Path to backup directory, containing the save and its resource assets
+    """
     # First make the folder for the backup
     save_name = save.filename
 
@@ -224,7 +234,7 @@ def make_backup(save: Suitebro) -> str:
     return backup_path
 
 
-def resource_available(url: str) -> bool:
+def _resource_available(url: str) -> bool:
     try:
         # Use HEAD request for faster response
         response = requests.head(url, timeout=2, headers={'User-agent': 'PyTower'})
@@ -246,7 +256,7 @@ def resource_available(url: str) -> bool:
 
 
 def _reachable_thread(url: str) -> bool:
-    return resource_available(url)
+    return _resource_available(url)
 
 
 async def _check_links(urls: list[str]) -> set[str]:
@@ -255,6 +265,14 @@ async def _check_links(urls: list[str]) -> set[str]:
 
 
 def restore_backup(path: str, force_reupload: bool=False, backend: ResourceBackend=CatboxBackend()):
+    """
+    Restores a backup from the backups folder
+
+    Args:
+        path: Path to the backup
+        force_reupload: Whether to force reuploading files to backend
+        backend: Backend to use (Catbox by default)
+    """
     cwd = os.getcwd()
     os.chdir(path)
     with open('index.json', 'r') as fd:

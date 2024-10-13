@@ -15,7 +15,8 @@ from .object import TowerObject
 
 
 class Suitebro:
-    """Suitebro file
+    """
+    Suitebro file
 
     Abstraction over the input CondoData/.map file, representing parsed tower-unite-suitebro data
 
@@ -24,7 +25,8 @@ class Suitebro:
     """
 
     def __init__(self, filename: str, directory: str, data: dict[str, Any]):
-        """Instantiates a new Suitebro instance based on the input filename and directory
+        """
+        Instantiates a new Suitebro instance based on the input filename and directory
 
         Args:
             filename: Name of file
@@ -94,7 +96,8 @@ class Suitebro:
             self.objects = self.objects[:size]
 
     def add_object(self, obj: TowerObject):
-        """Adds a new object to the Suitebro file
+        """
+        Adds a new object to the Suitebro file
 
         Args:
             obj: The object to add
@@ -104,7 +107,8 @@ class Suitebro:
         self.max_groupid = max(obj.group_id, self.max_groupid)
 
     def add_objects(self, objs: Sequence[TowerObject]):
-        """Adds a list of objects to the Suitebro file
+        """
+        Adds a list of objects to the Suitebro file
 
         Args:
             objs: The list of objects to add
@@ -115,14 +119,14 @@ class Suitebro:
             self.max_groupid = max(self.max_groupid, obj.group_id)
 
     def find_item(self, name: str) -> TowerObject | None:
-        """Find a TowerObject by its name
+        """
+        Find a TowerObject by its name
 
         Args:
             name: The proper name or the nickname of the TowerObject
 
         Returns:
             The first TowerObject matching the name, if found, or else None
-
         """
         for obj in self.objects:
             if obj.matches_name(name):
@@ -155,7 +159,8 @@ class Suitebro:
         return max_id
 
     def group(self, objs: Selection, group_id: None | int = None):
-        """Groups a selection of objects together
+        """
+        Groups a selection of objects together
 
         Args:
             objs: Selection of objects to group
@@ -166,7 +171,8 @@ class Suitebro:
             obj.group_id = new_group_id
 
     def items(self) -> list[TowerObject]:
-        """Lists all non-property TowerObjects
+        """
+        Lists all non-property TowerObjects
 
         Returns:
             List containing all of the non-property TowerObject instances in this Suitebro
@@ -174,7 +180,8 @@ class Suitebro:
         return [obj for obj in self.objects if obj.item is not None]
 
     def inventory_items(self) -> list[TowerObject]:
-        """Lists all TowerObject instances that are non-property and are not I/O nor Game-World.
+        """
+        Lists all TowerObject instances that are non-property and are not I/O nor Game-World.
 
         This is equivalent to getting all items that exist in a player's inventory
 
@@ -188,7 +195,8 @@ class Suitebro:
         return {name: len(list(objs)) for name, objs in itertools.groupby(ordered, TowerObject.get_name)}
 
     def item_count(self) -> dict[str, int]:
-        """Counts the number of items in the Suitebro file
+        """
+        Counts the number of items in the Suitebro file
 
         Returns:
             Dictionary where each key is the proper name of the object and the value is the number of instances
@@ -196,7 +204,8 @@ class Suitebro:
         return self._item_count(self.objects)
 
     def inventory_count(self) -> dict[str, int]:
-        """Counts the number of inventory items in the Suitebro file
+        """
+        Counts the number of inventory items in the Suitebro file
 
         Returns:
             Dictionary where each key is the proper name of the object and the value is the number of instances
@@ -206,7 +215,8 @@ class Suitebro:
 
     # Convert item list back into a dict
     def to_dict(self):
-        """Converts the Suitebro object back into a dictionary, formatted in the tower-unite-suitebro style
+        """
+        Converts the Suitebro object back into a dictionary, formatted in the tower-unite-suitebro style
 
         Returns:
             Serialized Suitebro representation that can be written to a file using json.dump

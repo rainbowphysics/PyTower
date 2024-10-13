@@ -57,12 +57,25 @@ class TowerConfig:
             json.dump(self.config, fd, indent=2)
 
     def get(self, key: str, dtype: Callable[[Any], Any] | None = None) -> Any:
+        """
+        Args:
+            key: Key in config
+            dtype: (Optional) Data type to cast to
+
+        Returns:
+            Value (typecasted) in config
+        """
         entry = self.config[key]
         if dtype is not None and entry is not None:
             entry = dtype(entry)
         return entry
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any):
+        """
+        Args:
+            key: Key in config to set value of
+            value: Value to set
+        """
         if key not in self.config:
             raise ValueError
 
@@ -70,6 +83,10 @@ class TowerConfig:
         self._save()
 
     def keys(self):
+        """
+        Returns:
+            Keys of config
+        """
         return self.config.keys()
 
     def __getitem__(self, key: str):

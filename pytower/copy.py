@@ -18,8 +18,15 @@ def fitem_guid(guid: str) -> str:
     return guid.replace('-', '').upper()
 
 
-# Returns new selection containing the new copied objects
+#
 def copy_selection(selection: Selection) -> Selection:
+    """
+    Args:
+        selection: Input selection to copy
+
+    Returns:
+        New Selection containing the new copied objects
+    """
     # First pass: new guids and setup replacement table
     replacement_table: dict[str, str] = {}
     copies: list[TowerObject] = [None] * len(selection)  # type: ignore

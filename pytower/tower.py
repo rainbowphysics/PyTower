@@ -37,7 +37,6 @@ class PyTowerParser(argparse.ArgumentParser):
 
 def get_parser(tool_names: str) -> PyTowerParser:
     """
-
     Args:
         tool_names: List of tool names as a string. Used when running `pytower`
 
@@ -98,13 +97,13 @@ def get_parser(tool_names: str) -> PyTowerParser:
 
     # Flags
     run_parser.add_argument('-v', '--invert', dest='invert', action='store_true',
-                            help='Whether or not to invert selection')
+                            help='Whether to invert selection')
     run_parser.add_argument('-vf', '--invert-full', dest='invert-full', action='store_true',
-                            help='Whether or not to do a full inversion (included property-only objects)')
+                            help='Whether to do a full inversion (included property-only objects)')
     run_parser.add_argument('-j', '--json', dest='json', type=bool, action=argparse.BooleanOptionalAction,
                             help='Whether to load/save as .json, instead of converting to CondoData')
     run_parser.add_argument('-g', '--groups', '--per-group', dest='per_group', action='store_true',
-                            help='Whether or not to apply the tool per group')
+                            help='Whether to apply the tool per group')
     run_parser.add_argument('-r', '--num-runs', '--num-times', dest='num_runs', type=int, default=1,
                             help='Number of times to run tool')
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default=[],
@@ -143,7 +142,8 @@ def parse_args(parser: PyTowerParser | None = None):
 
 
 def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDict:
-    """Parse input parameters into a ParameterDict to pass into tool's main method
+    """
+    Parse input parameters into a ParameterDict to pass into tool's main method
 
     Args:
         param_input: List of strings in the format "parameter=value" to be parsed
@@ -198,7 +198,8 @@ def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDic
 
 
 def run(input_filename: str, tool: ToolMainType, selector: Selector | None = None, params: list[str] | None = None):
-    """ Mock run for rapid prototyping tools
+    """
+    Mock run for rapid prototyping tools
 
     Args:
         input_filename: Path or filename of the CondoData/.map file to use
@@ -273,7 +274,8 @@ def config_confirm_show() -> bool:
 
 
 def parse_selector(selection_input: str) -> Selector | None:
-    """Parses a single selector string input into a Selector object
+    """
+    Parses a single selector string input into a Selector object
 
     Args:
         selection_input: Input string to parse
@@ -338,7 +340,8 @@ def parse_selector(selection_input: str) -> Selector | None:
 
 
 def parse_selectors(selection_input: str) -> list[Selector]:
-    """Parses an input string, where each selector is separated with a ';', into a sequence of Selector objects
+    """
+    Parses an input string, where each selector is separated with a ';', into a sequence of Selector objects
 
     Args:
         selection_input: String input to parse
@@ -382,7 +385,8 @@ def parse_resource_backend(backends: list[ResourceBackend], backend_input: str) 
 
 
 def version() -> str:
-    """ PyTower version
+    """
+    PyTower version
 
     Returns:
         The version as a string, in the format "PyTower {version}"
@@ -391,7 +395,8 @@ def version() -> str:
 
 
 def convert(filename: str):
-    """Converts input into .json or vice versa, from the uesave tower-unite-suitebro .json format
+    """
+    Converts input into .json or vice versa, from the uesave tower-unite-suitebro .json format
 
     Args:
         filename: Path or file name of the CondoData/.map file to convert
@@ -410,7 +415,8 @@ def convert(filename: str):
 
 def backup(mode: str, filename: str, backends: list[ResourceBackend] | None = None, backend: str = 'Catbox',
            force: bool = False):
-    """Prints list of tools
+    """
+    Prints list of tools
 
     Args:
         mode: Either 'save' or 'restore'
@@ -446,7 +452,8 @@ def backup(mode: str, filename: str, backends: list[ResourceBackend] | None = No
 
 
 def list_tools(tools: PartialToolListType | None = None):
-    """Prints list of tools
+    """
+    Prints list of tools
 
     Args:
         tools: List of tools, if included avoids reloading the tool index
@@ -468,7 +475,8 @@ def list_tools(tools: PartialToolListType | None = None):
 
 
 def info_tool(tool_input: str, tools: PartialToolListType | None = None, tool_names: str = ''):
-    """Prints information about input tool name
+    """
+    Prints information about input tool name
 
     Args:
         tool_input: Name of the tool to print info for
@@ -495,7 +503,8 @@ def info_tool(tool_input: str, tools: PartialToolListType | None = None, tool_na
 
 
 def scan(path: str, tools: PartialToolListType | None = None) -> PartialToolListType:
-    """Scans a directory for tool scripts and registers detected tool scripts
+    """
+    Scans a directory for tool scripts and registers detected tool scripts
 
     Args:
         path: Path of directory to scan
@@ -536,7 +545,8 @@ def scan(path: str, tools: PartialToolListType | None = None) -> PartialToolList
 
 
 def fix(filename: str, backends: list[ResourceBackend] | None = None, backend: str = 'Catbox', force: bool = False):
-    """Scans a directory for tool scripts and registers detected tool scripts
+    """
+    Scans a directory for tool scripts and registers detected tool scripts
 
     Args:
         filename: Path or file name of the CondoData/.map file to fix
@@ -607,7 +617,7 @@ def main():
             # Input file name
             input_filename = args['input']
 
-            # Whether or not to only use json
+            # Whether to only use json
             only_json = args['json']
             if only_json:
                 # Remove .json to be consistent with rest of program
