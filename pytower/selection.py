@@ -82,7 +82,7 @@ class Selector(ABC):
         """
 
         Args:
-            name: Readable name for Selector object
+            name: Printed name for Selector object
         """
         self.name = name
 

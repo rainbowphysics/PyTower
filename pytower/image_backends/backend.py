@@ -7,12 +7,25 @@ from pytower.logging import *
 
 
 class ResourceBackend(ABC):
+    """Base class for the resource-uploading backends used by `pytower backup` and `pytower fix`"""
     def __init__(self, name: str):
+        """
+
+        Args:
+            name: Printed name for this backend
+        """
         self.name = name
 
-    # Upload image takes as input a path and returns the uploaded url
     @abstractmethod
     def upload_file(self, path: str) -> str | None:
+        """`upload_file` takes as input a path and returns the uploaded url
+
+        Args:
+            path: Path to the file to upload
+
+        Returns:
+            Uploaded URL as a string, or None if failed
+        """
         pass
 
     def _upload_thread(self, path: str) -> str | None:
@@ -35,7 +48,13 @@ class ResourceBackend(ABC):
         # Convert to dict with dict comprehension
         return {k: v for k, v in zipped}
 
-    # Default implementation that can be overridden for performance and to avoid rate limiting
-    # Return value is dict where paths are keys and urls are values
     def upload_files(self, files: Iterable[str]) -> dict[str, str]:
+        """Upload multiple files. Default implementation can be overridden for performance and to avoid rate limiting
+
+        Args:
+            files: List of file paths
+
+        Returns:
+            Dictionary where paths are keys and urls are values
+        """
         return asyncio.run(self._upload_async(files))

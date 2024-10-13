@@ -9,6 +9,7 @@ IMGUR_API = "https://api.imgur.com/3/upload"
 
 
 class ImgurBackend(ResourceBackend):
+    """Imgur backend that based on submitting POST requests to https://api.imgur.com/3/upload"""
     def __init__(self, client_id):
         super().__init__('Imgur')
         self.client_id = client_id
