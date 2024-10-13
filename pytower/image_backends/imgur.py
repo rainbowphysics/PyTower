@@ -37,3 +37,6 @@ class ImgurBackend(ResourceBackend):
             # Request was not successful
             error(f"Error uploading image: {response.status_code} {response.reason}")
             return None
+
+    def upload_files(self, files: Iterable[str]) -> dict[str, str]:
+        return super().upload_files(files)

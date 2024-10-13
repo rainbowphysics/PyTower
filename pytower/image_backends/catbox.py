@@ -1,5 +1,6 @@
 import os.path
 import sys
+from typing import Iterable
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -49,3 +50,6 @@ class CatboxBackend(ResourceBackend):
             # Upload failed
             error(f"Catbox upload failed with status code: {response.status_code}")
             return None
+
+    def upload_files(self, files: Iterable[str]) -> dict[str, str]:
+        return super().upload_files(files)
