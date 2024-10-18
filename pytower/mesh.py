@@ -12,6 +12,8 @@ from .logging import *
 from .object import TowerObject
 from .selection import Selection
 from .suitebro import Suitebro
+from .tool_lib import ParameterDict
+from .tools import rotate
 from .util import xyz, XYZ, XYZW
 
 WEDGE_ITEM_DATA = json.loads('''
@@ -545,6 +547,9 @@ def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)) ->
     wedges = []
     for face in mesh:
         wedges += convert_triangle(face * 100)
+
+    # Fix mesh rotation
+    rotate.main(save, Selection(wedges), ParameterDict({'rotation': xyz(0, -90, 0), 'local': False}))
 
     for wedge in wedges:
         wedge.position += offset
