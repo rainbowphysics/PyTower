@@ -14,14 +14,22 @@ AUTHOR = 'Physics System'
 URL = 'https://github.com/rainbowphysics/PyTower/blob/main/tools/convert_mesh.py'
 INFO = '''Converts given mesh into wedges'''
 PARAMETERS = {'filename': ToolParameterInfo(dtype=str, description='Filename of 3D model'),
-              'offset': ToolParameterInfo(dtype=xyz, description='Translation offset', default=xyz(0.0, 0.0, 0.0))}
+              'offset': ToolParameterInfo(dtype=xyz, description='Translation offset', default=xyz(0.0, 0.0, 0.0)),
+              'scale': ToolParameterInfo(dtype=float, description='Model scale', default=1.0)}
 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
+    # Load mesh
     mesh = load_mesh(params.filename)
+
+    # Scale mesh BEFORE converting to canvas wedges
+    for face in mesh:
+        face *= params.scale
+
+    # Convert mesh and group together
     mesh_group_id = convert_mesh(save, mesh, offset=params.offset).group()
     success(f'Imported mesh {params.filename} with group:{mesh_group_id}')
 
 
 if __name__ == '__main__':
-    tower.run('../saves/blank', main, params=['filename=../bobomb_fixed.obj', 'offset=0,0,200'])
+    tower.run('../saves/blank', main, params=['filename=../bunny.obj', 'offset=0,0,300', 'scale=20'])

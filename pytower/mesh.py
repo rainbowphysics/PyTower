@@ -465,7 +465,7 @@ class OctreeBVH:
         # TODO
 
 
-def load_mesh(path):
+def load_mesh(path) -> list[np.ndarray]:
     mesh = o3d.io.read_triangle_mesh(path)
     vertices = np.asarray(mesh.vertices)
     tris = np.asarray(mesh.triangles)
