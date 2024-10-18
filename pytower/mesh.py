@@ -1,4 +1,5 @@
 import json
+import math
 import sys
 import uuid
 from typing import Optional
@@ -60,347 +61,6 @@ WEDGE_PROPERTY_DATA = json.loads('''
     {
       "name": "CanvasWedge_C_2",
       "properties": {
-        "SlopeOverride": {
-          "Bool": {
-            "value": false
-          }
-        },
-        "URL": {
-          "Str": {
-            "value": ""
-          }
-        },
-        "Scale": {
-          "Float": {
-            "value": 0.0
-          }
-        },
-        "Type": {
-          "Byte": {
-            "value": {
-              "Label": "CanvasTypes::NewEnumerator0"
-            },
-            "enum_type": "CanvasTypes"
-          }
-        },
-        "CanvasShape": {
-          "Byte": {
-            "value": {
-              "Label": "CanvasShapes::NewEnumerator0"
-            },
-            "enum_type": "CanvasShapes"
-          }
-        },
-        "Emissive": {
-          "Float": {
-            "value": 0.0
-          }
-        },
-        "ScaleX": {
-          "Float": {
-            "value": 1.0
-          }
-        },
-        "ScaleY": {
-          "Float": {
-            "value": 1.0
-          }
-        },
-        "ScaleZ": {
-          "Float": {
-            "value": 1.0
-          }
-        },
-        "WorldScale": {
-          "Struct": {
-            "value": {
-              "Vector": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
-              }
-            },
-            "struct_type": "Vector",
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "Tiling": {
-          "Struct": {
-            "value": {
-              "Vector": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 1.0
-              }
-            },
-            "struct_type": "Vector",
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "CacheToDisk": {
-          "Bool": {
-            "value": true
-          }
-        },
-        "AdditionalURLs": {
-          "Array": {
-            "array_type": "StrProperty",
-            "value": {
-              "Base": {
-                "Str": []
-              }
-            }
-          }
-        },
-        "SurfaceMaterial": {
-          "Object": {
-            "value": "None"
-          }
-        },
-        "SurfaceColorable": {
-          "Struct": {
-            "value": {
-              "Struct": {
-                "Color": {
-                  "Struct": {
-                    "value": {
-                      "LinearColor": {
-                        "r": 1.0,
-                        "g": 1.0,
-                        "b": 1.0,
-                        "a": 1.0
-                      }
-                    },
-                    "struct_type": "LinearColor",
-                    "struct_id": "00000000-0000-0000-0000-000000000000"
-                  }
-                },
-                "DynamicMaterialIndex": {
-                  "Int": {
-                    "value": 0
-                  }
-                }
-              }
-            },
-            "struct_type": {
-              "Struct": "Colorable"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "AnimationMode": {
-          "Bool": {
-            "value": false
-          }
-        },
-        "AnimationColumns": {
-          "Int": {
-            "value": 5
-          }
-        },
-        "AnimationRows": {
-          "Int": {
-            "value": 5
-          }
-        },
-        "AnimationRate": {
-          "Float": {
-            "value": 1.0
-          }
-        },
-        "WorldAlignCanvas": {
-          "Bool": {
-            "value": false
-          }
-        },
-        "NSFW": {
-          "Bool": {
-            "value": false
-          }
-        },
-        "Rotation": {
-          "Float": {
-            "value": 0.0
-          }
-        },
-        "Activated": {
-          "Bool": {
-            "value": true
-          }
-        },
-        "ItemCustomName": {
-          "Name": {
-            "value": "None"
-          }
-        },
-        "ItemCustomFolder": {
-          "Name": {
-            "value": "None"
-          }
-        },
-        "PhysicsSettings": {
-          "Struct": {
-            "value": {
-              "Struct": {
-                "PhysicsEnabled": {
-                  "Bool": {
-                    "value": false
-                  }
-                },
-                "PhysicsCanPickup": {
-                  "Bool": {
-                    "value": true
-                  }
-                },
-                "MassMultiplier": {
-                  "Float": {
-                    "value": 1.0
-                  }
-                },
-                "PhysicsSurfaceType": {
-                  "Enum": {
-                    "value": "EItemSurfaceType::NORMAL",
-                    "enum_type": "EItemSurfaceType"
-                  }
-                },
-                "PhysicsRespawnAfterPickup": {
-                  "Bool": {
-                    "value": false
-                  }
-                },
-                "PhysicsRespawnLocation": {
-                  "Struct": {
-                    "value": {
-                      "Struct": {
-                        "Rotation": {
-                          "Struct": {
-                            "value": {
-                              "Quat": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0,
-                                "w": 1.0
-                              }
-                            },
-                            "struct_type": "Quat",
-                            "struct_id": "00000000-0000-0000-0000-000000000000"
-                          }
-                        },
-                        "Translation": {
-                          "Struct": {
-                            "value": {
-                              "Vector": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                              }
-                            },
-                            "struct_type": "Vector",
-                            "struct_id": "00000000-0000-0000-0000-000000000000"
-                          }
-                        },
-                        "Scale3D": {
-                          "Struct": {
-                            "value": {
-                              "Vector": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                              }
-                            },
-                            "struct_type": "Vector",
-                            "struct_id": "00000000-0000-0000-0000-000000000000"
-                          }
-                        }
-                      }
-                    },
-                    "struct_type": {
-                      "Struct": "Transform"
-                    },
-                    "struct_id": "00000000-0000-0000-0000-000000000000"
-                  }
-                },
-                "PhysicsRespawnDelay": {
-                  "Float": {
-                    "value": 5.0
-                  }
-                }
-              }
-            },
-            "struct_type": {
-              "Struct": "ItemPhysics"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "ItemGroupID": {
-          "Struct": {
-            "value": {
-              "Guid": "00000000-0000-0000-0000-000000000000"
-            },
-            "struct_type": "Guid",
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "GroupID": {
-          "Int": {
-            "value": -1
-          }
-        },
-        "ItemLocked": {
-          "Bool": {
-            "value": false
-          }
-        },
-        "ItemNoCollide": {
-          "Bool": {
-            "value": false
-          }
-        },
-        "SpawnDefaults": {
-          "Struct": {
-            "value": {
-              "Struct": {
-                "Hidden": {
-                  "Bool": {
-                    "value": false
-                  }
-                },
-                "Active": {
-                  "Bool": {
-                    "value": true
-                  }
-                }
-              }
-            },
-            "struct_type": {
-              "Struct": "ItemSpawnDefaults"
-            },
-            "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "InteractiveState": {
-          "Enum": {
-            "value": "FItemInteractiveState::EVERYONE",
-            "enum_type": "FItemInteractiveState"
-          }
-        },
-        "ItemConnections": {
-          "Array": {
-            "array_type": "StructProperty",
-            "value": {
-              "Struct": {
-                "_type": "ItemConnections",
-                "name": "StructProperty",
-                "struct_type": {
-                  "Struct": "ItemConnectionData"
-                },
-                "id": "00000000-0000-0000-0000-000000000000",
-                "value": []
-              }
-            }
-          }
-        },
         "OwningSteamID": {
           "Struct": {
             "value": {
@@ -410,19 +70,6 @@ WEDGE_PROPERTY_DATA = json.loads('''
               "Struct": "SteamID"
             },
             "struct_id": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "ActiveDragSlot": {
-          "Byte": {
-            "value": {
-              "Byte": 0
-            },
-            "enum_type": "None"
-          }
-        },
-        "bCanBeDamaged": {
-          "Bool": {
-            "value": true
           }
         }
       }
@@ -477,7 +124,7 @@ def load_mesh(path) -> list[np.ndarray]:
     return faces
 
 
-def divide_triangle(face: np.ndarray):
+def divide_triangle(face: np.ndarray) -> np.ndarray | None:
     """
     Given a triangular face as input, divide it into two right triangles using the altitude
 
@@ -497,7 +144,11 @@ def divide_triangle(face: np.ndarray):
 
         lin_op = np.transpose(np.array([opp_line, perp]))
         b = v0 - v1
-        soln = np.dot(np.linalg.pinv(lin_op), np.array([[b[0]], [b[1]], [b[2]]]))
+
+        try:
+            soln = np.dot(np.linalg.pinv(lin_op), np.array([[b[0]], [b[1]], [b[2]]]))
+        except np.linalg.LinAlgError:
+            continue
 
         foot_coeff = soln[0][0]
         if foot_coeff < 0 or foot_coeff > 1:
@@ -506,10 +157,10 @@ def divide_triangle(face: np.ndarray):
         v3 = foot_coeff * opp_line + v1
         return np.array([[v3, v1, v0], [v3, v2, v0]])
 
-    return np.array([face])
+    return None
 
 
-def convert_triangle(face: np.ndarray):
+def convert_triangle(face: np.ndarray) -> list[TowerObject]:
     """
     Given a triangular face, convert the face into one or two canvas wedges
 
@@ -520,6 +171,9 @@ def convert_triangle(face: np.ndarray):
         List of TowerObject corresponding to the new canvas wedges
     """
     tris = divide_triangle(face)
+    if tris is None:
+        return []
+
     wedges = []
     for tri in tris:
         # First fix the coordinate system handedness
@@ -544,10 +198,20 @@ def convert_triangle(face: np.ndarray):
         rot = R.from_matrix(rot_matrix)
         wedge.rotation = XYZW(rot.as_quat())
 
+        # Double-check rotation is non-zero or NAN
+        bad_rotation = False
+        if wedge.rotation.norm() < XYZ.EPSILON or np.isnan(wedge.rotation.norm()):
+            bad_rotation = True
+
+        if bad_rotation:
+            wedge.rotation = XYZW(0.0, 0.0, 0.0, 1.0)
+
         # Translate to centroid
         wedge_pos = np.array([[-25 * scale[0], 0, 0], [25 * scale[0], 0, 0], [-25 * scale[0], 0, 50 * scale[2]]],
                              dtype=np.float64)
-        wedge_pos = rot.apply(wedge_pos)
+
+        if not bad_rotation:
+            wedge_pos = rot.apply(wedge_pos)
         wedge_centroid = np.sum(wedge_pos, axis=0) / 3
         wedge.position -= wedge_centroid
 
