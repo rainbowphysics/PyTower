@@ -194,7 +194,7 @@ class Suitebro:
         Returns:
             Dictionary where each key is the proper name of the object and the value is the number of instances
         """
-        return self._item_count(self.objects)
+        return self._item_count(self.items())
 
     def inventory_count(self) -> dict[str, int]:
         """
