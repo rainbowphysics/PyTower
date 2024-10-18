@@ -14,6 +14,28 @@ class Selection(set[TowerObject]):
     def _group_key(obj: TowerObject):
         return obj.group_id
 
+    @property
+    def group_id(self) -> int:
+        return self.groups().pop()[0]
+
+    @group_id.setter
+    def group_id(self, value: int):
+        for obj in self:
+            obj.group_id = value
+
+    @group_id.deleter
+    def group_id(self):
+        self.destroy_groups()
+
+    def group(self) -> int:
+        """Creates a new group based on the selection
+
+        Returns:
+            Group ID of the new group
+        """
+        from .suitebro import get_active_save
+        return get_active_save().group(self)
+
     def groups(self) -> set[tuple[int, 'Selection']]:
         """
         Returns:

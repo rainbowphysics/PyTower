@@ -1,6 +1,7 @@
 from scipy.spatial.transform import Rotation as R
 
 from pytower import tower
+from pytower.logging import *
 from pytower.selection import Selection
 from pytower.suitebro import Suitebro
 from pytower.tool_lib import ToolParameterInfo, ParameterDict
@@ -18,8 +19,9 @@ PARAMETERS = {'filename': ToolParameterInfo(dtype=str, description='Filename of 
 
 def main(save: Suitebro, selection: Selection, params: ParameterDict):
     mesh = load_mesh(params.filename)
-    convert_mesh(save, mesh, offset=params.offset)
+    mesh_group_id = convert_mesh(save, mesh, offset=params.offset).group()
+    success(f'Imported mesh {params.filename} with group:{mesh_group_id}')
 
 
 if __name__ == '__main__':
-    tower.run('../saves/blank', main, params=['filename=../bobomb_battlefield.obj', 'offset=0,0,200'])
+    tower.run('../saves/blank', main, params=['filename=../bobomb_fixed.obj', 'offset=0,0,200'])

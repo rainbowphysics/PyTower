@@ -10,8 +10,9 @@ from scipy.spatial.transform import Rotation as R
 
 from .logging import *
 from .object import TowerObject
+from .selection import Selection
 from .suitebro import Suitebro
-from .util import xyz, XYZ
+from .util import xyz, XYZ, XYZW
 
 WEDGE_ITEM_DATA = json.loads('''
     {
@@ -503,8 +504,11 @@ def convert_triangle(face: np.ndarray):
     tris = divide_triangle(face)
     wedges = []
     for tri in tris:
-        # print('Face')
-        # print(tri)
+        # First fix the coordinate system handedness
+        for vert in tri:
+            vert[0], vert[1] = vert[1], vert[0]
+
+        # Wedge object for triangle
         wedge = TowerObject(item=WEDGE_ITEM_DATA, properties=WEDGE_PROPERTY_DATA)
 
         # Scale from side lengths
@@ -514,22 +518,13 @@ def convert_triangle(face: np.ndarray):
         scale[2] = xyz(tri[0]).distance(tri[2]) / 50
         wedge.scale = scale
 
-        # if scale[0] < 0.01 or scale[1] < 0.01 or scale[2] < 0.01:
-        #    print(f'FUUCK: {scale}')
-
         # Apply rotation
         ab_dir = xyz(tri[1] - tri[0]).normalize()
         ac_dir = xyz(tri[2] - tri[0]).normalize()
         perp = xyz(np.cross(ab_dir, ac_dir)).normalize()
         rot_matrix = np.matrix.transpose(np.array([ab_dir, -perp, ac_dir]))
-        # print('Rotation matrix:')
-        # print(rot_matrix)
-        # print(np.linalg.det(rot_matrix))
-        # eggs = np.linalg.eigvals(rot_matrix)
-        # print(eggs)
         rot = R.from_matrix(rot_matrix)
-        # print(rot.as_matrix())
-        wedge.rotation = rot.as_quat()
+        wedge.rotation = XYZW(rot.as_quat())
 
         # Translate to centroid
         wedge_pos = np.array([[-25 * scale[0], 0, 0], [25 * scale[0], 0, 0], [-25 * scale[0], 0, 50 * scale[2]]],
@@ -541,15 +536,12 @@ def convert_triangle(face: np.ndarray):
         tri_centroid = np.sum(tri, axis=0) / 3
         wedge.position += tri_centroid
 
-        # print('Position:')
-        # print(wedge.position)
-
         wedges.append(wedge)
 
     return wedges
 
 
-def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)):
+def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)) -> Selection:
     wedges = []
     for face in mesh:
         wedges += convert_triangle(face * 100)
@@ -558,3 +550,5 @@ def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)):
         wedge.position += offset
 
     save.add_objects(wedges)
+
+    return Selection(wedges)

@@ -55,8 +55,6 @@ class Suitebro:
             except ValueError:
                 continue
 
-        self.max_groupid = -1
-
         # This algorithm handles inserting TowerObjects from the (indexed) json by handling three cases:
         #  Case 1: There is an item but no corresponding property
         #  Case 2 (Most likely): There is an item and a corresponding property
@@ -86,8 +84,6 @@ class Suitebro:
                 self.objects[x] = TowerObject(item=None, properties=p, nocopy=True)
                 prop_idx += 1
 
-            self.max_groupid = max(self.objects[x].group_id, self.max_groupid)
-
             x += 1
 
         # Now cull Nones at the end of array
@@ -104,8 +100,6 @@ class Suitebro:
         """
         self.objects += [obj]
 
-        self.max_groupid = max(obj.group_id, self.max_groupid)
-
     def add_objects(self, objs: Sequence[TowerObject]):
         """
         Adds a list of objects to the Suitebro file
@@ -114,9 +108,6 @@ class Suitebro:
             objs: The list of objects to add
         """
         self.objects += objs
-
-        for obj in objs:
-            self.max_groupid = max(self.max_groupid, obj.group_id)
 
     def find_item(self, name: str) -> TowerObject | None:
         """
@@ -158,7 +149,7 @@ class Suitebro:
             max_id = max(group_id, max_id)
         return max_id
 
-    def group(self, objs: Selection, group_id: None | int = None):
+    def group(self, objs: Selection, group_id: None | int = None) -> int:
         """
         Groups a selection of objects together
 
@@ -169,6 +160,8 @@ class Suitebro:
         new_group_id = self.get_max_groupid() + 1 if group_id is None else group_id
         for obj in objs:
             obj.group_id = new_group_id
+
+        return new_group_id
 
     def items(self) -> list[TowerObject]:
         """
