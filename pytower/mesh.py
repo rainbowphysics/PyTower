@@ -477,8 +477,16 @@ def load_mesh(path) -> list[np.ndarray]:
     return faces
 
 
-# Given a triangular face as input, it will divide it into two right triangles using the altitude
 def divide_triangle(face: np.ndarray):
+    """
+    Given a triangular face as input, divide it into two right triangles using the altitude
+
+    Args:
+        face: List of triangle face's vertices
+
+    Returns:
+        Triangle subdivided into two right triangles (i.e., canvas wedges)
+    """
     for idx in range(3):
         v0 = face[idx]
         v1 = face[(idx + 1) % 3]
@@ -498,11 +506,19 @@ def divide_triangle(face: np.ndarray):
         v3 = foot_coeff * opp_line + v1
         return np.array([[v3, v1, v0], [v3, v2, v0]])
 
-    print('OOF')
-    return [face]
+    return np.array([face])
 
 
 def convert_triangle(face: np.ndarray):
+    """
+    Given a triangular face, convert the face into one or two canvas wedges
+
+    Args:
+        face: List of triangle face's vertices
+
+    Returns:
+        List of TowerObject corresponding to the new canvas wedges
+    """
     tris = divide_triangle(face)
     wedges = []
     for tri in tris:
@@ -544,6 +560,17 @@ def convert_triangle(face: np.ndarray):
 
 
 def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)) -> Selection:
+    """
+    Given a mesh as a list of faces, convert the mesh to TowerObjects (i.e., canvas wedges)
+
+    Args:
+        save: Save to add the new TowerObjects to
+        mesh: Mesh as a list of faces
+        offset: (Optional) Positional offset to apply
+
+    Returns:
+        Selection of the converted mesh
+    """
     wedges = []
     for face in mesh:
         wedges += convert_triangle(face * 100)
