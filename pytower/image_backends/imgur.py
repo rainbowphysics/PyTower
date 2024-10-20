@@ -3,7 +3,7 @@ from typing import Iterable
 import requests
 
 from .backend import ResourceBackend
-from pytower.logging import *
+from ..logging import *
 
 IMGUR_API = "https://api.imgur.com/3/upload"
 

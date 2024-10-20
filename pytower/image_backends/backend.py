@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Iterable, cast
 
-from pytower.logging import *
+from ..logging import *
 
 
 class ResourceBackend(ABC):

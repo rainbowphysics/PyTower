@@ -5,7 +5,7 @@ import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from .backend import ResourceBackend
-from pytower.logging import *
+from ..logging import *
 
 
 class CatboxBackend(ResourceBackend):
