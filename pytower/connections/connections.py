@@ -47,7 +47,7 @@ class ItemConnectionObject:
     data: dict[str, Any]
 
     def __init__(self, datadict: dict[str, Any] | None = None, guid: str | None = None, event_name: str | None = None,
-                 delay: float | None = None, listener_event: str | None = None, datatype: dict[str, Any] | None = None,
+                 delay: float | None = None, listener_event: str | None = None, datatype: str | None = None,
                  data: dict[str, Any] | None = None):
         if datadict is not None:
             self.data = datadict
@@ -96,10 +96,10 @@ class ItemConnectionObject:
         self.data['Struct']['ListenerEventName']['Name']['value'] = name
 
     # Returns datatype of attached data
-    def get_datatype(self) -> dict[str, Any]:
+    def get_datatype(self) -> str:
         return self.data['Struct']['DataType']['Enum']['value']
 
-    def set_datatype(self, datatype: dict[str, Any]):
+    def set_datatype(self, datatype: str):
         self.data['Struct']['DataType']['Enum']['value'] = datatype
 
     # Returns datatype of attached data
