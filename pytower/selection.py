@@ -1,3 +1,4 @@
+import copy
 import itertools
 import random
 
@@ -120,6 +121,11 @@ class Selector(ABC):
             A new refined Selection object
         """
         pass
+
+    def __repr__(self):
+        self_vars = copy.copy(vars(self))
+        del self_vars['name']
+        return f'{self.name}[{self_vars}]'
 
 
 class NameSelector(Selector):
@@ -300,3 +306,31 @@ class SphereSelector(Selector):
             Selection of objects contained in the sphere defined by self.center and self.radius
         """
         return Selection({obj for obj in everything if self._contains(obj.position)})
+
+
+class UnionSelector(Selector):
+    def __init__(self, left: Selector, right: Selector):
+        super().__init__('UnionSelector')
+        self.left = left
+        self.right = right
+
+    def select(self, everything: Selection) -> Selection:
+        """
+        Returns:
+            Selection union of self.left and self.right selectors applied to input
+        """
+        return self.left.select(everything) + self.right.select(everything)
+
+
+class CompositionSelector(Selector):
+    def __init__(self, left: Selector, right: Selector):
+        super().__init__('CompositionSelector')
+        self.left = left
+        self.right = right
+
+    def select(self, everything: Selection) -> Selection:
+        """
+        Returns:
+            Selection composition of self.left applied to Selection input, followed by self.right
+        """
+        return self.right.select(self.left.select(everything))

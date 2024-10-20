@@ -1,4 +1,5 @@
 import argparse
+import pyparsing
 import os
 import sys
 from types import ModuleType
@@ -339,7 +340,7 @@ def parse_selector(selection_input: str) -> Selector | None:
     return selector
 
 
-def parse_selectors(selection_input: str) -> list[Selector]:
+def parse_selectors(selection_input: str) -> Selector:
     """
     Parses an input string, where each selector is separated with a ';', into a sequence of Selector objects
 
@@ -347,19 +348,53 @@ def parse_selectors(selection_input: str) -> list[Selector]:
         selection_input: String input to parse
 
     Returns:
-        List of Selector
+        Selector object
     """
-    inputs = selection_input.split(';')
-    selectors = [parse_selector(input_sel) for input_sel in inputs]
+
+    # Define basic components of the expression
+    word = pyparsing.Word(pyparsing.alphanums + ':').setParseAction(lambda t: parse_selector(t[0]))
+    union = pyparsing.Literal('+')
+    compose = pyparsing.Literal(';')
+
+    bad_selection = False
+    def eval_binary_operator(tokens):
+        nonlocal bad_selection
+        expr = tokens[0]
+
+        result = expr[len(expr)-1]  # Start with the last operand
+
+        if result is None or isinstance(result, str):
+            bad_selection = True
+
+        # Now iterate through the remaining tokens to evaluate the expression
+        for i in range(len(expr)-2, -1, -2):
+            operator = expr[i]
+            operand = expr[i - 1]
+            if operand is None or isinstance(result, str):
+                bad_selection = True
+
+            if operator == '+':
+                result = UnionSelector(operand, result)
+            elif operator == ';':
+                result = CompositionSelector(operand, result)
+
+        return result
+
+    # Define how operators associate (infix notation with precedence)
+    expr = pyparsing.infixNotation(word, [
+        (compose, 2, pyparsing.opAssoc.LEFT, eval_binary_operator),
+        (union, 2, pyparsing.opAssoc.LEFT, eval_binary_operator),
+    ])
+
+    parsed = expr.parseString(selection_input)[0]
 
     # Validate
-    for selector, sel_input in zip(selectors, inputs):
-        if not selector:
-            error(f'Invalid selection: {sel_input}')
-            info('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
-            sys.exit(1)
+    if bad_selection:
+        error(f'Invalid selection: {selection_input}')
+        info('\nExample usages:\n  --select group:4\n  --select name:FrontDoor\n  --select regex:Canvas.*')
+        sys.exit(1)
 
-    return cast(list[Selector], selectors)  # We know it's not None!
+    return cast(Selector, parsed)  # We know it's not None!
 
 
 def get_resource_backends() -> list[ResourceBackend]:
@@ -631,13 +666,13 @@ def main():
 
             # If --select argument provided, choose different selector
             if args['selection']:
-                selectors = parse_selectors(args['selection'])
+                selector = parse_selectors(args['selection'])
             else:
-                selectors = [ItemSelector()]
+                selector = ItemSelector()
 
-            selection = Selection(save.objects)
-            for selector in selectors:
-                selection = selector.select(selection)
+            print(selector)
+
+            selection = selector.select(Selection(save.objects))
 
             if args['invert-full'] and args['invert']:
                 critical('--invert-all and --invert cannot be used at the same time!')
