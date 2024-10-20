@@ -4,7 +4,7 @@ from typing import Iterable
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
-from pytower.image_backends.backend import ResourceBackend
+from .backend import ResourceBackend
 from pytower.logging import *
 
 
