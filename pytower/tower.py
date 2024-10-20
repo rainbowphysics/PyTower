@@ -304,8 +304,6 @@ def parse_selector(selection_input: str) -> Selector | None:
         except ValueError:
             error(f'{gid_input} is not valid group_id!')
             return None
-    elif sel_input.startswith('regex:'):
-        selector = RegexSelector(sel_split_case_sensitive[1])
     elif sel_input.startswith('name:'):
         selector = NameSelector(sel_split[1])
     elif sel_input.startswith('customname:'):
