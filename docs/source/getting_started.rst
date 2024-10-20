@@ -21,6 +21,7 @@ When using PyTower, there are the following subcommands available to you:
  - ``pytower scan <PATH>``: Scans path/directory for tool scripts
  - ``pytower run <TOONAME> ...``: Run given tool
  - ``pytower fix``: Fix broken canvases and corruption in given file
+ - ``pytower compress`` (WIP) Compression tool
  - ``pytower config``: PyTower configuration
 
 
@@ -60,9 +61,30 @@ Selection Modes
 - ``customname:<NAME>``: Select objects by custom name (name assigned in game)
 - ``objname:<NAME>``: Select objects by internal object name only
 - ``group:<ID>``: Select objects by group id
-- ``regex:<PATTERN>``: Select objects by regular expression pattern (matches both custom name and object name)
+- ``random:<PROB>``: Randomly selects objects with probability ``PROB``
+- ``take:<NUM>``: Randomly selects ``NUM`` number of objects
+- ``<NUM>%``: Randomly select ``NUM`` percent of objects
+- ``box:<X1>,<Y1>,<Z1>/<X2>,<Y2>,<Z2>``: Select objects with position falling inside box
+- ``sphere:<X>,<Y>,<Z>/<R>``: Select objects with position falling inside sphere of radius ``R``.
 - ``all``: Everything including property-only objects
 - ``none``: Nothing (can be useful for generation tools)
+
+Selection Operators
+~~~~~~~~~~~~~~~~~~~
+Currently, the following selection operators are supported (in order of operator precedence):
+ - Intersection (*)
+ - Addition (+)
+ - Difference (-)
+ - Composition (;)
+
+Examples:
+ - ``group:1+group:3``: Select group 1 and group 3
+ - ``group:42;10%``: Select 10% of objects in group 42
+ - ``name:CanvasWedge-group:5``: Select canvas wedges excluding group 5
+
+.. note::
+
+   When inputting operators, it's important to not include any spaces. Spaces will be interpretted as additional arguments by argparse and break the ``pytower`` command.
 
 Tool Parameter Format
 ---------------------
