@@ -74,12 +74,13 @@ class Selection(set[TowerObject]):
 
         return Selection(self.union(other))
 
-    def __iadd__(self, other: 'Selection') -> None:
+    def __iadd__(self, other: 'Selection') -> 'Selection':
         """Implements the += operator as union for Selection objects"""
         if not isinstance(other, Selection):
             raise ValueError(f'Cannot add Selection with {type(other)}!')
 
         self.update(other)
+        return self
 
     def __sub__(self, other: 'Selection') -> 'Selection':
         """Implements the - operator as set difference for Selection objects"""
@@ -94,6 +95,7 @@ class Selection(set[TowerObject]):
             raise ValueError(f'Cannot add Selection with {type(other)}!')
 
         self.difference_update(other)
+        return self
 
     def __mul__(self, other: 'Selection') -> 'Selection':
         """Implements the \\* operator as intersection for Selection objects"""
@@ -108,6 +110,7 @@ class Selection(set[TowerObject]):
             raise ValueError(f'Cannot multiply Selection with {type(other)}!')
 
         self.intersection_update(other)
+        return self
 
     def __hash__(self):  # type: ignore # set overrides __hash__=None, we override it again
         return hash(tuple(self))
