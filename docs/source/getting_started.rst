@@ -72,10 +72,10 @@ Selection Modes
 Selection Operators
 ~~~~~~~~~~~~~~~~~~~
 Currently, the following selection operators are supported (in order of operator precedence):
- - Intersection (*)
- - Addition (+)
- - Difference (-)
- - Composition (;)
+ - Intersection ``*``
+ - Addition ``+``
+ - Difference ``-``
+ - Composition ``;``
 
 Examples:
  - ``group:1+group:3``: Select group 1 and group 3
