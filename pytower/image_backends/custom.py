@@ -1,5 +1,4 @@
-from abc import ABC
-from typing import IO, Iterable
+from typing import Iterable
 
 from .backend import ResourceBackend
 

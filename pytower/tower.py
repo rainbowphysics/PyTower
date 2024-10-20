@@ -1,6 +1,5 @@
 import argparse
 import pyparsing
-import os
 import sys
 from types import ModuleType
 from typing import Any, cast

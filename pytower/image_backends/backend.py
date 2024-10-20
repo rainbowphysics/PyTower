@@ -1,8 +1,7 @@
 import asyncio
-import sys
-import threading
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Iterable, IO, Literal, ParamSpec, Protocol, TypeVar, cast
+from typing import Iterable, cast
+
 from pytower.logging import *
 
 

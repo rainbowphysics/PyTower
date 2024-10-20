@@ -1,14 +1,10 @@
 import itertools
 import json
-import os
 import platform
 import sys
 from subprocess import Popen, PIPE
 from typing import Any, Sequence, TypedDict
 
-import numpy as np
-
-from .__config__ import root_directory
 from .logging import *
 from .selection import Selection
 from .object import TowerObject

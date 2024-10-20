@@ -1,27 +1,23 @@
+import asyncio
+import datetime
 import hashlib
 import json
-import logging
-import os
 import struct
-import sys
-import datetime
 from typing import Any, Collection
-from typing_extensions import Buffer
 
 import requests
-import asyncio
-from colorama import Fore, Back, Style
+from typing_extensions import Buffer
 
-from .__config__ import root_directory, __version__
+from .__config__ import __version__
 from .config import KEY_INSTALL_PATH
 from .image_backends.backend import ResourceBackend
 from .image_backends.catbox import CatboxBackend
 from .logging import *
+from .selection import Selection
 from .suitebro import Suitebro, load_suitebro, save_suitebro
 from .tool_lib import ParameterDict
-from .util import dict_walk
-from .selection import Selection
 from .tools import replace_url
+from .util import dict_walk
 
 BACKUP_DIR = os.path.join(root_directory, 'backup')
 

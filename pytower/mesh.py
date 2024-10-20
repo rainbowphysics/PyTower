@@ -1,7 +1,4 @@
 import json
-import math
-import sys
-import uuid
 from typing import Optional
 
 import open3d as o3d
