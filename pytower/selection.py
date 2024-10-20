@@ -81,6 +81,20 @@ class Selection(set[TowerObject]):
 
         self.update(other)
 
+    def __sub__(self, other: 'Selection') -> 'Selection':
+        """Implements the - operator as set difference for Selection objects"""
+        if not isinstance(other, Selection):
+            raise ValueError(f'Cannot add Selection with {type(other)}!')
+
+        return Selection(self.difference(other))
+
+    def __isub__(self, other: 'Selection') -> None:
+        """Implements the -= operator as set difference for Selection objects"""
+        if not isinstance(other, Selection):
+            raise ValueError(f'Cannot add Selection with {type(other)}!')
+
+        self.difference_update(other)
+
     def __mul__(self, other: 'Selection') -> 'Selection':
         """Implements the \\* operator as intersection for Selection objects"""
         if not isinstance(other, Selection):
@@ -334,3 +348,31 @@ class CompositionSelector(Selector):
             Selection composition of self.left applied to Selection input, followed by self.right
         """
         return self.right.select(self.left.select(everything))
+
+
+class IntersectionSelector(Selector):
+    def __init__(self, left: Selector, right: Selector):
+        super().__init__('IntersectionSelector')
+        self.left = left
+        self.right = right
+
+    def select(self, everything: Selection) -> Selection:
+        """
+        Returns:
+            Selection composition of self.left applied to Selection input, followed by self.right
+        """
+        return self.left.select(everything) * self.right.select(everything)
+
+
+class DifferenceSelector(Selector):
+    def __init__(self, left: Selector, right: Selector):
+        super().__init__('DifferenceSelector')
+        self.left = left
+        self.right = right
+
+    def select(self, everything: Selection) -> Selection:
+        """
+        Returns:
+            Selection composition of self.left applied to Selection input, followed by self.right
+        """
+        return self.left.select(everything) - self.right.select(everything)
