@@ -139,7 +139,6 @@ class Suitebro:
         return sel.groups()
 
     def get_max_groupid(self) -> int:
-        grps = self.groups()
         max_id = -1
         for obj in self.objects:
             max_id = max(obj.group_id, max_id)
