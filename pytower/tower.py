@@ -6,7 +6,6 @@ from types import ModuleType
 from typing import Any, cast
 
 import colorama
-from colorama import Fore, Style
 
 from .__config__ import __version__
 from .backup import make_backup, restore_backup, fix_canvases
