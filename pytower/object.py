@@ -44,6 +44,7 @@ _nv = _v('Name')
 _av = _v('Array')
 _fv = _v('Float')
 _bv = _v('Bool')
+_stv = _v('Str')
 
 Spec = list[str]
 
@@ -80,16 +81,8 @@ _WORLD_SCALE_SPEC = spec_keys(f'properties.WorldScale.{_sv}.Vector')
 _ITEM_CONNECTIONS_PARENT_SPEC = spec_keys(f'properties.ItemConnections')
 _ITEM_CONNECTIONS_SPEC = spec_keys(f'properties.ItemConnections.{_av}.{_sv}')
 
-DEFAULT_PROPS = {
-    f'Emissive.{_fv}': 0.0,
-    f'ScaleX.{_fv}': 1.0,
-    f'ScaleY.{_fv}': 1.0,
-    f'ScaleZ.{_fv}': 1.0,
-    f'Rotation.{_fv}': 0.0,
-    f'ItemCustomName.{_nv}': 'None',
-    f'ItemCustomFolder.{_nv}': 'None',
-    f'bCanBeDamaged.{_bv}': True
-}
+_URL_SPEC = spec_keys(f'properties.URL.{_stv}')
+# _SURFACE_MAT_SPEC = spec_keys(f'properties.SurfaceMaterial.{_stv}')
 
 # UUID4 regex pattern
 _UUID_PATTERN = re.compile('^' + '-'.join([fr'[\da-f]{{{d}}}' for d in [8, 4, 4, 4, 12]]) + '$')
@@ -329,6 +322,16 @@ class TowerObject:
             if prop not in self.item['properties']:
                 del self.properties['properties'][prop]
 
+    @property
+    def url(self) -> str | None:
+        if not self.is_canvas():
+            return None
+
+        return get_in(_URL_SPEC, self.item, no_default=True)
+
+    @url.setter
+    def url(self, value: str):
+        self.set_property(_URL_SPEC, value)
 
     def _check_connetions(self):
         if not _exists(self.item, _ITEM_CONNECTIONS_SPEC):
