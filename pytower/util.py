@@ -104,7 +104,9 @@ class XYZ(np.ndarray):
         return {'x': self.x, 'y': self.y, 'z': self.z}
 
     def __eq__(self, other: 'XYZ'):
-        return self.norm() < XYZ.EPSILON
+        diff = self - other
+        eps = XYZ.EPSILON
+        return np.abs(diff.x) < eps and np.abs(diff.y) < eps and np.abs(diff.z) < eps
 
     def __getitem__(self, item):
         return self.py_dtype(super().__getitem__(item))
