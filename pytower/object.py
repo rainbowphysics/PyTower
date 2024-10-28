@@ -127,15 +127,15 @@ class TowerObject:
                 "Name", "value"]
 
         Returns:
-            Value at path
+            Value at path or None
         """
         if isinstance(path, str):
             path = spec_keys(path)
 
         if self.properties is not None:
-            return get_in(path, self.properties)
+            return get_in(path, self.properties) if _exists(self.properties, path) else None
 
-        return get_in(path, self.item)
+        return get_in(path, self.item) if _exists(self.item, path) else None
 
     def set_property(self, path: Spec | str, value: Any):
         """
