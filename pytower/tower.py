@@ -348,7 +348,7 @@ def parse_selectors(selection_input: str) -> Selector:
     """
 
     # Define basic components of the expression
-    word = pyparsing.Word(pyparsing.alphanums + ':').setParseAction(lambda t: parse_selector(t[0]))
+    word = pyparsing.Word(pyparsing.alphanums + ':-,/').setParseAction(lambda t: parse_selector(t[0]))
     union = pyparsing.Literal('+')
     compose = pyparsing.Literal(';')
     intersection = pyparsing.Literal('*')
@@ -389,7 +389,7 @@ def parse_selectors(selection_input: str) -> Selector:
         return result
 
     # Define how operators associate (infix notation with precedence)
-    # Precedence: * then + then - then ;
+    # Precedence: * then + then \ then ;
     expr = pyparsing.infixNotation(word, [
         (intersection, 2, pyparsing.opAssoc.LEFT, eval_binary_operator),
         (union, 2, pyparsing.opAssoc.LEFT, eval_binary_operator),
