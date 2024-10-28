@@ -105,6 +105,15 @@ class Suitebro:
         """
         self.objects += objs
 
+    def remove_object(self, obj: TowerObject):
+        """
+        Removes object from the Suitebro file
+
+        Args:
+            obj: The object to remove
+        """
+        self.objects.remove(obj)
+
     def find_item(self, name: str) -> TowerObject | None:
         """
         Find a TowerObject by its name
