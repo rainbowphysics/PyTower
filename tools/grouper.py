@@ -1,4 +1,5 @@
 from pytower import tower
+from pytower.selection import Selection
 from pytower.suitebro import Suitebro
 from pytower.tool_lib import ParameterDict
 
