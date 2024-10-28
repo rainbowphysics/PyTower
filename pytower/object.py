@@ -117,6 +117,26 @@ class TowerObject:
         if self.item is not None:
             self.guid = str(uuid.uuid4()).lower()
 
+    def get_property(self, path: Spec | str) -> Any | None:
+        """
+        Gets property value
+
+        Args:
+            path: Either a list of string keys or a period-separated string representing the path to take through
+                the dictionary. For example, "properties.ItemCustomName.Name.value" and ["properties", "ItemCustomName",
+                "Name", "value"]
+
+        Returns:
+            Value at path
+        """
+        if isinstance(path, str):
+            path = spec_keys(path)
+
+        if self.properties is not None:
+            return get_in(path, self.properties)
+
+        return get_in(path, self.item)
+
     def set_property(self, path: Spec | str, value: Any):
         """
         Sets property in both item and properties sections
