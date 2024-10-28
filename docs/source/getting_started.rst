@@ -74,13 +74,13 @@ Selection Operators
 Currently, the following selection operators are supported (in order of operator precedence):
  - Intersection ``*``
  - Addition ``+``
- - Difference ``-``
+ - Difference ``\``
  - Composition ``;``
 
 Examples:
  - ``group:1+group:3``: Select group 1 and group 3
  - ``group:42;10%``: Select 10% of objects in group 42
- - ``name:CanvasWedge-group:5``: Select canvas wedges excluding group 5
+ - ``name:CanvasWedge\group:5``: Select canvas wedges excluding group 5
 
 .. note::
 

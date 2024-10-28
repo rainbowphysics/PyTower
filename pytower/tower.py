@@ -352,7 +352,7 @@ def parse_selectors(selection_input: str) -> Selector:
     union = pyparsing.Literal('+')
     compose = pyparsing.Literal(';')
     intersection = pyparsing.Literal('*')
-    difference = pyparsing.Literal('-')
+    difference = pyparsing.Literal('\\')
 
     bad_selection = False
     def eval_binary_operator(tokens):
@@ -383,7 +383,7 @@ def parse_selectors(selection_input: str) -> Selector:
                 result = CompositionSelector(operand, result)
             elif operator == '*':
                 result = IntersectionSelector(operand, result)
-            elif operator == '-':
+            elif operator == '\\':
                 result = DifferenceSelector(operand, result)
 
         return result
