@@ -298,7 +298,9 @@ class BoxSelector(Selector):
         self.max_pos = XYZ.max(pos1, pos2)
 
     def _contains(self, pos: XYZ):
-        return pos == pos.clamp(self.min_pos, self.max_pos)
+        if pos is not None:
+            return pos == pos.clamp(self.min_pos, self.max_pos)
+        return False
 
     def select(self, everything: Selection) -> Selection:
         """
@@ -314,8 +316,10 @@ class SphereSelector(Selector):
         self.center = center
         self.radius = radius
 
-    def _contains(self, pos: XYZ):
-        return self.center.distance(pos) < self.radius
+    def _contains(self, pos: XYZ) -> bool:
+        if pos is not None:
+            return self.center.distance(pos) < self.radius
+        return False
 
     def select(self, everything: Selection) -> Selection:
         """

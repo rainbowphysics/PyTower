@@ -285,7 +285,7 @@ class TowerObject:
     @property
     def position(self) -> XYZ | None:
         """World position"""
-        return self._get_xyz(_POS_SPEC)
+        return self._get_xyz(_POS_SPEC) if self.item is not None else None
 
     @position.setter
     def position(self, value: XYZ):
@@ -300,7 +300,7 @@ class TowerObject:
     @property
     def rotation(self) -> XYZW | None:
         """Rotation quaternion"""
-        return self._get_xyz(_ROT_SPEC)
+        return self._get_xyz(_ROT_SPEC) if self.item is not None else None
 
     @rotation.setter
     def rotation(self, value: XYZW):
@@ -315,7 +315,7 @@ class TowerObject:
     @property
     def scale(self) -> XYZ | None:
         """Local scale"""
-        return self._get_xyz(_SCALE_SPEC)
+        return self._get_xyz(_SCALE_SPEC) if self.item is not None else None
 
     @scale.setter
     def scale(self, value: XYZ):
