@@ -144,10 +144,21 @@ class Suitebro:
         self.data['groups'] = group_data
 
     def groups(self) -> set[tuple[int, Selection]]:
+        """
+        Calculates the groups present in the save
+
+        Returns:
+            The set of groups, as a set of tuples where the first slot is the group ID and the second slot is the
+            corresponding Selection
+        """
         sel = Selection(self.objects)
         return sel.groups()
 
     def get_max_groupid(self) -> int:
+        """
+        Returns:
+            Maximum group ID present in the save
+        """
         max_id = -1
         for obj in self.objects:
             max_id = max(obj.group_id, max_id)
