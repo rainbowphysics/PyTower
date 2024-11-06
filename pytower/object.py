@@ -132,6 +132,9 @@ class TowerObject:
         if isinstance(path, str):
             path = spec_keys(path)
 
+        if path[0] != 'properties':
+            path = ['properties'] + path
+
         if self.properties is not None:
             return get_in(path, self.properties) if _exists(self.properties, path) else None
 
@@ -152,6 +155,9 @@ class TowerObject:
 
         if isinstance(path, str):
             path = spec_keys(path)
+
+        if path[0] != 'properties':
+            path = ['properties'] + path
 
         self.item = update_in(self.item, path, lambda _: value)
         if self.properties is not None:
