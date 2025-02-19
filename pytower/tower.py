@@ -183,7 +183,7 @@ def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDic
             continue
 
         # Load in non-optional parameter: prompt user for input
-        value = input(f'Enter value for {param.lower()}{' (x,y,z)' if info.dtype == xyz else ''}: ')
+        value = input(f'Enter value for {param.lower()}{" (x,y,z)" if info.dtype == xyz else ""}: ')
         try:
             value = info.dtype(value)
         except Exception as e:
