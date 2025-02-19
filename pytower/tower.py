@@ -18,7 +18,7 @@ from .selection import *
 from .suitebro import load_suitebro, save_suitebro, run_suitebro_parser
 from .tool_lib import ToolMetadata, ParameterDict, ToolMainType, load_tool, PartialToolListType, load_tools, \
     make_tools_index
-from .util import not_none, xyz
+from .util import not_none, xyz, xyzint
 
 
 class PyTowerParser(argparse.ArgumentParser):
@@ -183,7 +183,7 @@ def parse_parameters(param_input: list[Any], meta: ToolMetadata) -> ParameterDic
             continue
 
         # Load in non-optional parameter: prompt user for input
-        value = input(f'Enter value for {param.lower()}{" (x,y,z)" if info.dtype == xyz else ""}: ')
+        value = input(f'Enter value for {param.lower()}{" (x,y,z)" if info.dtype in [xyz, xyzint] else ""}: ')
         try:
             value = info.dtype(value)
         except Exception as e:
