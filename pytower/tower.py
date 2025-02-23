@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 import pyparsing
 import sys
 from types import ModuleType
@@ -6,6 +7,7 @@ from typing import Any, cast
 
 import colorama
 
+from pytower.blueprint import make_blueprint, place_blueprint
 from .__config__ import __version__
 from .backup import make_backup, restore_backup, fix_canvases
 from .config import TowerConfig
@@ -107,6 +109,29 @@ def get_parser(tool_names: str) -> PyTowerParser:
                             help='Number of times to run tool')
     run_parser.add_argument('-@', '--params', '--parameters', dest='parameters', nargs='*', default=[],
                             help='Parameters to pass onto tooling script (must come at end)')
+
+    # Blueprint subcommand
+    blueprint_parser = subparsers.add_parser('blueprint', help='Run given tool')
+    blueprint_subparsers = blueprint_parser.add_subparsers(dest='blueprint_mode', required=True)
+
+    # Blueprint make
+    blueprint_make = blueprint_subparsers.add_parser('make', help='Create blueprint from selection')
+    blueprint_make.add_argument('name', type=str, help='Name for blueprint')
+    blueprint_make.add_argument('-i', '--input', dest='input', type=str, default='CondoData',
+                            help='Input file')
+    blueprint_make.add_argument('-s', '--select', dest='selection', type=str, default='items',
+                            help='Selection type')
+
+    # Blueprint list
+    blueprint_list = blueprint_subparsers.add_parser('list', help='List saved blueprints')
+
+    # Blueprint place
+    blueprint_place = blueprint_subparsers.add_parser('place', help='Place given blueprint at PyMarker')
+    blueprint_place.add_argument('name', type=str, help='Name for blueprint')
+    blueprint_place.add_argument('-i', '--input', dest='input', type=str, default='CondoData',
+                                help='Input file')
+    blueprint_place.add_argument('-o', '--output', dest='output', type=str, default='CondoData_output',
+                            help='Output file')
 
     # Fix subcommand
     fix_parser = subparsers.add_parser('fix', help='Fix broken canvases and corruption in given file')
@@ -675,12 +700,7 @@ def main():
 
             inv_items_count = save.inventory_count()
 
-            # If --select argument provided, choose different selector
-            if args['selection']:
-                selector = parse_selectors(args['selection'])
-            else:
-                selector = ItemSelector()
-
+            selector = parse_selectors(args['selection'])
             selection = selector.select(Selection(save.objects))
 
             if args['invert-full'] and args['invert']:
@@ -733,6 +753,47 @@ def main():
                 info('Make sure you have the following items in your inventory before loading the map:')
                 for name, count in final_inv_items_count.items():
                     info(f'{count:>9,}x {name}')
+        case 'blueprint':
+            match args['blueprint_mode']:
+                case 'make':
+                    name = args['name']
+                    save = load_suitebro(args['input'])
+                    selector = parse_selectors(args['selection'])
+                    selection = selector.select(Selection(save.objects))
+
+                    if make_blueprint(name, selection):
+                        success(f'Successfully created blueprint {name}!')
+                    else:
+                        info(f'Failed to create blueprint {name}')
+                case 'list':
+                    from .blueprint import BLUEPRINT_DIR
+                    blueprints_path = Path(BLUEPRINT_DIR)
+
+                    output_string = 'Available blueprints:\n'
+                    file_found = False
+                    for file in blueprints_path.rglob('*'):
+                        if file.is_file() and file.suffix == '.json':
+                            output_string += f'{str(file.relative_to(blueprints_path))[:-5]}, '
+                            file_found = True
+
+                    if file_found:
+                        output_string = output_string[:-2]
+                        info(output_string)
+                    else:
+                        info('No available blueprints!')
+                case 'place':
+                    name = args['name']
+                    input_name = args['input']
+                    save = load_suitebro(input_name)
+
+                    if place_blueprint(name, save):
+                        # Writeback save
+                        save_suitebro(save, args['output'])
+                        success(f'Exported to {args["output"]}!')
+
+                        success(f'Successfully placed blueprint {name}!')
+                    else:
+                        error(f'Could not place blueprint (Make sure map contains a PyMarker)')
         case 'fix':
             fix(args['filename'], backends, args['backend'], args['force'])
         case 'compress':
@@ -766,10 +827,6 @@ def main():
                     if config_confirm_show():
                         for k, v in dict(config).items():
                             info(f'{k}: {v}')
-                case _:
-                    pass
-        case _:
-            pass
 
 
 if __name__ == '__main__':

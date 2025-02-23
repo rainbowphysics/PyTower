@@ -141,21 +141,24 @@ def xyz(*args, length=3) -> XYZ:
         if isinstance(data, XYZ):
             return data
 
+        if isinstance(data, list):
+            data = np.array(data)
+
         if isinstance(data, np.ndarray):
             if len(data) == 3:
-                if isinstance(data[0], np.int32):
-                    return data.view(XYZInt)
+                if isinstance(data[0], np.integer):
+                    return data.astype(np.int64, casting='unsafe').view(XYZInt)
                 else:
-                    return data.view(XYZ)
+                    return data.astype(np.float64, casting='unsafe').view(XYZ)
             elif len(data) == 4:
-                return data.view(XYZW)
+                return data.astype(np.float64, casting='unsafe').view(XYZW)
 
     # Constructor 1: x,y,z triplet
     if len(args) == length:
         nums = args
         for var in nums:
-            if (not isinstance(var, float) and not isinstance(var, int) and not isinstance(var, np.int32)
-                    and not isinstance(var, np.float32)):
+            if (not isinstance(var, float) and not isinstance(var, int) and not isinstance(var, np.integer)
+                    and not isinstance(var, np.floating)):
                 raise ValueError(f'xyz expected float or int but got {type(var)}: {args}')
 
     # Constructor 2: 'x,y,z' string

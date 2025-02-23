@@ -8,7 +8,7 @@ from .object import TowerObject
 from abc import ABC, abstractmethod
 import re
 
-from .util import XYZ
+from .util import XYZ, xyz
 
 
 class Selection(set[TowerObject]):
@@ -28,6 +28,15 @@ class Selection(set[TowerObject]):
     @group_id.deleter
     def group_id(self):
         self.destroy_groups()
+
+    @property
+    def centroid(self) -> XYZ:
+        centroid = xyz(0.0, 0.0, 0.0)
+        for obj in self:
+            centroid += obj.position
+
+        centroid /= len(self)
+        return centroid
 
     def group(self) -> int:
         """Creates a new group based on the selection

@@ -8,7 +8,7 @@ from deprecated.sphinx import deprecated
 import numpy as np
 
 from .connections import ItemConnectionObject
-from .util import XYZ, XYZW, not_none
+from .util import XYZ, XYZW, not_none, xyz
 
 from toolz import get_in, update_in
 
@@ -276,9 +276,8 @@ class TowerObject:
         vector = [vec_data['x'], vec_data['y'], vec_data['z']]
         if 'w' in vec_data:
             vector.append(vec_data['w'])
-            return np.array(vector).view(XYZW)
 
-        return np.array(vector).view(XYZ)
+        return xyz(vector)
 
     def _set_xyz(self, spec: Spec, value: XYZ, meta: bool = False):
         vector_dict = value.to_dict()
