@@ -338,7 +338,10 @@ def get_suitebro_path():
 def pretty_path(path: str) -> str:
     relpath = os.path.relpath(path, root_directory)
     abspath = os.path.abspath(path)
-    if len(relpath) < len(abspath):
+    cwdpath = os.path.relpath(path, os.getcwd())
+    if len(cwdpath) <= min(len(relpath), len(abspath)):
+        return cwdpath
+    elif len(relpath) <= len(abspath):
         return relpath
     else:
         return abspath
