@@ -1,6 +1,7 @@
 import copy
 import itertools
 import random
+from typing import Any
 
 from .object import TowerObject
 
@@ -66,6 +67,48 @@ class Selection(set[TowerObject]):
 
         """
         return next(iter(self)) if len(self) != 0 else None
+
+    def to_dict(self) -> dict:
+        sorted = list(self)
+        sorted.sort()
+
+        num_obj = len(sorted)
+        item_arr: list[dict[str, Any] | None] = [None] * num_obj
+        prop_arr: list[dict[str, Any] | None] = [None] * num_obj
+
+        item_idx = 0
+        prop_idx = 0
+
+        last_name = None
+        last_num = 0
+        for obj in sorted:
+            if obj.item is not None:
+                item_arr[item_idx] = obj.item
+                item_idx += 1
+            if obj.properties is not None:
+                # Name fuckery TODO determine if the naming even matters
+                if obj.item is not None:
+                    name_split = obj.properties['name'].split('_')
+                    root_name = '_'.join(name_split[:-1])
+
+                    if last_name == root_name:
+                        last_num += 1
+                    else:
+                        last_num = 0
+
+                    obj.properties['name'] = root_name + '_' + str(last_num)
+
+                    last_name = root_name
+
+                # Now actually add to prop_arr
+                prop_arr[prop_idx] = obj.properties
+                prop_idx += 1
+
+        item_arr = item_arr[:item_idx]
+        prop_arr = prop_arr[:prop_idx]
+
+        # Finally return new dictionary
+        return {'items': item_arr, 'properties': prop_arr}
 
     def __add__(self, other: 'Selection') -> 'Selection':
         """Implements the + operator as union for Selection objects"""

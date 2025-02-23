@@ -6,8 +6,8 @@ from subprocess import Popen, PIPE
 from typing import Any, Sequence, TypedDict
 
 from .logging import *
-from .selection import Selection
 from .object import TowerObject
+from .selection import Selection
 
 
 class Suitebro:
@@ -33,59 +33,7 @@ class Suitebro:
         self.directory = directory
         self.data: dict[str, Any] = data
 
-        # Parse objects
-        prop_section = self.data['properties']
-        item_section = self.data['items']
-        num_props = len(prop_section)
-        num_items = len(item_section)
-        self.objects: list[TowerObject] = [None] * (num_items + num_props)  # type: ignore[assignment]
-
-        # First get all names present in properties to determine item-only objects. Except for property-only metadata
-        #  objects, every property name is <SOME ITEM NAME>_C_###, where ### is the index within the item-type grouping
-        prop_names = set[str]()
-        for prop_data in prop_section:
-            name: str = prop_data['name']
-            try:
-                name_end = name.rindex('_C_')
-                prop_names.add(name[:name_end])
-            except ValueError:
-                continue
-
-        # This algorithm handles inserting TowerObjects from the (indexed) json by handling three cases:
-        #  Case 1: There is an item but no corresponding property
-        #  Case 2 (Most likely): There is an item and a corresponding property
-        #  Case 3: There is no item and just a property
-        item_idx = 0
-        prop_idx = 0
-        x = 0
-        while item_idx < num_items or prop_idx < num_props:
-            p = prop_section[prop_idx] if prop_idx < num_props else None
-            i = item_section[item_idx] if item_idx < num_items else None
-            # print(p['name'] if p is not None else None)
-            # print(i['name'] if i is not None else None)
-
-            if i is not None and i['name'] == 'None':
-                # Skip the "None" object left behind by spline anchor points
-                item_idx += 1
-                continue
-
-            if i is not None and i['name'] not in prop_names:
-                self.objects[x] = TowerObject(item=i, properties=None, nocopy=True)
-                item_idx += 1
-            elif i is not None and p is not None and p['name'].startswith(i['name']):
-                self.objects[x] = TowerObject(item=i, properties=p, nocopy=True)
-                item_idx += 1
-                prop_idx += 1
-            elif p is not None:
-                self.objects[x] = TowerObject(item=None, properties=p, nocopy=True)
-                prop_idx += 1
-
-            x += 1
-
-        # Now cull Nones at the end of array
-        if None in self.objects:  # type: ignore[read]
-            size = self.objects.index(None)  # type: ignore[read]
-            self.objects = self.objects[:size]
+        self.objects = TowerObject.deserialize_objects(data)
 
     def add_object(self, obj: TowerObject):
         """
@@ -238,46 +186,9 @@ class Suitebro:
             if k != 'items' and k != 'properties':
                 new_dict[k] = v
 
-        self.objects.sort()
-
-        num_obj = len(self.objects)
-        item_arr: list[dict[str, Any] | None] = [None] * num_obj
-        prop_arr: list[dict[str, Any] | None] = [None] * num_obj
-
-        item_idx = 0
-        prop_idx = 0
-
-        last_name = None
-        last_num = 0
-        for obj in self.objects:
-            if obj.item is not None:
-                item_arr[item_idx] = obj.item
-                item_idx += 1
-            if obj.properties is not None:
-                # Name fuckery TODO determine if the naming even matters
-                if obj.item is not None:
-                    name_split = obj.properties['name'].split('_')
-                    root_name = '_'.join(name_split[:-1])
-
-                    if last_name == root_name:
-                        last_num += 1
-                    else:
-                        last_num = 0
-
-                    obj.properties['name'] = root_name + '_' + str(last_num)
-
-                    last_name = root_name
-
-                # Now actually add to prop_arr
-                prop_arr[prop_idx] = obj.properties
-                prop_idx += 1
-
-        item_arr = item_arr[:item_idx]
-        prop_arr = prop_arr[:prop_idx]
-
-        # Finally set new dictionary and return
-        new_dict['items'] = item_arr
-        new_dict['properties'] = prop_arr
+        serial_objs = Selection(self.objects).to_dict()
+        new_dict['items'] = serial_objs['items']
+        new_dict['properties'] = serial_objs['properties']
 
         return new_dict
 

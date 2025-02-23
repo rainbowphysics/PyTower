@@ -439,3 +439,61 @@ class TowerObject:
 
     def __str__(self):
         return self.__repl__()
+
+    @staticmethod
+    def deserialize_objects(data: dict) -> list[TowerObject]:
+        # Parse objects
+        prop_section = data['properties']
+        item_section = data['items']
+        num_props = len(prop_section)
+        num_items = len(item_section)
+        objects: list[TowerObject] = [None] * (num_items + num_props)  # type: ignore[assignment]
+
+        # First get all names present in properties to determine item-only objects. Except for property-only metadata
+        #  objects, every property name is <SOME ITEM NAME>_C_###, where ### is the index within the item-type grouping
+        prop_names = set[str]()
+        for prop_data in prop_section:
+            name: str = prop_data['name']
+            try:
+                name_end = name.rindex('_C_')
+                prop_names.add(name[:name_end])
+            except ValueError:
+                continue
+
+        # This algorithm handles inserting TowerObjects from the (indexed) json by handling three cases:
+        #  Case 1: There is an item but no corresponding property
+        #  Case 2 (Most likely): There is an item and a corresponding property
+        #  Case 3: There is no item and just a property
+        item_idx = 0
+        prop_idx = 0
+        x = 0
+        while item_idx < num_items or prop_idx < num_props:
+            p = prop_section[prop_idx] if prop_idx < num_props else None
+            i = item_section[item_idx] if item_idx < num_items else None
+            # print(p['name'] if p is not None else None)
+            # print(i['name'] if i is not None else None)
+
+            if i is not None and i['name'] == 'None':
+                # Skip the "None" object left behind by spline anchor points
+                item_idx += 1
+                continue
+
+            if i is not None and i['name'] not in prop_names:
+                objects[x] = TowerObject(item=i, properties=None, nocopy=True)
+                item_idx += 1
+            elif i is not None and p is not None and p['name'].startswith(i['name']):
+                objects[x] = TowerObject(item=i, properties=p, nocopy=True)
+                item_idx += 1
+                prop_idx += 1
+            elif p is not None:
+                objects[x] = TowerObject(item=None, properties=p, nocopy=True)
+                prop_idx += 1
+
+            x += 1
+
+        # Now cull Nones at the end of array
+        if None in objects:  # type: ignore[read]
+            size = objects.index(None)  # type: ignore[read]
+            objects = objects[:size]
+
+        return objects
