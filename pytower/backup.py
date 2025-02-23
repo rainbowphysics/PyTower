@@ -8,7 +8,7 @@ from typing import Any, Collection
 import requests
 from typing_extensions import Buffer
 
-from .__config__ import __version__
+from .__config__ import __version__, root_directory
 from .config import KEY_INSTALL_PATH
 from .image_backends.backend import ResourceBackend
 from .image_backends.catbox import CatboxBackend
