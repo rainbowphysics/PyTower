@@ -132,6 +132,10 @@ def get_parser(tool_names: str) -> PyTowerParser:
                                 help='Input file')
     blueprint_place.add_argument('-o', '--output', dest='output', type=str, default='CondoData_output',
                             help='Output file')
+    blueprint_place.add_argument('-f', '--force', dest='force', action='store_true',
+                            help='Whether to force place the blueprint')
+    blueprint_place.add_argument('-g', '--group', dest='group', action='store_true',
+                                 help='Whether to group the placed blueprints')
 
     # Fix subcommand
     fix_parser = subparsers.add_parser('fix', help='Fix broken canvases and corruption in given file')
@@ -762,7 +766,7 @@ def main():
                     selection = selector.select(Selection(save.objects))
 
                     if make_blueprint(name, selection):
-                        success(f'Successfully created blueprint {name}!')
+                        success(f'Created blueprint {name}!')
                     else:
                         info(f'Failed to create blueprint {name}')
                 case 'list':
@@ -786,12 +790,12 @@ def main():
                     input_name = args['input']
                     save = load_suitebro(input_name)
 
-                    if place_blueprint(name, save):
+                    if place_blueprint(name, save, force=args['force'], group=args['group']):
                         # Writeback save
                         save_suitebro(save, args['output'])
                         success(f'Exported to {args["output"]}!')
 
-                        success(f'Successfully placed blueprint {name}!')
+                        success(f'Placed blueprint {name}!')
                     else:
                         error(f'Could not place blueprint (Make sure map contains a PyMarker)')
         case 'fix':
