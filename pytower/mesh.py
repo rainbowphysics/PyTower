@@ -1,8 +1,10 @@
 import json
+import math
 from typing import Optional
 
 import open3d as o3d
 import numpy as np
+from open3d.cpu.pybind.geometry import TriangleMesh
 
 from scipy.spatial.transform import Rotation as R
 
@@ -22,6 +24,37 @@ WEDGE_ITEM_DATA = json.loads('''
       "unreal_version": 517,
       "steam_item_id": 0,
       "properties": {
+        "SurfaceMaterial": {
+          "Object": {
+            "value": "/Game/Materials/Lobby/Condo/SimpleColor_Inst.SimpleColor_Inst"
+          }
+        },
+        "SurfaceColorable": {
+          "Struct": {
+            "value": {
+              "Struct": {
+                "Color": {
+                  "Struct": {
+                    "value": {
+                      "LinearColor": {
+                        "r": 1.0,
+                        "g": 1.0,
+                        "b": 1.0,
+                        "a": 1.0
+                      }
+                    },
+                    "struct_type": "LinearColor",
+                    "struct_id": "00000000-0000-0000-0000-000000000000"
+                  }
+                }
+              }
+            },
+            "struct_type": {
+              "Struct": "Colorable"
+            },
+            "struct_id": "00000000-0000-0000-0000-000000000000"
+          }
+        },
         "OwningSteamID": {
           "Struct": {
             "value": {
@@ -58,6 +91,37 @@ WEDGE_PROPERTY_DATA = json.loads('''
     {
       "name": "CanvasWedge_C_2",
       "properties": {
+        "SurfaceMaterial": {
+          "Object": {
+            "value": "/Game/Materials/Lobby/Condo/SimpleColor_Inst.SimpleColor_Inst"
+          }
+        },
+        "SurfaceColorable": {
+          "Struct": {
+            "value": {
+              "Struct": {
+                "Color": {
+                  "Struct": {
+                    "value": {
+                      "LinearColor": {
+                        "r": 1.0,
+                        "g": 1.0,
+                        "b": 1.0,
+                        "a": 1.0
+                      }
+                    },
+                    "struct_type": "LinearColor",
+                    "struct_id": "00000000-0000-0000-0000-000000000000"
+                  }
+                }
+              }
+            },
+            "struct_type": {
+              "Struct": "Colorable"
+            },
+            "struct_id": "00000000-0000-0000-0000-000000000000"
+          }
+        },
         "OwningSteamID": {
           "Struct": {
             "value": {
@@ -73,6 +137,7 @@ WEDGE_PROPERTY_DATA = json.loads('''
     }
     ''')
 
+COLOR_PATH = 'properties.SurfaceColorable.Struct.value.Struct.Color.Struct.value.LinearColor'
 
 class OctreeNode:
     """Axis-aligned octree node implementation"""
@@ -108,18 +173,78 @@ class OctreeBVH:
 
         # TODO
 
+class TowerMesh:
+    def __init__(self, mesh: TriangleMesh):
+        self.vertices = np.asarray(mesh.vertices)  # shape (#V, 3)
+        self.tri_ids = np.asarray(mesh.triangles)  # shape (#F, 3)
 
-def load_mesh(path) -> list[np.ndarray]:
-    mesh = o3d.io.read_triangle_mesh(path)
-    vertices = np.asarray(mesh.vertices)
-    tris = np.asarray(mesh.triangles)
+        self.vertex_colors = np.asarray(mesh.vertex_colors)  # shape (#V, 3)
+        if self.vertex_colors.shape[0] == 0:
+            self.vertex_colors = np.array([[255, 255, 255]] * self.vertices.shape[0])
 
-    faces = []
-    for tri in tris:
-        faces.append(vertices[tri])
+        self.triangle_uvs = np.asarray(mesh.triangle_uvs)  # shape (3 * #F, 2)
 
-    return faces
+        # Needed to filter out 0x0 Image objects, which crash NumPy
+        textures_filtered = []
+        for texture in mesh.textures:
+            if np.all(texture.get_min_bound() == texture.get_max_bound()):
+                textures_filtered.append(None)
+            else:
+                textures_filtered.append(texture)
 
+        # shape [(#H_m, #W_m, 3)] * #M
+        self.textures = [np.asarray(tex) if tex is not None else None for tex in textures_filtered]
+
+        self.triangle_material_ids = np.asarray(mesh.triangle_material_ids)  # shape (#F,)
+
+        self.triangles = self.vertices[self.tri_ids] # shape (#F, 3)
+
+    def get_color(self, uv: np.ndarray, material_id: int) -> np.ndarray | None:
+        texture = self.textures[material_id]
+        if texture is None:
+            return None
+
+        height, width, _ = texture.shape
+        u, v = uv[0], uv[1]
+
+        # Bilinear interpolate
+        w_value = u * width
+        h_value = v * height
+
+        # Assume GL_REPEAT mode with the modulus
+        w_pixel_low = math.floor(w_value)
+        w_pixel_high = math.ceil(w_value)
+        h_pixel_low = math.floor(h_value)
+        h_pixel_high = math.ceil(h_value)
+
+        w_r = w_value - w_pixel_low
+        h_r = h_value - h_pixel_low
+
+        high_u_interp = (w_r * texture[h_pixel_high % height, w_pixel_high % width, :]
+                         + (1 - w_r) * texture[h_pixel_high % height, w_pixel_low % width, :])
+        low_u_interp = (w_r * texture[h_pixel_low % height, w_pixel_high % width, :]
+                        + (1 - w_r) * texture[h_pixel_low % height, w_pixel_low % width, :])
+        return h_r * high_u_interp + (1 - h_r) * low_u_interp
+
+    def get_triangle_color(self, tri_id: int):
+        uvs = self.triangle_uvs[3*tri_id:3*(tri_id+1)] # shape (3, 2)
+        avg_color = np.zeros((3,))
+        for uv_pair in uvs:
+            color = self.get_color(uv_pair, int(self.triangle_material_ids[tri_id]))
+            # if color is not None and (np.any(color > 255) or np.any(color < 0)):
+            #     print(color)
+
+            if color is not None:
+                avg_color += color[:3] / 3
+
+        return avg_color / 255
+
+    def get_triangles(self) -> np.ndarray:
+        # Results in 3x3 matrices
+        return self.triangles
+
+def load_mesh(path) -> TowerMesh:
+    return TowerMesh(o3d.io.read_triangle_mesh(path))
 
 def divide_triangle(face: np.ndarray) -> np.ndarray | None:
     """
@@ -157,7 +282,7 @@ def divide_triangle(face: np.ndarray) -> np.ndarray | None:
     return None
 
 
-def convert_triangle(face: np.ndarray) -> list[TowerObject]:
+def convert_triangle(face: np.ndarray, rgb: np.ndarray | None) -> list[TowerObject]:
     """
     Given a triangular face, convert the face into one or two canvas wedges
 
@@ -217,10 +342,14 @@ def convert_triangle(face: np.ndarray) -> list[TowerObject]:
 
         wedges.append(wedge)
 
+    if rgb is not None:
+        for wedge in wedges:
+            wedge.set_property(COLOR_PATH, {'r': rgb[0], 'g': rgb[1], 'b': rgb[2], 'a': 1.0})
+
     return wedges
 
 
-def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)) -> Selection:
+def convert_mesh(save: Suitebro, mesh: TowerMesh, offset=xyz(0, 0, 0)) -> Selection:
     """
     Given a mesh as a list of faces, convert the mesh to TowerObjects (i.e., canvas wedges)
 
@@ -233,8 +362,8 @@ def convert_mesh(save: Suitebro, mesh: list[np.ndarray], offset=xyz(0, 0, 0)) ->
         Selection of the converted mesh
     """
     wedges = []
-    for face in mesh:
-        wedges += convert_triangle(face * 100)
+    for tri_id, face in enumerate(mesh.get_triangles()):
+        wedges += convert_triangle(face * 60, mesh.get_triangle_color(tri_id))
 
     # Fix mesh rotation
     rotate.main(save, Selection(wedges), ParameterDict({'rotation': xyz(0, -90, 0), 'local': False}))

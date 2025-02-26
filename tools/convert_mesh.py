@@ -23,8 +23,7 @@ def main(save: Suitebro, selection: Selection, params: ParameterDict):
     mesh = load_mesh(params.filename)
 
     # Scale mesh BEFORE converting to canvas wedges
-    for face in mesh:
-        face *= params.scale
+    mesh.triangles *= params.scale
 
     # Convert mesh and group together
     mesh_group_id = convert_mesh(save, mesh, offset=params.offset).group()
