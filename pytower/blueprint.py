@@ -17,7 +17,7 @@ BLUEPRINT_DIR = os.path.join(root_directory, 'blueprints')
 MARKER_SELECTOR = CustomNameSelector('PyMarker')
 
 
-def make_blueprint(name: str, selection: Selection) -> bool:
+def make_blueprint(name: str, selection: Selection, anchor_mode: str = 'centroid') -> bool:
     if '..' in name:
         error('Using .. in blueprint path not supported')
         return False
@@ -37,12 +37,32 @@ def make_blueprint(name: str, selection: Selection) -> bool:
 
     blueprint_path.parent.mkdir(parents=True, exist_ok=True)
 
-    centroid = selection.centroid
-    min_z = float('inf')
-    for obj in selection:
-        min_z = min(obj.position.z, min_z)
+    anchor_mode = anchor_mode.strip().casefold()
+    if anchor_mode not in ['centroid', 'lowest', 'none']:
+        error(f'{anchor_mode} is not a valid anchor mode! Must be: centroid, lowest, or none')
+        return False
 
-    blueprint_origin = xyz(centroid.x, centroid.y, min_z)
+    match anchor_mode:
+        case 'centroid':
+            centroid = selection.centroid
+            min_z = float('inf')
+            for obj in selection:
+                min_z = min(obj.position.z, min_z)
+
+            blueprint_origin = xyz(centroid.x, centroid.y, min_z)
+        case 'lowest':
+            min_z = float('inf')
+            lowest_obj = None
+            for obj in selection:
+                if obj.position.z < min_z:
+                    min_z = obj.position.z
+                    lowest_obj = obj
+
+            blueprint_origin = lowest_obj.position
+        case _:
+            blueprint_origin = xyz(0.0, 0.0, 0.0)
+
+
     for obj in selection:
         obj.position -= blueprint_origin
 

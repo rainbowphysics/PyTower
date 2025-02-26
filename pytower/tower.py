@@ -121,6 +121,8 @@ def get_parser(tool_names: str) -> PyTowerParser:
                             help='Input file')
     blueprint_make.add_argument('-s', '--select', dest='selection', type=str, default='items',
                             help='Selection type')
+    blueprint_make.add_argument('-a', '--anchor', dest='anchor_mode', type=str, default='centroid',
+                                help='Anchor mode to save blueprint using')
 
     # Blueprint list
     blueprint_list = blueprint_subparsers.add_parser('list', help='List saved blueprints')
@@ -765,7 +767,7 @@ def main():
                     selector = parse_selectors(args['selection'])
                     selection = selector.select(Selection(save.objects))
 
-                    if make_blueprint(name, selection):
+                    if make_blueprint(name, selection, anchor_mode=args['anchor_mode']):
                         success(f'Created blueprint {name}!')
                     else:
                         info(f'Failed to create blueprint {name}')
