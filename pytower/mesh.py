@@ -5,9 +5,12 @@ from typing import Optional
 import open3d as o3d
 import numpy as np
 from open3d.cpu.pybind.geometry import TriangleMesh
+from PIL import Image
 
 from scipy.spatial.transform import Rotation as R
 
+from .image_backends.backend import ResourceBackend
+from .image_backends.catbox import CatboxBackend
 from .logging import *
 from .object import TowerObject
 from .selection import Selection
@@ -52,6 +55,19 @@ WEDGE_ITEM_DATA = json.loads('''
             "struct_type": {
               "Struct": "Colorable"
             },
+            "struct_id": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "Tiling": {
+          "Struct": {
+            "value": {
+              "Vector": {
+                "x": 0.4000000059604645,
+                "y": 0.4000000059604645,
+                "z": 0.10000000149011612
+              }
+            },
+            "struct_type": "Vector",
             "struct_id": "00000000-0000-0000-0000-000000000000"
           }
         },
@@ -119,6 +135,19 @@ WEDGE_PROPERTY_DATA = json.loads('''
             "struct_type": {
               "Struct": "Colorable"
             },
+            "struct_id": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "Tiling": {
+          "Struct": {
+            "value": {
+              "Vector": {
+                "x": 0.4000000059604645,
+                "y": 0.4000000059604645,
+                "z": 0.10000000149011612
+              }
+            },
+            "struct_type": "Vector",
             "struct_id": "00000000-0000-0000-0000-000000000000"
           }
         },
@@ -199,10 +228,10 @@ class TowerMesh:
 
         self.triangles = self.vertices[self.tri_ids] # shape (#F, 3)
 
-    def get_color(self, uv: np.ndarray, material_id: int) -> np.ndarray | None:
+    def get_color(self, uv: np.ndarray, material_id: int) -> np.ndarray:
         texture = self.textures[material_id]
         if texture is None:
-            return None
+            return np.zeros(3)
 
         height, width, _ = texture.shape
         u, v = uv[0], uv[1]
@@ -224,18 +253,18 @@ class TowerMesh:
                          + (1 - w_r) * texture[h_pixel_high % height, w_pixel_low % width, :])
         low_u_interp = (w_r * texture[h_pixel_low % height, w_pixel_high % width, :]
                         + (1 - w_r) * texture[h_pixel_low % height, w_pixel_low % width, :])
-        return h_r * high_u_interp + (1 - h_r) * low_u_interp
+        return (h_r * high_u_interp + (1 - h_r) * low_u_interp)[:3]
 
     def get_triangle_color(self, tri_id: int):
         uvs = self.triangle_uvs[3*tri_id:3*(tri_id+1)] # shape (3, 2)
         avg_color = np.zeros((3,))
         for uv_pair in uvs:
-            color = self.get_color(uv_pair, int(self.triangle_material_ids[tri_id]))
+            color = self.get_color(uv_pair, self.get_material_id(tri_id))
             # if color is not None and (np.any(color > 255) or np.any(color < 0)):
             #     print(color)
 
             if color is not None:
-                avg_color += color[:3] / 3
+                avg_color += color / 3
 
         return avg_color / 255
 
@@ -243,10 +272,114 @@ class TowerMesh:
         # Results in 3x3 matrices
         return self.triangles
 
+    def get_uvs(self, tri_id: int) -> np.ndarray:
+        return self.triangle_uvs[3 * tri_id:3 * (tri_id + 1)]
+
+    def get_material_id(self, tri_id: int):
+        return int(self.triangle_material_ids[tri_id])
+
+class TriangleTextureInfo:
+    def __init__(self, offset_x: float, offset_y: float, texture_scale: float):
+        self.offset_x = offset_x
+        self.offset_y = offset_y
+        self.texture_scale = texture_scale
+
+
+class TextureBake:
+    TEMP_FILENAME = 'temp_pytower.png'
+    def __init__(self, num_triangles_size: int, triangle_size: int, backend: ResourceBackend):
+        self.num_triangles_size = num_triangles_size
+        self.triangle_size = triangle_size
+        self.width = self.height = triangle_size * num_triangles_size
+        self.backend = backend
+
+        self.image = np.zeros((self.height, self.width, 3))
+        self.num_triangles = 0
+        self.max_triangles = self.num_triangles_size * self.num_triangles_size
+
+        self.objects = []
+
+    def _get_cur_xy(self):
+        r = self.num_triangles // self.num_triangles_size
+        c = self.num_triangles % self.num_triangles_size
+        return c, r
+
+    def add_triangle(self, mesh: TowerMesh, tri_id: int, uvs: np.ndarray, wedge: TowerObject, flipped: bool) \
+            -> TriangleTextureInfo | None:
+        if self.num_triangles >= self.max_triangles:
+            return None
+
+        mat_id = mesh.get_material_id(tri_id)
+
+        tri_bake = np.zeros((self.triangle_size, self.triangle_size, 3))
+        for y in range(self.triangle_size):
+            h =  1 - y / self.triangle_size
+            for x in range(self.triangle_size):
+                w = 1 - x / self.triangle_size
+                if h > 1 - w + 1.1 / self.triangle_size:
+                    continue
+
+                w_uv = (1 - w) * uvs[0]+ w * uvs[1]
+                h_uv = (1 - h) * w_uv + h * uvs[2]
+                col = mesh.get_color(h_uv, mat_id)
+                if flipped:
+                    tri_bake[y,x] = col
+                else:
+                    tri_bake[y, self.triangle_size - x - 1] = col
+
+        tri_x, tri_y = self._get_cur_xy()
+        self.image[(tri_y * self.triangle_size):((tri_y+1) * self.triangle_size),
+        (tri_x * self.triangle_size):((tri_x+1) * self.triangle_size)] = tri_bake
+
+        self.num_triangles += 1
+        self.objects.append(wedge)
+
+        return TriangleTextureInfo(offset_x = tri_x / self.num_triangles_size, offset_y = tri_y / self.num_triangles_size,
+                                   texture_scale = 1 / self.num_triangles_size)
+
+    def upload(self):
+        temp = TextureBake.TEMP_FILENAME
+
+        Image.fromarray(self.image.astype(np.uint8)).save(temp)
+        url = self.backend.upload_file(temp)
+        os.remove(temp)
+
+        if url is None:
+            error('TextureBake upload failed!')
+
+        for obj in self.objects:
+            obj.url = url
+
+
+class TextureBakeCollection:
+    def __init__(self, num_triangles_size: int, triangle_size: int, backend: ResourceBackend):
+        self.num_triangles_size = num_triangles_size
+        self.triangle_size = triangle_size
+        self.width = self.height = triangle_size * num_triangles_size
+        self.backend = backend
+
+        self.bakes = [TextureBake(num_triangles_size, triangle_size, backend)]
+
+    def add_triangle(self, mesh: TowerMesh, tri_id: int, uvs: np.ndarray, wedge: TowerObject, flipped: bool) \
+            -> TriangleTextureInfo:
+        result = self.bakes[-1].add_triangle(mesh, tri_id, uvs, wedge, flipped)
+        if result is None:
+            self.bakes.append(TextureBake(self.num_triangles_size, self.triangle_size, self.backend))
+            return self.add_triangle(mesh, tri_id, uvs, wedge, flipped)
+
+        return result
+
+    def upload(self):
+        for b in self.bakes:
+            b.upload()
+
+NUM_TRIANGLES_SIZE = 10
+TRIANGLE_SIZE = 25
+
 def load_mesh(path) -> TowerMesh:
     return TowerMesh(o3d.io.read_triangle_mesh(path))
 
-def divide_triangle(face: np.ndarray) -> np.ndarray | None:
+def divide_triangle(face: np.ndarray, uvs: np.ndarray) -> (np.ndarray | None, np.ndarray | None):
     """
     Given a triangular face as input, divide it into two right triangles using the altitude
 
@@ -260,6 +393,10 @@ def divide_triangle(face: np.ndarray) -> np.ndarray | None:
         v0 = face[idx]
         v1 = face[(idx + 1) % 3]
         v2 = face[(idx + 2) % 3]
+
+        uv0 = uvs[idx]
+        uv1 = uvs[(idx + 1) % 3]
+        uv2 = uvs[(idx + 2) % 3]
 
         opp_line = v2 - v1
         perp = xyz(np.cross(opp_line, np.cross(v1 - v0, v2 - v0))).normalize()
@@ -277,12 +414,13 @@ def divide_triangle(face: np.ndarray) -> np.ndarray | None:
             continue
 
         v3 = foot_coeff * opp_line + v1
-        return np.array([[v3, v1, v0], [v3, v2, v0]])
+        uv3 = foot_coeff * uv2 + (1 - foot_coeff) * uv1
+        return np.array([[v3, v1, v0], [v3, v2, v0]]), np.array([[uv3, uv1, uv0], [uv3, uv2, uv0]])
 
-    return None
+    return None, None
 
-
-def convert_triangle(face: np.ndarray, rgb: np.ndarray | None) -> list[TowerObject]:
+def convert_triangle(face: np.ndarray, tri_id: int, mesh: TowerMesh,
+                     bakes: TextureBakeCollection, rgb: np.ndarray | None = None) -> list[TowerObject]:
     """
     Given a triangular face, convert the face into one or two canvas wedges
 
@@ -292,15 +430,19 @@ def convert_triangle(face: np.ndarray, rgb: np.ndarray | None) -> list[TowerObje
     Returns:
         List of TowerObject corresponding to the new canvas wedges
     """
-    tris = divide_triangle(face)
+    uvs = mesh.get_uvs(tri_id)
+    tris, tris_uvs = divide_triangle(face, uvs)
     if tris is None:
         return []
 
+    flipped = False
     wedges = []
-    for tri in tris:
+    for tri, tri_uvs in zip(tris, tris_uvs):
         # First fix the coordinate system handedness
         for vert in tri:
             vert[0], vert[1] = vert[1], vert[0]
+
+        #TODO apply for UVs as well?
 
         # Wedge object for triangle
         wedge = TowerObject(item=WEDGE_ITEM_DATA, properties=WEDGE_PROPERTY_DATA)
@@ -340,7 +482,14 @@ def convert_triangle(face: np.ndarray, rgb: np.ndarray | None) -> list[TowerObje
         tri_centroid = np.sum(tri, axis=0) / 3
         wedge.position += tri_centroid
 
+        # Textures
+        tex_info = bakes.add_triangle(mesh, tri_id, tri_uvs, wedge, flipped)
+        tiling_value = {'x': tex_info.offset_x, 'y': tex_info.offset_y, 'z': tex_info.texture_scale}
+        wedge.set_property('properties.Tiling.Struct.value.Vector', tiling_value)
+
         wedges.append(wedge)
+
+        flipped = not flipped
 
     if rgb is not None:
         for wedge in wedges:
@@ -362,14 +511,18 @@ def convert_mesh(save: Suitebro, mesh: TowerMesh, offset=xyz(0, 0, 0)) -> Select
         Selection of the converted mesh
     """
     wedges = []
+    bakes = TextureBakeCollection(NUM_TRIANGLES_SIZE, TRIANGLE_SIZE, CatboxBackend())
     for tri_id, face in enumerate(mesh.get_triangles()):
-        wedges += convert_triangle(face * 60, mesh.get_triangle_color(tri_id))
+        wedges += convert_triangle(face * 60, tri_id, mesh, bakes, rgb=mesh.get_triangle_color(tri_id))
 
     # Fix mesh rotation
     rotate.main(save, Selection(wedges), ParameterDict({'rotation': xyz(0, -90, 0), 'local': False}))
 
     for wedge in wedges:
         wedge.position += offset
+
+    # Upload texture bakes
+    bakes.upload()
 
     save.add_objects(wedges)
 
