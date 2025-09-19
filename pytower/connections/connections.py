@@ -1,4 +1,6 @@
 import copy
+from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Any, Callable
 from ..util import run_if_not_none
 
@@ -42,6 +44,22 @@ CONNECTION_DEFAULT: dict[str, Any] = {
     }
 }
 
+class FItemDataType(Enum):
+    NONE = auto()
+    COLOR = auto()
+    DROPDOWN = auto()
+    TU_BOOL = auto()
+    TU_FLOAT = auto()
+    TU_INT = auto()
+    URL = auto()
+
+    def __repr__(self):
+        return f'FItemDataType::{self.name}'
+
+@dataclass
+class ItemConnectionData:
+    data_type: FItemDataType
+    data: str
 
 class ItemConnectionObject:
     data: dict[str, Any]
