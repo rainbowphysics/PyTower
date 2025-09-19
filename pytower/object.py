@@ -362,6 +362,10 @@ class TowerObject:
         if not _exists(self.item, _ITEM_CONNECTIONS_SPEC):
             self.item = update_in(self.item, _ITEM_CONNECTIONS_PARENT_SPEC,
                                   lambda _: copy.deepcopy(ITEMCONNECTIONS_DEFAULT))
+        
+        if self.properties is not None and not _exists(self.properties, _ITEM_CONNECTIONS_SPEC):
+            self.properties = update_in(self.properties, _ITEM_CONNECTIONS_PARENT_SPEC,
+                                  lambda _: copy.deepcopy(ITEMCONNECTIONS_DEFAULT))
 
     def add_connection(self, con: ItemConnectionObject):
         """
@@ -431,7 +435,17 @@ class TowerObject:
         if other.item is None:
             return False
 
-        return self.item['name'] < other.item['name']
+        if self.item['name'] != other.item['name']:
+            return self.item['name'] < other.item['name']
+
+        if self.item['name'].startswith('BaseWorkshopItem'):
+            self_workshop_file = self.item['actors'][0]['properties']['WorkshopFile']['Struct']['value']['WorkshopFile']
+            other_workshop_file = other.item['actors'][0]['properties']['WorkshopFile']['Struct']['value'][
+                'WorkshopFile']
+
+            return self_workshop_file < other_workshop_file
+
+        return False
 
     def __repl__(self):
         return f'{__class__.__name__}({self.item}, {self.properties})'
