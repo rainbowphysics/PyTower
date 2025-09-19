@@ -80,6 +80,7 @@ _RESPAWN_SCALE3D_SPEC = spec_keys(f'properties.RespawnLocation.{_sv}.{_s("Scale3
 _WORLD_SCALE_SPEC = spec_keys(f'properties.WorldScale.{_sv}.Vector')
 _ITEM_CONNECTIONS_PARENT_SPEC = spec_keys(f'properties.ItemConnections')
 _ITEM_CONNECTIONS_SPEC = spec_keys(f'properties.ItemConnections.{_av}.{_sv}')
+_ITEM_METADATA_SCALE_SPEC = spec_keys(f'properties.ItemMetadataScale.{_fv}')
 
 _URL_SPEC = spec_keys(f'properties.URL.{_stv}')
 # _SURFACE_MAT_SPEC = spec_keys(f'properties.SurfaceMaterial.{_stv}')
@@ -286,6 +287,11 @@ class TowerObject:
         if meta and self.properties is not None:
             self.properties = update_in(self.properties, spec, lambda _: vector_dict)
 
+    @property
+    def metadata_scale(self) -> float:
+        """Metadata scale (used by some workshop items)"""
+        return get_in(_ITEM_METADATA_SCALE_SPEC, self.item, default=1.0)
+
     # region position
     @property
     def position(self) -> XYZ | None:
@@ -325,16 +331,21 @@ class TowerObject:
     @scale.setter
     def scale(self, value: XYZ):
         self._set_xyz(_SCALE_SPEC, value)
+
         if not _exists(self.item, spec_keys('properties.WorldScale')) and self.item is not None:
             self.item = update_in(self.item, spec_keys('properties.WorldScale.Struct.struct_type'), lambda _: 'Vector')
-            self.item = update_in(self.item, spec_keys('properties.WorldScale.Struct.struct_id'), lambda _: '00000000-0000-0000-0000-000000000000')
+            self.item = update_in(self.item, spec_keys('properties.WorldScale.Struct.struct_id'),
+                                  lambda _: '00000000-0000-0000-0000-000000000000')
         if not _exists(self.properties, spec_keys('properties.WorldScale')) and self.properties is not None:
-            self.properties = update_in(self.properties, spec_keys('properties.WorldScale.Struct.struct_type'), lambda _: 'Vector')
-            self.properties = update_in(self.properties, spec_keys('properties.WorldScale.Struct.struct_id'), lambda _: '00000000-0000-0000-0000-000000000000')
-        self._set_xyz(_WORLD_SCALE_SPEC, value, meta=True)
+            self.properties = update_in(self.properties, spec_keys('properties.WorldScale.Struct.struct_type'),
+                                        lambda _: 'Vector')
+            self.properties = update_in(self.properties, spec_keys('properties.WorldScale.Struct.struct_id'),
+                                        lambda _: '00000000-0000-0000-0000-000000000000')
+
+        self._set_xyz(_WORLD_SCALE_SPEC, value / self.metadata_scale, meta=True)
 
         if _exists(self.item, _RESPAWN_SPEC):
-            self._set_xyz(_RESPAWN_SCALE3D_SPEC, value, meta=True)
+            self._set_xyz(_RESPAWN_SCALE3D_SPEC, value / self.metadata_scale, meta=True)
 
     # endregion scale
 
