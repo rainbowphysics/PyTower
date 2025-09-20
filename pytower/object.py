@@ -8,6 +8,7 @@ from deprecated.sphinx import deprecated
 import numpy as np
 
 from .connections import ItemConnectionObject
+from .connections.connections import ItemConnectionData
 from .util import XYZ, XYZW, not_none, xyz
 
 from toolz import get_in, update_in
@@ -418,6 +419,26 @@ class TowerObject:
         self._check_connetions()
         cons_list = [con.to_dict() for con in cons]
         self.set_property(_ITEM_CONNECTIONS_SPEC, cons_list)
+
+    def connect_to(self, listener_event_name: str, other: TowerObject, event_name: str, delay: float = 0.0,
+                   data: ItemConnectionData | None = None):
+        """
+        Connect this object to another object
+
+        Args:
+            listener_event_name: The name of the listener event to connect to (for example, "OnFired")
+            other: The other object to connect to
+            event_name: The name of the event on this object to connect from
+            delay: The delay in seconds
+            data: The optional data to use for this event
+        """
+        data_dict = {'Str': {'value': data.data}} if data is not None else None
+        data_type = str(data.data_type) if data is not None else None
+
+        con = ItemConnectionObject(guid=self.guid, event_name=event_name, delay=delay,
+                                   listener_event=listener_event_name, datatype=data_type, data=data_dict)
+
+        other.add_connection(con)
 
     def __lt__(self, other: Any):
         if not isinstance(other, TowerObject):
