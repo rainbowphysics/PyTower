@@ -2,7 +2,7 @@ from __future__ import annotations
 import copy
 import re
 import uuid
-from typing import Any, cast
+from typing import Any, cast, TypeAlias
 
 from deprecated.sphinx import deprecated
 import numpy as np
@@ -47,7 +47,7 @@ _fv = _v('Float')
 _bv = _v('Bool')
 _stv = _v('Str')
 
-Spec = list[str]
+Spec: TypeAlias = list[str]
 
 
 def spec_keys(spec: str) -> Spec:
@@ -89,6 +89,21 @@ _URL_SPEC = spec_keys(f'properties.URL.{_stv}')
 # UUID4 regex pattern
 _UUID_PATTERN = re.compile('^' + '-'.join([fr'[\da-f]{{{d}}}' for d in [8, 4, 4, 4, 12]]) + '$')
 
+
+def _preprocess_path(path: Spec | str) -> Spec:
+    if isinstance(path, str):
+        path = spec_keys(path)
+
+    if path[0] != 'properties':
+        path = ['properties'] + path
+
+    return path
+
+def _preprocess_value(value: Any) -> Any:
+    if isinstance(value, XYZ):
+        value = value.to_dict()
+
+    return value
 
 class TowerObject:
     """Represents an object appearing in the Suitebro file. This includes all the sections of the object."""
@@ -138,9 +153,36 @@ class TowerObject:
             path = ['properties'] + path
 
         if self.properties is not None:
-            return get_in(path, self.properties) if _exists(self.properties, path) else None
+            prelim_result = get_in(path, self.properties, default=None)
+        else:
+            prelim_result = get_in(path, self.item, default=None)
 
-        return get_in(path, self.item) if _exists(self.item, path) else None
+        if not isinstance(prelim_result, dict):
+            return prelim_result
+
+        # Walk the dict to try to figure out what this is
+        # Case 1: we were given a field without the Type.value suffix
+        while len(prelim_result) == 1 or 'value' in prelim_result:
+            if 'value' in prelim_result:
+                prelim_result = prelim_result['value']
+            else:
+                prelim_result = prelim_result.pop(prelim_result.keys()[0])
+
+        if not isinstance(prelim_result, dict):
+            return prelim_result
+
+        # Case 2: value is Vector or Label or TODO Struct or array
+        if len(prelim_result) == 1 and 'Vector' in prelim_result:
+            vec_dict = prelim_result['Vector']
+            vector_data = [vec_dict['x'], vec_dict['y'], vec_dict['z']]
+            if 'w' in vec_dict:
+                vector_data.append(vec_dict['w'])
+            return xyz(vector_data)
+        elif len(prelim_result) == 1 and 'Label' in prelim_result:
+            return prelim_result['Label']
+
+        # At this point we give up and just return a dict
+        return prelim_result
 
     def set_property(self, path: Spec | str, value: Any):
         """
@@ -155,15 +197,12 @@ class TowerObject:
         """
         assert self.item is not None
 
-        if isinstance(path, str):
-            path = spec_keys(path)
+        spec = _preprocess_path(path)
+        value = _preprocess_value(value)
 
-        if path[0] != 'properties':
-            path = ['properties'] + path
-
-        self.item = update_in(self.item, path, lambda _: value)
+        self.item = update_in(self.item, spec, lambda _: value)
         if self.properties is not None:
-            self.set_meta_property(path, value)
+            self.set_meta_property(spec, value)
 
     def set_meta_property(self, path: Spec | str, value: Any):
         """
@@ -178,10 +217,10 @@ class TowerObject:
         """
         assert self.properties is not None
 
-        if isinstance(path, str):
-            path = spec_keys(path)
+        spec = _preprocess_path(path)
+        value = _preprocess_value(value)
 
-        self.properties = update_in(self.properties, path, lambda _: value)
+        self.properties = update_in(self.properties, spec, lambda _: value)
 
     def is_canvas(self) -> bool:
         """
