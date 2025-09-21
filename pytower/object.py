@@ -173,13 +173,16 @@ class TowerObject:
 
         # Case 2: value is Vector or Label or TODO Struct or array
         if len(prelim_result) == 1 and 'Vector' in prelim_result:
-            vec_dict = prelim_result['Vector']
-            vector_data = [vec_dict['x'], vec_dict['y'], vec_dict['z']]
-            if 'w' in vec_dict:
-                vector_data.append(vec_dict['w'])
-            return xyz(vector_data)
+            prelim_result = prelim_result['Vector']
         elif len(prelim_result) == 1 and 'Label' in prelim_result:
             return prelim_result['Label']
+
+        # Check if we're in a Vector
+        if isinstance(prelim_result, dict) and 'x' in prelim_result and 'y' in prelim_result and 'z' in prelim_result:
+            vector_data = [prelim_result['x'], prelim_result['y'], prelim_result['z']]
+            if 'w' in prelim_result:
+                vector_data.append(prelim_result['w'])
+            return xyz(vector_data)
 
         # At this point we give up and just return a dict
         return prelim_result
